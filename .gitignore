@@ -1,0 +1,23 @@
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDEs（仅根目录或通用）
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.codex
+
+.claude/
+.cursor/
+.opencode/
+yarn.lock
+Makefile
+node_modules
+.codex-edge
+.codex-tmp
+.sixth
+.deps
+.deps312

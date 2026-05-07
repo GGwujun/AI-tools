@@ -1,0 +1,50 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+:root {
+  --lof-bg: linear-gradient(180deg, #fbfdff 0%, #f4f8fc 100%);
+  --lof-card: #ffffff;
+  --lof-primary: #149f87;
+  --lof-primary-deep: #0f8b76;
+  --lof-border: #e8eff5;
+  --lof-text: #152435;
+  --lof-muted: #7b8794;
+  --lof-danger: #ff5a5f;
+  --lof-warning: #f7a74b;
+  --lof-success: #27b07d;
+  --lof-shadow: 0 10px 28px rgba(28, 53, 74, 0.08);
+}
+
+body {
+  font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--lof-bg);
+  color: var(--lof-text);
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
