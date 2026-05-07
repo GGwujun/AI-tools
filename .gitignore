@@ -21,3 +21,4 @@ node_modules
 .sixth
 .deps
 .deps312
+__pycache__
