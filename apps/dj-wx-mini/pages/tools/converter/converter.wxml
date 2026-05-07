@@ -1,0 +1,65 @@
+<view class="container">
+  <!-- 分类选择 -->
+  <view class="category-section">
+    <scroll-view scroll-x class="category-scroll">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-item {{selectedCategory === item.id ? 'active' : ''}}"
+        bindtap="selectCategory"
+        data-id="{{item.id}}"
+      >
+        <text class="category-icon">{{item.icon}}</text>
+        <text class="category-name">{{item.name}}</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 换算区域 -->
+  <view class="convert-section">
+    <view class="convert-box">
+      <view class="convert-header">
+        <text class="convert-label">从</text>
+        <picker class="unit-picker" mode="selector" range="{{unitList}}" range-key="name" bindchange="onFromUnitChange">
+          <text class="picker-text">{{fromUnit.name}}</text>
+          <text class="picker-arrow">▼</text>
+        </picker>
+      </view>
+      <input
+        class="convert-input"
+        type="digit"
+        placeholder="请输入数值"
+        value="{{fromValue}}"
+        bindinput="onInput"
+      />
+    </view>
+
+    <view class="swap-btn" bindtap="swapUnits">
+      <text>⇅</text>
+    </view>
+
+    <view class="convert-box">
+      <view class="convert-header">
+        <text class="convert-label">到</text>
+        <picker class="unit-picker" mode="selector" range="{{unitList}}" range-key="name" bindchange="onToUnitChange">
+          <text class="picker-text">{{toUnit.name}}</text>
+          <text class="picker-arrow">▼</text>
+        </picker>
+      </view>
+      <view class="convert-result">
+        <text class="result-value">{{toValue}}</text>
+        <text class="result-copy" bindtap="copyResult">复制</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 常用换算 -->
+  <view class="quick-section">
+    <text class="quick-title">常用换算</text>
+    <view class="quick-list">
+      <view wx:for="{{quickList}}" wx:key="*this" class="quick-item" bindtap="applyQuick" data-value="{{item}}">
+        <text>{{item}}</text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,23 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="hero-card">
+      <text class="hero-title">侵权投诉</text>
+      <text class="hero-desc">如果你认为某条内容侵犯了你的合法权益，可以先整理相关证明信息后再提交处理。</text>
+    </view>
+
+    <view class="section-card">
+      <text class="section-title">建议准备的信息</text>
+      <text class="section-body">1. 被投诉内容链接</text>
+      <text class="section-body">2. 权利归属说明</text>
+      <text class="section-body">3. 身份或授权证明</text>
+      <text class="section-body">4. 联系方式与补充材料</text>
+    </view>
+
+    <view class="section-card">
+      <text class="section-title">当前处理方式</text>
+      <text class="section-body">现阶段可先复制投诉模板，通过客服或人工渠道统一收集处理。后续可接入在线提交表单。</text>
+    </view>
+
+    <button class="primary-btn" bindtap="copyTemplate">复制投诉模板</button>
+  </scroll-view>
+</view>

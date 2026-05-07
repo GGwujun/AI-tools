@@ -1,0 +1,77 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+    <view class="card">
+      <view class="card-header">
+        <text class="card-title">输入主题</text>
+        <text class="char-count">{{topic.length}}/200</text>
+      </view>
+      <textarea
+        class="textarea"
+        placeholder="描述视频内容，例如：分享一款超好用的护肤品..."
+        value="{{topic}}"
+        bindinput="onTopicInput"
+        maxlength="200"
+      ></textarea>
+    </view>
+
+    <view class="card">
+      <text class="card-title">选择平台</text>
+      <view class="platform-grid">
+        <view
+          wx:for="{{platforms}}"
+          wx:key="id"
+          class="platform-item {{selectedPlatform === item.id ? 'active' : ''}}"
+          bindtap="selectPlatform"
+          data-id="{{item.id}}"
+        >
+          <text class="platform-icon">{{item.icon}}</text>
+          <text class="platform-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <text class="card-title">文案风格</text>
+      <view class="style-list">
+        <view
+          wx:for="{{styles}}"
+          wx:key="id"
+          class="style-item {{selectedStyle === item.id ? 'active' : ''}}"
+          bindtap="selectStyle"
+          data-id="{{item.id}}"
+        >
+          {{item.emoji}} {{item.name}}
+        </view>
+      </view>
+    </view>
+
+    <button class="generate-btn {{isGenerating ? 'loading' : ''}}" bindtap="generateContent" disabled="{{!topic || isGenerating}}">
+      {{isGenerating ? '生成中...' : '生成文案'}}
+    </button>
+
+    <view wx:if="{{result}}" class="card result-card">
+      <view class="result-header">
+        <text class="card-title">生成结果</text>
+        <view class="result-actions">
+          <text class="action-btn" catchtap="copyResult">复制</text>
+          <text class="action-btn" catchtap="regenerate">重新生成</text>
+        </view>
+      </view>
+      <view class="result-content">{{result}}</view>
+      <view wx:if="{{tags.length > 0}}" class="tags">
+        <text wx:for="{{tags}}" wx:key="*this" class="tag">{{item}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{history.length > 0}}" class="card">
+      <view class="history-header">
+        <text class="card-title">历史记录</text>
+        <text class="clear-btn" catchtap="clearHistory">清空</text>
+      </view>
+      <view wx:for="{{history}}" wx:key="id" class="history-item" catchtap="loadHistory" data-index="{{index}}">
+        <text class="history-topic">{{item.topic}}</text>
+        <text class="history-platform">{{item.platform}}</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

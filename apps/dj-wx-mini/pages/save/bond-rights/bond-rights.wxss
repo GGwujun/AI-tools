@@ -1,0 +1,178 @@
+.page {
+  min-height: 100vh;
+  background: #f5f9ff;
+  color: #20304a;
+}
+
+.hero {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24rpx 24rpx 20rpx;
+  background: #ffffff;
+}
+
+.hero-center {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.hero-label {
+  font-size: 26rpx;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.hero-time {
+  font-size: 26rpx;
+  color: #ff3b30;
+  font-weight: 700;
+}
+
+.hero-brand {
+  position: absolute;
+  right: 18rpx;
+  top: 18rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.hero-brand-icon {
+  font-size: 34rpx;
+}
+
+.hero-brand-text {
+  font-size: 22rpx;
+  color: #ff6a00;
+  font-weight: 700;
+}
+
+.table-header {
+  display: flex;
+  padding: 18rpx 10rpx 16rpx;
+  background: #ffffff;
+  border-top: 1rpx solid #eef3fb;
+  border-bottom: 1rpx solid #eef3fb;
+}
+
+.header-cell,
+.row-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.name-cell {
+  width: 160rpx;
+  padding-left: 2rpx;
+}
+
+.convert-cell {
+  width: 186rpx;
+}
+
+.allocate-cell {
+  width: 188rpx;
+}
+
+.progress-cell {
+  width: 210rpx;
+}
+
+.scale-cell {
+  width: 150rpx;
+  padding-right: 6rpx;
+}
+
+.header-title,
+.header-subtitle {
+  font-size: 22rpx;
+  line-height: 1.65;
+  color: #1f2937;
+}
+
+.table-body {
+  height: calc(100vh - 250rpx);
+  background: #ffffff;
+}
+
+.table-row {
+  display: flex;
+  min-height: 138rpx;
+  padding: 18rpx 10rpx;
+  align-items: center;
+}
+
+.table-row.alt {
+  background: #edf5ff;
+}
+
+.entry-name,
+.entry-code {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #2e6fd8;
+}
+
+.entry-code {
+  margin-top: 10rpx;
+}
+
+.entry-main,
+.entry-sub {
+  font-size: 24rpx;
+  line-height: 1.55;
+  color: #1f2937;
+}
+
+.entry-sub {
+  margin-top: 10rpx;
+}
+
+.entry-main.accent {
+  color: #ff6a00;
+  font-weight: 700;
+}
+
+.bottom-actions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  padding: 14rpx 14rpx calc(14rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1rpx solid #edf1f7;
+}
+
+.action-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  color: #5f6b7a;
+}
+
+.action-item.accent {
+  color: #ff3b30;
+}
+
+.action-item.muted {
+  color: #475569;
+}
+
+.action-icon {
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+.action-label {
+  font-size: 20rpx;
+  line-height: 1.3;
+}

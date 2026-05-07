@@ -1,0 +1,688 @@
+.page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding: 0 0 120rpx 0;
+  box-sizing: border-box;
+  padding-right: 24rpx;
+}
+
+/* 顶部标题 */
+.header {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 30rpx 30rpx 40rpx;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.fund-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.fund-lof {
+  font-size: 20rpx;
+  color: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.2);
+  border-radius: 6rpx;
+  padding: 4rpx 10rpx;
+  margin-left: 12rpx;
+}
+
+.fund-code {
+  font-size: 28rpx;
+  color: rgba(255,255,255,0.8);
+  margin-left: 12rpx;
+}
+
+.header-time {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.7);
+}
+
+/* 警告横幅 */
+.warning-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  padding: 20rpx 30rpx;
+}
+
+.warning-icon {
+  font-size: 28rpx;
+  margin-right: 10rpx;
+}
+
+.warning-text {
+  font-size: 26rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 价格信息卡片 */
+.price-card {
+  background: #fff;
+  margin: 24rpx;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.price-main {
+  display: flex;
+  align-items: center;
+}
+
+.price-left {
+  flex: 1;
+}
+
+.price-right {
+  flex: 1;
+  text-align: right;
+}
+
+.price-divider {
+  width: 1rpx;
+  height: 80rpx;
+  background: #e8e8e8;
+  margin: 0 30rpx;
+}
+
+.price-label {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.price-value {
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.price-change {
+  font-size: 26rpx;
+  margin-left: 16rpx;
+}
+
+.price-change.up {
+  color: #52c41a;
+}
+
+.price-change.down {
+  color: #ff4d4f;
+}
+
+.price-value-row {
+  display: flex;
+  align-items: center;
+}
+
+.price-iopt {
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 溢价信息卡片 */
+.premium-card {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  margin: 0 24rpx 24rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.premium-main {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+}
+
+.premium-rate {
+  flex: 1;
+  text-align: center;
+}
+
+.premium-label {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.8);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.premium-value {
+  font-size: 52rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.premium-value.up {
+  color: #52c41a;
+}
+
+.premium-value.down {
+  color: #ff6b6b;
+}
+
+.premium-divider {
+  width: 1rpx;
+  height: 80rpx;
+  background: rgba(255,255,255,0.3);
+  margin: 0 20rpx;
+}
+
+.premium-info {
+  flex: 1;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8rpx 0;
+}
+
+.info-label {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.8);
+}
+
+.info-value {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+.premium-warning {
+  background: rgba(0,0,0,0.2);
+  padding: 20rpx 30rpx;
+}
+
+.warning-title {
+  font-size: 24rpx;
+  color: #ff9800;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.warning-desc {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.9);
+}
+
+/* 操作按钮 */
+.action-section {
+  display: flex;
+  gap: 20rpx;
+  padding: 0 24rpx;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.btn-icon {
+  font-size: 32rpx;
+  margin-right: 10rpx;
+}
+
+.btn-text {
+  font-size: 28rpx;
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* 免责声明 */
+.disclaimer {
+  padding: 40rpx 24rpx 0;
+  text-align: center;
+}
+
+.disclaimer-text {
+  font-size: 22rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+/* 下跌天数 */
+.down-days-row {
+  display: flex;
+  align-items: center;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.down-badge {
+  background: #fff1f0;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+  margin-right: 16rpx;
+}
+
+.down-red {
+  font-size: 24rpx;
+  color: #ff4d4f;
+  font-weight: bold;
+}
+
+.down-desc {
+  font-size: 22rpx;
+  color: #999;
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* 不拖说明卡片 */
+.info-card {
+  background: #fff;
+  margin: 0 24rpx 24rpx;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.info-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.info-card-icon {
+  font-size: 28rpx;
+  margin-right: 10rpx;
+}
+
+.info-card-title {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.info-card-item {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.8;
+  padding: 4rpx 0;
+}
+
+/* 最强攻略 */
+.guide-card {
+  background: #fff;
+  margin: 24rpx;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.guide-icon {
+  font-size: 32rpx;
+  margin-right: 10rpx;
+}
+
+.guide-title {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.guide-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12rpx 0;
+}
+
+.guide-arrow {
+  font-size: 22rpx;
+  color: #667eea;
+  margin-right: 12rpx;
+  margin-top: 2rpx;
+  flex-shrink: 0;
+}
+
+.guide-content {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 规模卡片 */
+.scale-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  margin: 0 24rpx 24rpx;
+  border-radius: 16rpx;
+  padding: 24rpx 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.scale-item {
+  flex: 1;
+  text-align: center;
+}
+
+.scale-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: #e8e8e8;
+}
+
+.scale-label {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.scale-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+}
+
+/* 五档折溢价 */
+.five-level-card {
+  background: #fff;
+  margin: 0 24rpx 24rpx;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.five-level-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.five-level-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.five-level-time {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.five-level-section {
+  margin-bottom: 20rpx;
+}
+
+.five-level-section:last-child {
+  margin-bottom: 0;
+}
+
+.five-level-section-title {
+  font-size: 24rpx;
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.five-level-row {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.five-level-row:last-child {
+  border-bottom: none;
+}
+
+.header-row {
+  background: #f8f9fa;
+  border-radius: 8rpx;
+  padding: 10rpx 12rpx;
+  margin-bottom: 4rpx;
+}
+
+.five-level-col-title {
+  font-size: 22rpx;
+  color: #999;
+  flex: 1;
+  text-align: center;
+}
+
+.five-level-price {
+  flex: 1;
+  text-align: center;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.five-level-price.ask {
+  color: #52c41a;
+}
+
+.five-level-price.bid {
+  color: #ff4d4f;
+}
+
+.five-level-vol {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  color: #666;
+}
+
+.five-level-premium {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.five-level-premium.up {
+  color: #52c41a;
+}
+
+.five-level-premium.down {
+  color: #ff4d4f;
+}
+
+/* 统计数据卡片 */
+.stats-card {
+  background: #fff;
+  margin: 0 24rpx 24rpx;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.stats-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.stats-item {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.stats-item:last-child {
+  margin-bottom: 0;
+}
+
+.stats-condition {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.stats-threshold {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.stats-since {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.stats-starred-tag {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 22rpx;
+  color: #faad14;
+}
+
+.stats-starred-tag .star-icon {
+  font-size: 24rpx;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+}
+
+.stats-cell {
+  text-align: center;
+  padding: 12rpx 4rpx;
+}
+
+.stats-cell-value {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.stats-cell-value.green {
+  color: #52c41a;
+}
+
+.stats-cell-label {
+  font-size: 20rpx;
+  color: #999;
+  display: block;
+}
+
+/* 历史净值卡片 */
+.nav-card {
+  background: #fff;
+  margin: 0 24rpx 24rpx;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.nav-header {
+  margin-bottom: 16rpx;
+}
+
+.nav-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.nav-table {
+  overflow-x: auto;
+}
+
+.nav-thead {
+  display: flex;
+  background: #f0f5ff;
+  border-radius: 8rpx;
+  padding: 12rpx 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.nav-th {
+  flex: 1;
+  font-size: 22rpx;
+  color: #666;
+  text-align: center;
+  font-weight: 600;
+}
+
+.nav-th-date {
+  flex: 0.6;
+}
+
+.nav-tbody {
+  min-width: 100%;
+}
+
+.nav-tr {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 8rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.nav-tr:last-child {
+  border-bottom: none;
+}
+
+.nav-td {
+  flex: 1;
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+}
+
+.nav-td-date {
+  flex: 0.6;
+  color: #666;
+}
+
+.nav-td-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nav-value {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.nav-change {
+  font-size: 20rpx;
+  margin-top: 2rpx;
+}
+
+.nav-change.up {
+  color: #52c41a;
+}
+
+.nav-change.down {
+  color: #ff4d4f;
+}

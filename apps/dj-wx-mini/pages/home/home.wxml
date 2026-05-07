@@ -1,0 +1,115 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="hero-card">
+      <view class="hero-top">
+        <view class="hero-copy">
+          <text class="hero-title">无水印视频提取</text>
+          <text class="hero-subtitle">复制分享链接，粘贴后即可解析并保存</text>
+        </view>
+        <view class="hero-badge">
+          <text class="hero-badge-text">{{dateText}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{clipboardReady}}" class="clipboard-card">
+        <view class="clipboard-head">
+          <view>
+            <text class="clipboard-title">{{clipboardTitle}}</text>
+            <text class="clipboard-subtitle">{{clipboardSubtitle}}</text>
+          </view>
+          <text class="clipboard-close" bindtap="dismissClipboard">×</text>
+        </view>
+        <view class="clipboard-tag-row">
+          <text class="clipboard-tag">{{clipboardPlatformText}}</text>
+        </view>
+        <text class="clipboard-text">{{clipboardPreview}}</text>
+        <view class="clipboard-actions">
+          <button class="primary-btn small-btn" bindtap="pasteClipboardToInput">一键粘贴</button>
+          <button class="ghost-btn small-btn" bindtap="dismissClipboard">暂不处理</button>
+        </view>
+      </view>
+
+      <view class="input-card">
+        <view class="input-bar">
+          <text class="input-placeholder-title">请输入或粘贴视频 / 图集分享链接</text>
+          <text class="clear-text" bindtap="clearInput">清空</text>
+        </view>
+        <textarea
+          class="input-box"
+          value="{{draftInput}}"
+          placeholder="请输入或粘贴视频 / 图集分享链接"
+          maxlength="800"
+          auto-height
+          bindinput="onInput"
+        ></textarea>
+        <button class="primary-btn" bindtap="goToParse">立即解析</button>
+        <text class="helper-text">支持主流短视频与图文平台分享内容解析</text>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">当前支持平台</text>
+      </view>
+      <view class="platform-grid">
+        <view wx:for="{{platforms}}" wx:key="name" class="platform-item">
+          <image class="platform-icon-image" src="{{item.icon}}" mode="aspectFit"></image>
+          <text class="platform-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">3 步完成保存</text>
+      </view>
+      <view class="steps-row">
+        <view wx:for="{{steps}}" wx:key="index" class="step-item">
+          <view class="step-index">{{item.index}}</view>
+          <text class="step-title">{{item.title}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-head between">
+        <text class="section-title">最近记录</text>
+        <text class="link-text" bindtap="goToLibrary">查看全部</text>
+      </view>
+
+      <view wx:if="{{recentItems.length}}" class="history-list">
+        <view
+          wx:for="{{recentItems}}"
+          wx:key="id"
+          class="history-item"
+          bindtap="openRecent"
+          data-id="{{item.id}}"
+          data-url="{{item.url}}"
+        >
+          <image class="history-cover" src="{{item.cover}}" mode="aspectFill"></image>
+          <view class="history-main">
+            <text class="history-title">{{item.title}}</text>
+            <text class="history-meta">{{item.platformText}} · {{item.timeText}}</text>
+            <text class="history-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:else class="empty-box">
+        <text class="empty-title">还没有保存的素材</text>
+        <text class="empty-desc">解析成功后会自动收录到这里，后续复查会更方便</text>
+      </view>
+    </view>
+
+    <view class="footer-nav-row">
+      <view class="footer-shortcut" bindtap="goToTools">
+        <text class="footer-shortcut-title">工具箱</text>
+        <text class="footer-shortcut-desc">封面提取、文案生成、配音</text>
+      </view>
+      <view class="footer-shortcut" bindtap="goToProfile">
+        <text class="footer-shortcut-title">我的</text>
+        <text class="footer-shortcut-desc">记录、协议、反馈与设置</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

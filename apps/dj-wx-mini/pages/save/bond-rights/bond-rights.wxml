@@ -1,0 +1,77 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero-center">
+      <text class="hero-label">可转债抢权配售：</text>
+      <text class="hero-time">{{updateTime}}</text>
+    </view>
+    <view class="hero-brand">
+      <text class="hero-brand-icon">💬</text>
+      <text class="hero-brand-text">小鱼的储钱助手</text>
+    </view>
+  </view>
+
+  <view class="table-header">
+    <view class="header-cell name-cell">
+      <text class="header-title">股/债名称</text>
+      <text class="header-subtitle">股/债代码</text>
+    </view>
+    <view class="header-cell convert-cell">
+      <text class="header-title">转股价格</text>
+      <text class="header-subtitle">转股价值</text>
+    </view>
+    <view class="header-cell allocate-cell">
+      <text class="header-title">配售10张</text>
+      <text class="header-subtitle">所需资金</text>
+    </view>
+    <view class="header-cell progress-cell">
+      <text class="header-title">进展日期</text>
+      <text class="header-subtitle">进展阶段</text>
+    </view>
+    <view class="header-cell scale-cell">
+      <text class="header-title">发行规模</text>
+      <text class="header-subtitle">百元含权</text>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="table-body">
+    <view wx:for="{{entries}}" wx:key="stockCode" class="table-row {{index % 2 === 1 ? 'alt' : ''}}">
+      <view class="row-cell name-cell">
+        <text class="entry-name">{{item.stockName}}</text>
+        <text class="entry-code">{{item.stockCode}}</text>
+      </view>
+
+      <view class="row-cell convert-cell">
+        <text class="entry-main">{{item.convertPrice}}</text>
+        <text class="entry-sub">{{item.convertValue}}</text>
+      </view>
+
+      <view class="row-cell allocate-cell">
+        <text class="entry-main">{{item.allocateTenLots}}</text>
+        <text class="entry-sub">{{item.requiredCapital}}</text>
+      </view>
+
+      <view class="row-cell progress-cell">
+        <text class="entry-main">{{item.progressDate}}</text>
+        <text class="entry-sub">{{item.progressStage}}</text>
+      </view>
+
+      <view class="row-cell scale-cell">
+        <text class="entry-main accent">{{item.issueScale}}</text>
+        <text class="entry-sub">{{item.hundredValue}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="bottom-actions">
+    <view
+      wx:for="{{bottomActions}}"
+      wx:key="key"
+      class="action-item {{item.tone}}"
+      bindtap="onBottomActionTap"
+      data-label="{{item.label}}"
+    >
+      <text class="action-icon">{{item.icon}}</text>
+      <text class="action-label">{{item.label}}</text>
+    </view>
+  </view>
+</view>

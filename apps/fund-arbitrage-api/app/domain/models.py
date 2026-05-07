@@ -67,7 +67,6 @@ class OpportunitySnapshotModel:
     benchmark_type: str
     benchmark_value: float | None
     gross_premium_rate: float | None
-    estimate_premium_rate: float | None = None
     valuation_error_rate: float | None
     fee_cost_rate: float
     slippage_cost_rate: float
@@ -78,6 +77,7 @@ class OpportunitySnapshotModel:
     risk_score: float
     risk_level: str
     opportunity_level: str
+    estimate_premium_rate: float | None = None
     risk_tags: list[str] = field(default_factory=list)
     displayable: bool = True
     trigger_count: int = 0

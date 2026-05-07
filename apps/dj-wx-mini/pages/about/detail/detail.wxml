@@ -1,0 +1,18 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="hero-card">
+      <text class="hero-title">{{detail.title}}</text>
+      <text class="hero-summary">{{detail.summary}}</text>
+    </view>
+
+    <view class="section-card" wx:for="{{detail.sections}}" wx:key="heading">
+      <view class="section-marker"></view>
+      <view class="section-main">
+        <text class="section-title">{{item.heading}}</text>
+        <text class="section-body">{{item.body}}</text>
+      </view>
+    </view>
+
+    <button class="primary-btn" bindtap="handlePrimaryAction">{{detail.primaryText}}</button>
+  </scroll-view>
+</view>

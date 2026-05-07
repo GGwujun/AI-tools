@@ -1,0 +1,268 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top center, rgba(21, 101, 255, 0.06), transparent 28%),
+    #f7f8fa;
+}
+
+.scroll {
+  height: 100vh;
+  padding: 20rpx 24rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.profile-card,
+.menu-card,
+.storage-card {
+  border-radius: 30rpx;
+  background: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(16, 24, 40, 0.05);
+  border: 1rpx solid #eef2f6;
+}
+
+.profile-card {
+  padding: 26rpx 24rpx 24rpx;
+}
+
+.profile-top {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, #66a1ff 0%, #1565ff 100%);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  line-height: 84rpx;
+  text-align: center;
+}
+
+.avatar-image {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 999rpx;
+  background: #eef2f6;
+}
+
+.profile-main {
+  flex: 1;
+  margin-left: 18rpx;
+}
+
+.profile-name {
+  display: block;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.profile-id {
+  display: block;
+  margin-top: 8rpx;
+  color: #98a2b3;
+  font-size: 20rpx;
+}
+
+.profile-setting {
+  color: #98a2b3;
+  font-size: 34rpx;
+}
+
+.login-btn {
+  min-width: 140rpx;
+  height: 64rpx;
+  padding: 0 20rpx;
+  border-radius: 18rpx;
+  background: #1565ff;
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-btn::after {
+  border: none;
+}
+
+.member-card {
+  margin-top: 20rpx;
+  padding: 22rpx;
+  border-radius: 26rpx;
+  background: linear-gradient(135deg, #fff3e6 0%, #fff8ef 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.member-copy {
+  flex: 1;
+}
+
+.member-badge {
+  display: inline-flex;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: #2f2f2f;
+  color: #ffdc8a;
+  font-size: 20rpx;
+}
+
+.member-title {
+  display: block;
+  margin-top: 12rpx;
+  color: #7b5d2b;
+  font-size: 22rpx;
+}
+
+.member-desc {
+  display: block;
+  margin-top: 10rpx;
+  color: #8b6a33;
+  font-size: 20rpx;
+  line-height: 1.6;
+}
+
+.member-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12rpx;
+}
+
+.member-count {
+  color: #101828;
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.member-btn,
+.storage-btn {
+  height: 72rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(180deg, #2c76ff 0%, #1565ff 100%);
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-btn::after,
+.storage-btn::after {
+  border: none;
+}
+
+.logout-row {
+  margin-top: 16rpx;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.logout-text {
+  color: #98a2b3;
+  font-size: 20rpx;
+}
+
+.menu-card {
+  margin-top: 18rpx;
+  padding: 0 24rpx;
+}
+
+.menu-item {
+  height: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.menu-icon {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-icon-image {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.menu-icon.blue {
+  background: #eef4ff;
+}
+
+.menu-icon.amber {
+  background: #fff5e8;
+}
+
+.menu-icon.green {
+  background: #edf9f1;
+}
+
+.menu-icon.purple {
+  background: #f3ecff;
+}
+
+.menu-label {
+  color: #101828;
+  font-size: 26rpx;
+}
+
+.menu-arrow {
+  color: #98a2b3;
+  font-size: 24rpx;
+}
+
+.storage-card {
+  margin-top: 18rpx;
+  padding: 26rpx 24rpx 24rpx;
+}
+
+.storage-title {
+  display: block;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.storage-value {
+  display: block;
+  margin-top: 12rpx;
+  color: #1565ff;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.storage-desc {
+  display: block;
+  margin-top: 12rpx;
+  color: #98a2b3;
+  font-size: 20rpx;
+  line-height: 1.6;
+}
+
+.storage-btn {
+  margin-top: 20rpx;
+}

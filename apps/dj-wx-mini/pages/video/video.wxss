@@ -1,0 +1,282 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top center, rgba(21, 101, 255, 0.06), transparent 28%),
+    #f7f8fa;
+}
+
+.scroll {
+  height: 100vh;
+  padding: 20rpx 24rpx 28rpx;
+  box-sizing: border-box;
+}
+
+.status-bar,
+.author-row,
+.info-line,
+.bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.status-ok {
+  color: #17b26a;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.asset-card,
+.info-card,
+.notes-card {
+  margin-top: 16rpx;
+  border-radius: 30rpx;
+  background: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(16, 24, 40, 0.05);
+  border: 1rpx solid #eef2f6;
+}
+
+.asset-card {
+  padding: 18rpx 18rpx 26rpx;
+}
+
+.preview-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24rpx;
+}
+
+.preview-swiper {
+  width: 100%;
+  height: 348rpx;
+}
+
+.preview-cover {
+  width: 100%;
+  height: 348rpx;
+  display: block;
+  background: #eef2f6;
+}
+
+.play-mask {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 96rpx;
+  height: 96rpx;
+  margin-left: -48rpx;
+  margin-top: -48rpx;
+  border-radius: 999rpx;
+  background: rgba(16, 24, 40, 0.48);
+  color: #fff;
+  font-size: 38rpx;
+  text-align: center;
+  line-height: 96rpx;
+}
+
+.gallery-badge {
+  position: absolute;
+  right: 16rpx;
+  bottom: 16rpx;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(16, 24, 40, 0.58);
+  color: #fff;
+  font-size: 18rpx;
+  font-weight: 600;
+}
+
+.result-title {
+  display: block;
+  margin-top: 20rpx;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1.75;
+}
+
+.author-row {
+  margin-top: 16rpx;
+  justify-content: flex-start;
+}
+
+.author-chip {
+  display: inline-flex;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #eef4ff;
+  color: #1565ff;
+  font-size: 18rpx;
+  font-weight: 600;
+}
+
+.author-text {
+  color: #98a2b3;
+  font-size: 20rpx;
+}
+
+.meta-grid {
+  margin-top: 18rpx;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10rpx;
+}
+
+.meta-item {
+  padding: 16rpx 10rpx;
+  border-radius: 20rpx;
+  background: #f8fbff;
+}
+
+.meta-label {
+  display: block;
+  color: #98a2b3;
+  font-size: 18rpx;
+}
+
+.meta-value {
+  display: block;
+  margin-top: 8rpx;
+  color: #101828;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+
+.primary-btn,
+.ghost-btn,
+.member-btn {
+  height: 82rpx;
+  border-radius: 20rpx;
+  font-size: 25rpx;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-btn {
+  margin-top: 22rpx;
+  background: linear-gradient(180deg, #2c76ff 0%, #1565ff 100%);
+  color: #fff;
+}
+
+.ghost-btn {
+  flex: 1;
+  background: #fff;
+  color: #475467;
+  border: 2rpx solid #e4e7ec;
+}
+
+.member-btn {
+  flex: 1.3;
+  background: linear-gradient(180deg, #2c76ff 0%, #1565ff 100%);
+  color: #fff;
+}
+
+.primary-btn::after,
+.ghost-btn::after,
+.member-btn::after {
+  border: none;
+}
+
+.save-tip {
+  display: block;
+  margin-top: 12rpx;
+  color: #98a2b3;
+  font-size: 20rpx;
+  text-align: center;
+}
+
+.action-grid {
+  margin-top: 18rpx;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+}
+
+.action-item {
+  text-align: center;
+}
+
+.action-icon {
+  width: 74rpx;
+  height: 74rpx;
+  margin: 0 auto;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef4ff;
+}
+
+.action-icon-image {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.action-text {
+  display: block;
+  margin-top: 10rpx;
+  color: #475467;
+  font-size: 20rpx;
+}
+
+.info-card,
+.notes-card {
+  padding: 24rpx;
+}
+
+.info-title,
+.notes-title {
+  display: block;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.info-line {
+  margin-top: 16rpx;
+  align-items: flex-start;
+}
+
+.info-label {
+  width: 120rpx;
+  flex-shrink: 0;
+  color: #98a2b3;
+  font-size: 20rpx;
+}
+
+.info-value {
+  flex: 1;
+  color: #475467;
+  font-size: 20rpx;
+  line-height: 1.7;
+  word-break: break-all;
+}
+
+.note-item {
+  display: block;
+  margin-top: 14rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.8;
+}
+
+.bottom-actions {
+  margin-top: 20rpx;
+  align-items: stretch;
+}
+
+.empty-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-text {
+  color: #98a2b3;
+  font-size: 28rpx;
+}

@@ -1,0 +1,63 @@
+<view class="container">
+  <!-- 搜索区域 -->
+  <view class="search-section">
+    <view class="search-box">
+      <input
+        class="search-input"
+        placeholder="请输入快递单号"
+        value="{{trackingNo}}"
+        bindinput="onInput"
+        bindconfirm="queryExpress"
+      />
+      <text class="search-btn" bindtap="queryExpress">查询</text>
+    </view>
+    <!-- 快递公司 -->
+    <scroll-view scroll-x class="company-list">
+      <view
+        wx:for="{{companies}}"
+        wx:key="code"
+        class="company-item {{selectedCompany === item.code ? 'active' : ''}}"
+        bindtap="selectCompany"
+        data-code="{{item.code}}"
+      >
+        <text class="company-icon">{{item.icon}}</text>
+        <text class="company-name">{{item.name}}</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 查询按钮 -->
+  <button class="query-btn" bindtap="queryExpress" disabled="{{!trackingNo}}">
+    🔍 查询快递
+  </button>
+
+  <!-- 物流信息 -->
+  <view wx:if="{{logisticsInfo.length > 0}}" class="result-section">
+    <view class="result-header">
+      <text class="result-title">物流信息</text>
+      <text class="result-status {{statusClass}}">{{statusText}}</text>
+    </view>
+    <view class="timeline">
+      <view wx:for="{{logisticsInfo}}" wx:key="time" class="timeline-item {{index === 0 ? 'latest' : ''}}">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <text class="timeline-text">{{item.desc}}</text>
+          <text class="timeline-time">{{item.time}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{showEmpty}}" class="empty-section">
+    <text class="empty-icon">📦</text>
+    <text class="empty-text">输入快递单号查询物流信息</text>
+    <text class="empty-hint">支持顺丰、圆通、中通、韵达等主流快递</text>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{isLoading}}" class="loading-section">
+    <text class="loading-icon">⏳</text>
+    <text class="loading-text">正在查询...</text>
+  </view>
+</view>

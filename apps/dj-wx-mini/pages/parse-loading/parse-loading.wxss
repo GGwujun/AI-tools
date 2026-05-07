@@ -1,0 +1,73 @@
+.page {
+  min-height: 100vh;
+  background: #f7f8fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-wrap {
+  width: 100%;
+  padding: 0 60rpx;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.spinner-shell {
+  width: 140rpx;
+  height: 140rpx;
+  margin: 0 auto;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 999rpx;
+  border: 10rpx solid #dce8ff;
+  border-top-color: #1565ff;
+  animation: spin 0.9s linear infinite;
+}
+
+.loading-title {
+  display: block;
+  margin-top: 40rpx;
+  color: #101828;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.loading-desc {
+  display: block;
+  margin-top: 16rpx;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+.loading-desc.secondary {
+  margin-top: 8rpx;
+  color: #98a2b3;
+  font-size: 22rpx;
+}
+
+.loading-tip {
+  margin-top: 420rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  padding: 20rpx 24rpx;
+  box-shadow: 0 12rpx 32rpx rgba(16, 24, 40, 0.06);
+}
+
+.loading-tip-text {
+  color: #98a2b3;
+  font-size: 22rpx;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

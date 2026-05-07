@@ -1,0 +1,13 @@
+<view class="page">
+  <view class="loading-wrap">
+    <view class="spinner-shell">
+      <view class="spinner"></view>
+    </view>
+    <text class="loading-title">正在解析内容</text>
+    <text class="loading-desc">通常只需要几秒钟，请稍候</text>
+    <text class="loading-desc secondary">解析完成后会自动跳转结果页</text>
+    <view class="loading-tip">
+      <text class="loading-tip-text">请勿重复提交或关闭页面</text>
+    </view>
+  </view>
+</view>

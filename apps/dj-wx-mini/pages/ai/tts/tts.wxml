@@ -1,0 +1,89 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+    <!-- 输入 -->
+    <view class="card">
+      <view class="card-header">
+        <text class="card-title">输入文本</text>
+        <text class="char-count">{{text.length}}/500</text>
+      </view>
+      <textarea
+        class="textarea"
+        placeholder="请输入要转换为语音的文本..."
+        value="{{text}}"
+        bindinput="onTextInput"
+        maxlength="500"
+      ></textarea>
+    </view>
+
+    <!-- 音色选择 -->
+    <view class="card">
+      <text class="card-title">选择音色</text>
+      <view class="voice-grid">
+        <view
+          wx:for="{{voices}}"
+          wx:key="id"
+          class="voice-item {{selectedVoice === item.id ? 'active' : ''}}"
+          bindtap="selectVoice"
+          data-id="{{item.id}}"
+        >
+          <text class="voice-icon">{{item.icon}}</text>
+          <text class="voice-name">{{item.name}}</text>
+          <text class="voice-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 参数设置 -->
+    <view class="card">
+      <text class="card-title">参数设置</text>
+      <view class="setting-item">
+        <text class="setting-label">语速</text>
+        <slider class="setting-slider" min="0.5" max="2" step="0.1" value="{{speed}}" bindchange="onSpeedChange" show-value />
+      </view>
+      <view class="setting-item">
+        <text class="setting-label">音调</text>
+        <slider class="setting-slider" min="0.5" max="2" step="0.1" value="{{pitch}}" bindchange="onPitchChange" show-value />
+      </view>
+    </view>
+
+    <!-- 生成按钮 -->
+    <button class="generate-btn {{isGenerating ? 'loading' : ''}}" bindtap="generateAudio" disabled="{{!text || isGenerating}}">
+      {{isGenerating ? '生成中...' : '🎙️ 生成语音'}}
+    </button>
+
+    <!-- 预览 -->
+    <view wx:if="{{audioUrl}}" class="card">
+      <view class="preview-header">
+        <text class="card-title">语音预览</text>
+        <text class="duration">{{duration}}秒</text>
+      </view>
+      <view class="audio-player">
+        <view class="play-btn" bindtap="togglePlay">
+          <text>{{isPlaying ? '⏸️' : '▶️'}}</text>
+        </view>
+        <text class="play-hint">点击播放（演示模式）</text>
+        <view class="progress-bar" bindtap="seekAudio">
+          <view class="progress-bg">
+            <view class="progress-fill" style="width: {{progress}}%"></view>
+          </view>
+        </view>
+        <text class="time-label">{{currentTime}}s</text>
+      </view>
+      <view class="audio-actions">
+        <button class="save-btn" bindtap="saveAudio">保存音频</button>
+        <button class="share-btn" bindtap="shareAudio">分享</button>
+      </view>
+    </view>
+
+    <!-- 场景模板 -->
+    <view class="card">
+      <text class="card-title">使用场景</text>
+      <view class="scene-grid">
+        <view wx:for="{{scenes}}" wx:key="id" class="scene-item" bindtap="applyScene" data-scene="{{item.id}}">
+          <text class="scene-icon">{{item.icon}}</text>
+          <text class="scene-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

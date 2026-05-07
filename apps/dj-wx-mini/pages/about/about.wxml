@@ -1,0 +1,54 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="profile-card">
+      <view class="profile-top">
+        <image wx:if="{{user && user.avatarUrl}}" class="avatar-image" src="{{user.avatarUrl}}" mode="aspectFill"></image>
+        <view wx:else class="avatar">{{user ? (user.nickname ? user.nickname.slice(0, 1) : '我') : '登'}}</view>
+
+        <view class="profile-main">
+          <text class="profile-name">{{user ? user.nickname : '未登录'}}</text>
+          <text class="profile-id">{{user ? ('ID：' + (user.openid || user.id || '')) : '登录后可同步个人身份信息'}}</text>
+        </view>
+
+        <button wx:if="{{!user}}" class="login-btn" loading="{{isLoggingIn}}" bindtap="login">微信登录</button>
+        <text wx:elif="{{user}}" class="profile-setting" bindtap="openSetting">⚙</text>
+      </view>
+
+      <view class="member-card">
+        <view class="member-copy">
+          <text class="member-badge">{{user ? '已登录用户' : '普通用户'}}</text>
+          <text class="member-title">今日可解析次数</text>
+          <text class="member-desc">{{user ? '当前登录态已生效，可继续接入会员和订单能力' : '登录后可展示更完整的个人资料与后续权益信息'}}</text>
+        </view>
+        <view class="member-side">
+          <text class="member-count">{{usage.todayUsed}} / {{usage.todayTotal}}</text>
+          <button wx:if="{{user}}" class="member-btn" bindtap="openMemberCenter">立即开通会员</button>
+          <button wx:else class="member-btn" bindtap="login" loading="{{isLoggingIn}}">先完成登录</button>
+        </view>
+      </view>
+
+      <view wx:if="{{user}}" class="logout-row">
+        <text class="logout-text" bindtap="logout">退出登录</text>
+      </view>
+    </view>
+
+    <view class="menu-card">
+      <view wx:for="{{menus}}" wx:key="key" class="menu-item" bindtap="handleMenu" data-key="{{item.key}}">
+        <view class="menu-left">
+          <view class="menu-icon {{item.color}}">
+            <image class="menu-icon-image" src="{{item.icon}}" mode="aspectFit"></image>
+          </view>
+          <text class="menu-label">{{item.name}}</text>
+        </view>
+        <text class="menu-arrow">></text>
+      </view>
+    </view>
+
+    <view class="storage-card">
+      <text class="storage-title">本地记录</text>
+      <text class="storage-value">{{usage.storageText}}</text>
+      <text class="storage-desc">解析记录和收藏素材会持续累积，建议定期整理。</text>
+      <button class="storage-btn" bindtap="clearStorage">立即清理</button>
+    </view>
+  </scroll-view>
+</view>

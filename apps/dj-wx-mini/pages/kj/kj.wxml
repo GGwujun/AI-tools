@@ -1,0 +1,65 @@
+<view class="page">
+  <view class="top-bar">
+    <text class="top-title">素材库</text>
+  </view>
+
+  <view class="search-box">
+    <image class="search-icon" src="/images/icons_svg/search.svg" mode="aspectFit"></image>
+    <input
+      class="search-input"
+      placeholder="搜索标题、平台或标签"
+      value="{{keyword}}"
+      bindinput="onKeywordInput"
+    />
+  </view>
+
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="filter-row">
+      <view
+        wx:for="{{filters}}"
+        wx:key="id"
+        class="filter-chip {{activeFilter === item.id ? 'active' : ''}}"
+        bindtap="switchFilter"
+        data-id="{{item.id}}"
+      >
+        {{item.name}}
+      </view>
+    </view>
+
+    <view wx:if="{{displayItems.length > 0}}" class="material-list">
+      <view
+        wx:for="{{displayItems}}"
+        wx:key="itemKey"
+        class="material-card"
+        bindtap="handleItemTap"
+        data-kind="{{item.kind}}"
+        data-id="{{item.id}}"
+      >
+        <image class="material-cover" src="{{item.cover}}" mode="aspectFill"></image>
+        <view class="material-main">
+          <view class="material-head">
+            <text class="material-platform">{{item.platformText}}</text>
+            <text class="material-time">{{item.timeText}}</text>
+          </view>
+          <text class="material-title">{{item.title}}</text>
+          <text class="material-desc">{{item.desc}}</text>
+          <view class="material-foot">
+            <text class="material-meta">{{item.metaText}}</text>
+            <view class="material-tools">
+              <image class="tool-mark" src="/images/icons_svg/favorite.svg" mode="aspectFit"></image>
+              <image class="tool-mark" src="/images/icons_svg/share.svg" mode="aspectFit"></image>
+              <text class="material-status {{item.status}}">{{item.statusText}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="empty-card">
+      <view class="empty-illus">□</view>
+      <text class="empty-title">还没有保存的素材</text>
+      <text class="empty-desc">解析成功后加入素材库，后续复查会更方便</text>
+      <button class="empty-btn" bindtap="goHome">去解析视频</button>
+    </view>
+  </scroll-view>
+</view>

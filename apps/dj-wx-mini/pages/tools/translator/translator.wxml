@@ -1,0 +1,67 @@
+<view class="container">
+  <!-- 语言选择 -->
+  <view class="lang-section">
+    <view class="lang-box" bindtap="selectFromLang">
+      <text class="lang-label">源语言</text>
+      <view class="lang-display">
+        <text class="lang-name">{{fromLang.name}}</text>
+        <text class="lang-arrow">▼</text>
+      </view>
+    </view>
+    <view class="swap-btn" bindtap="swapLanguages">⇄</view>
+    <view class="lang-box" bindtap="selectToLang">
+      <text class="lang-label">目标语言</text>
+      <view class="lang-display">
+        <text class="lang-name">{{toLang.name}}</text>
+        <text class="lang-arrow">▼</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 输入区域 -->
+  <view class="input-section">
+    <textarea
+      class="input-text"
+      placeholder="请输入要翻译的文字..."
+      value="{{inputText}}"
+      bindinput="onInput"
+      maxlength="2000"
+    ></textarea>
+    <view class="input-footer">
+      <text class="char-count">{{inputText.length}}/2000</text>
+      <text class="clear-btn" wx:if="{{inputText}}" catchtap="clearInput">清空</text>
+    </view>
+  </view>
+
+  <!-- 翻译按钮 -->
+  <button class="translate-btn {{isTranslating ? 'loading' : ''}}" bindtap="translate" disabled="{{!inputText || isTranslating}}">
+    {{isTranslating ? '翻译中...' : '🌐 翻译'}}
+  </button>
+
+  <!-- 结果区域 -->
+  <view wx:if="{{resultText}}" class="result-section">
+    <view class="result-header">
+      <text class="result-title">翻译结果</text>
+      <text class="copy-btn" catchtap="copyResult">复制</text>
+    </view>
+    <view class="result-text">{{resultText}}</view>
+  </view>
+
+  <!-- 历史记录 -->
+  <view wx:if="{{history.length > 0}}" class="history-section">
+    <view class="history-header">
+      <text class="history-title">翻译历史</text>
+      <text class="clear-btn" catchtap="clearHistory">清空</text>
+    </view>
+    <view class="history-list">
+      <view wx:for="{{history}}" wx:key="id" class="history-item" catchtap="loadHistory" data-index="{{index}}">
+        <view class="history-content">
+          <text class="history-from">{{item.from}}</text>
+          <text class="history-arrow">→</text>
+          <text class="history-to">{{item.to}}</text>
+        </view>
+        <text class="history-lang">{{item.fromLang}} → {{item.toLang}}</text>
+      </view>
+    </view>
+  </view>
+</view>

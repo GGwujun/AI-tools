@@ -1,0 +1,104 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom" wx:if="{{resultData}}">
+    <view class="status-bar">
+      <text class="status-ok">解析成功</text>
+    </view>
+
+    <view class="asset-card">
+      <view class="preview-card">
+        <swiper
+          wx:if="{{resultData.pics && resultData.pics.length}}"
+          class="preview-swiper"
+          current="{{currentPicIndex}}"
+          bindchange="onGalleryChange"
+          indicator-dots="false"
+          circular="false"
+        >
+          <swiper-item wx:for="{{resultData.pics}}" wx:key="*this">
+            <image class="preview-cover" src="{{item}}" mode="aspectFill" bindtap="onPreviewCurrentPic"></image>
+          </swiper-item>
+        </swiper>
+        <image
+          wx:elif="{{resultData.photo}}"
+          class="preview-cover"
+          src="{{resultData.photo}}"
+          mode="aspectFill"
+          bindtap="{{resultData.pics && resultData.pics.length ? 'onPreviewCurrentPic' : 'onPreviewCover'}}"
+        ></image>
+        <view wx:if="{{resultData.downurl}}" class="play-mask">▶</view>
+        <view wx:if="{{resultData.pics && resultData.pics.length}}" class="gallery-badge">{{currentPicIndex + 1}} / {{resultData.pics.length}}</view>
+      </view>
+
+      <text class="result-title">{{resultData.title}}</text>
+
+      <view class="author-row">
+        <text class="author-chip">{{resultMeta.platformLabel}}</text>
+        <text class="author-text">{{resultMeta.routeLabel}}</text>
+      </view>
+
+      <view class="meta-grid">
+        <view wx:for="{{summaryItems}}" wx:key="label" class="meta-item">
+          <text class="meta-label">{{item.label}}</text>
+          <text class="meta-value">{{item.value}}</text>
+        </view>
+      </view>
+
+      <button wx:if="{{resultData.downurl}}" class="primary-btn" bindtap="confirmAdWatch" data-action="downloadVideo">保存到相册</button>
+      <button wx:if="{{resultData.pics && resultData.pics.length}}" class="primary-btn" bindtap="confirmAdWatch" data-action="downloadAllPics">保存到相册</button>
+      <text class="save-tip">建议立即保存，避免链接失效</text>
+    </view>
+
+    <view class="action-grid">
+      <view class="action-item" bindtap="openDocExtract">
+        <view class="action-icon">
+          <image class="action-icon-image" src="/images/icons_svg/copy-text.svg" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">复制文案</text>
+      </view>
+      <view class="action-item" bindtap="confirmAdWatch" data-action="downloadCover">
+        <view class="action-icon">
+          <image class="action-icon-image" src="/images/icons_svg/extract-cover.svg" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">{{resultData.pics && resultData.pics.length ? '预览当前图' : '提取封面'}}</text>
+      </view>
+      <view class="action-item" bindtap="confirmAdWatch" data-action="{{resultData.downurl ? 'copyLink' : 'copyCurrentPic'}}">
+        <view class="action-icon">
+          <image class="action-icon-image" src="/images/icons_svg/link.svg" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">提取链接</text>
+      </view>
+      <view class="action-item" bindtap="{{resultData.pics && resultData.pics.length ? 'confirmAdWatch' : 'toggleFavorite'}}" data-action="{{resultData.pics && resultData.pics.length ? 'downloadCurrentPic' : ''}}">
+        <view class="action-icon">
+          <image class="action-icon-image" src="/images/icons_svg/favorite.svg" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">{{resultData.pics && resultData.pics.length ? '保存当前图' : '加入素材库'}}</text>
+      </view>
+    </view>
+
+    <view class="info-card">
+      <text class="info-title">素材信息</text>
+      <view class="info-line">
+        <text class="info-label">原始链接</text>
+        <text class="info-value">{{resultMeta.sourceUrl}}</text>
+      </view>
+      <view class="info-line">
+        <text class="info-label">标签</text>
+        <text class="info-value">{{resultMeta.platformLabel}} · {{resultMeta.typeLabel}} · {{resultMeta.routeLabel}}</text>
+      </view>
+    </view>
+
+    <view class="notes-card">
+      <text class="notes-title">补充说明</text>
+      <text wx:for="{{resourceNotes}}" wx:key="*this" class="note-item">• {{item}}</text>
+    </view>
+
+    <view class="bottom-actions">
+      <button class="ghost-btn" bindtap="goHome">再解析一条</button>
+      <button class="member-btn" bindtap="goToMemberCenter">开通会员，解锁更多效率功能</button>
+    </view>
+  </scroll-view>
+
+  <view wx:else class="empty-wrap">
+    <text class="empty-text">暂无可展示的解析结果</text>
+  </view>
+</view>

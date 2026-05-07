@@ -1,0 +1,59 @@
+<view class="container">
+  <!-- 输入选项 -->
+  <view class="input-section">
+    <text class="section-title">添加选项</text>
+    <view class="input-box">
+      <input
+        class="option-input"
+        placeholder="输入一个选项..."
+        value="{{newOption}}"
+        bindinput="onOptionInput"
+        bindconfirm="addOption"
+      />
+      <text class="add-btn" bindtap="addOption">添加</text>
+    </view>
+  </view>
+
+  <!-- 选项列表 -->
+  <view class="options-section">
+    <text class="section-title">选项列表 ({{options.length}}个)</text>
+    <view class="options-list">
+      <view wx:for="{{options}}" wx:key="*this" class="option-item">
+        <text class="option-text">{{item}}</text>
+        <text class="option-remove" catchtap="removeOption" data-index="{{index}}">✕</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 决策按钮 -->
+  <button class="decide-btn {{isDeciding ? 'loading' : ''}}" bindtap="makeDecision" disabled="{{options.length < 2}}">
+    {{isDeciding ? '🎲 决策中...' : '🎲 开始决策'}}
+  </button>
+
+  <!-- 结果展示 -->
+  <view wx:if="{{result}}" class="result-section">
+    <text class="result-title">决策结果</text>
+    <view class="result-card">
+      <text class="result-icon">🎉</text>
+      <text class="result-text">{{result}}</text>
+    </view>
+    <view class="result-actions">
+      <text class="action-btn" bindtap="copyResult">复制结果</text>
+      <text class="action-btn" bindtap="resetDecision">重新决策</text>
+    </view>
+  </view>
+
+  <!-- 历史记录 -->
+  <view wx:if="{{history.length > 0}}" class="history-section">
+    <view class="history-header">
+      <text class="section-title">历史记录</text>
+      <text class="clear-btn" catchtap="clearHistory">清空</text>
+    </view>
+    <view class="history-list">
+      <view wx:for="{{history}}" wx:key="id" class="history-item">
+        <text class="history-question">{{item.question || '快速决策'}}</text>
+        <text class="history-result">{{item.result}}</text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,25 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="hero-card">
+      <view class="fail-figure">
+        <view class="fail-sheet"></view>
+        <view class="fail-cross">×</view>
+      </view>
+      <text class="hero-title">这条内容暂时无法解析</text>
+      <text class="hero-desc">{{reason}}</text>
+    </view>
+
+    <view class="section-card">
+      <text class="section-title">常见原因</text>
+      <text class="section-body">链接可能不完整，请重新复制后再试</text>
+      <text class="section-body">该内容可能为私密内容，暂不支持处理</text>
+      <text class="section-body">当前平台接口波动中，请稍后再试</text>
+    </view>
+
+    <button class="primary-btn" bindtap="retry">重新粘贴链接</button>
+    <view class="action-row">
+      <button class="ghost-btn" bindtap="openSupport">查看支持平台</button>
+      <button class="ghost-btn" bindtap="copyFeedback">联系反馈</button>
+    </view>
+  </scroll-view>
+</view>

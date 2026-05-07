@@ -1,0 +1,185 @@
+.page {
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+
+.scroll {
+  height: 100vh;
+  padding: 20rpx 24rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.hero-card,
+.benefit-grid-card,
+.plans-card {
+  border-radius: 28rpx;
+  background: #fff;
+  box-shadow: 0 12rpx 32rpx rgba(16, 24, 40, 0.06);
+}
+
+.hero-card {
+  padding: 30rpx 24rpx 26rpx;
+  background: linear-gradient(135deg, #1d4ed8 0%, #1565ff 100%);
+}
+
+.hero-title {
+  display: block;
+  color: #fff;
+  font-size: 38rpx;
+  font-weight: 700;
+}
+
+.hero-desc {
+  display: block;
+  margin-top: 12rpx;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 22rpx;
+  line-height: 1.7;
+}
+
+.benefit-strip {
+  margin-top: 28rpx;
+  padding: 14rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.benefit-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.benefit-strip-text {
+  color: #fff;
+  font-size: 20rpx;
+}
+
+.benefit-grid-card {
+  margin-top: 18rpx;
+  padding: 20rpx;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14rpx;
+}
+
+.benefit-item {
+  padding: 18rpx 16rpx;
+  border-radius: 20rpx;
+  background: #f8fbff;
+  text-align: center;
+}
+
+.benefit-icon {
+  width: 54rpx;
+  height: 54rpx;
+  margin: 0 auto;
+  border-radius: 999rpx;
+  background: #e8f1ff;
+  color: #1565ff;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 54rpx;
+}
+
+.benefit-item-text {
+  display: block;
+  margin-top: 12rpx;
+  color: #1565ff;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.plans-card {
+  margin-top: 18rpx;
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.plan-item {
+  padding: 22rpx;
+  border-radius: 22rpx;
+  border: 2rpx solid #e4e7ec;
+  background: #fff;
+}
+
+.plan-item.active {
+  border-color: #1565ff;
+  background: #f8fbff;
+  box-shadow: 0 10rpx 24rpx rgba(21, 101, 255, 0.08);
+}
+
+.plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14rpx;
+}
+
+.plan-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.plan-name {
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.plan-badge {
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: #1565ff;
+  color: #fff;
+  font-size: 18rpx;
+}
+
+.plan-price {
+  color: #101828;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.plan-note {
+  display: block;
+  margin-top: 10rpx;
+  color: #98a2b3;
+  font-size: 20rpx;
+}
+
+.primary-btn {
+  margin-top: 24rpx;
+  height: 84rpx;
+  border-radius: 20rpx;
+  background: #1565ff;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-btn::after {
+  border: none;
+}
+
+.footer-note {
+  display: block;
+  margin-top: 14rpx;
+  color: #98a2b3;
+  font-size: 20rpx;
+  text-align: center;
+  line-height: 1.6;
+}

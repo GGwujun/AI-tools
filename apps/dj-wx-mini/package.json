@@ -1,0 +1,18 @@
+{
+  "name": "dj_wx_web",
+  "version": "1.0.0",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./styles/tailwind.css -o ./styles/tailwind.wxss --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "postcss": "^8.5.6",
+    "postcss-load-config": "^6.0.1",
+    "tailwindcss": "^3",
+    "weapp-tailwindcss": "^4.7.6"
+  }
+}

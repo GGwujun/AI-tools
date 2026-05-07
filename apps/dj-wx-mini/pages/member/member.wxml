@@ -1,0 +1,52 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="hero-card">
+      <text class="hero-title">开通会员，解锁更多效率</text>
+      <text class="hero-desc">适合高频解析、持续整理和后续创作场景</text>
+
+      <view class="benefit-strip">
+        <view class="benefit-dot"></view>
+        <text class="benefit-strip-text">更多次数</text>
+        <view class="benefit-dot"></view>
+        <text class="benefit-strip-text">更高成功率</text>
+        <view class="benefit-dot"></view>
+        <text class="benefit-strip-text">高清保存</text>
+      </view>
+    </view>
+
+    <view class="benefit-grid-card">
+      <view class="benefit-item">
+        <view class="benefit-icon">次</view>
+        <text class="benefit-item-text">更多解析次数</text>
+      </view>
+      <view class="benefit-item">
+        <view class="benefit-icon">稳</view>
+        <text class="benefit-item-text">更高成功率</text>
+      </view>
+      <view class="benefit-item">
+        <view class="benefit-icon">清</view>
+        <text class="benefit-item-text">高清保存</text>
+      </view>
+      <view class="benefit-item">
+        <view class="benefit-icon">效</view>
+        <text class="benefit-item-text">更多创作能力</text>
+      </view>
+    </view>
+
+    <view class="plans-card">
+      <view wx:for="{{plans}}" wx:key="id" class="plan-item {{currentPlanId === item.id ? 'active' : ''}}" bindtap="selectPlan" data-id="{{item.id}}">
+        <view class="plan-head">
+          <view class="plan-name-row">
+            <text class="plan-name">{{item.name}}</text>
+            <text wx:if="{{item.badge}}" class="plan-badge">{{item.badge}}</text>
+          </view>
+          <text class="plan-price">{{item.price}}</text>
+        </view>
+        <text class="plan-note">{{item.note}}</text>
+      </view>
+    </view>
+
+    <button class="primary-btn" bindtap="openPlan">立即开通</button>
+    <text class="footer-note">会员服务说明、自动续费规则与权益说明以支付页为准</text>
+  </scroll-view>
+</view>

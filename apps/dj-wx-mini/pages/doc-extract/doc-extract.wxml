@@ -1,0 +1,32 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="hero-card">
+      <text class="hero-title">文案提取</text>
+      <text class="hero-desc">已为你整理标题、正文和标签</text>
+    </view>
+
+    <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">标题</text>
+        <button class="copy-btn" bindtap="copyField" data-field="title">一键复制</button>
+      </view>
+      <text class="section-body">{{title}}</text>
+    </view>
+
+    <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">正文</text>
+        <button class="copy-btn" bindtap="copyField" data-field="body">一键复制</button>
+      </view>
+      <text class="section-body">{{body}}</text>
+    </view>
+
+    <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">标签</text>
+        <button class="copy-btn" bindtap="copyField" data-field="tags">一键复制</button>
+      </view>
+      <text class="section-body">{{tags}}</text>
+    </view>
+  </scroll-view>
+</view>

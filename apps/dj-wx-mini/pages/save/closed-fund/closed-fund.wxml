@@ -1,0 +1,70 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero-center">
+      <text class="hero-label">更新时间：</text>
+      <text class="hero-time">{{updateTime}}</text>
+    </view>
+    <view class="hero-brand">
+      <text class="hero-brand-icon">💬</text>
+      <text class="hero-brand-text">小鱼的储钱助手</text>
+    </view>
+  </view>
+
+  <view class="table-header">
+    <view class="header-cell name-cell">
+      <text class="header-title">封基名称</text>
+      <text class="header-link" bindtap="onSort" data-field="code">代码{{sortIndicators.code}}</text>
+    </view>
+    <view class="header-cell metric-cell">
+      <text class="header-title">场内</text>
+      <text class="header-subtitle">涨幅</text>
+    </view>
+    <view class="header-cell spread-cell">
+      <text class="header-title">日净价差</text>
+      <text class="header-subtitle">周净价差</text>
+    </view>
+    <view class="header-cell discount-cell">
+      <text class="header-title">折价率</text>
+      <text class="header-link dark" bindtap="onSort" data-field="annualized">年化{{sortIndicators.annualized}}</text>
+    </view>
+    <view class="header-cell action-cell">
+      <text class="header-link" bindtap="onSort" data-field="followed">关注{{sortIndicators.followed}}</text>
+      <text class="header-link dark" bindtap="onSort" data-field="remainingYears">剩余{{sortIndicators.remainingYears}}</text>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="table-body">
+    <view wx:for="{{displayFunds}}" wx:key="code" class="table-row {{item.rowClass}}">
+      <view class="row-cell name-cell">
+        <text class="fund-name">{{item.name}}</text>
+        <text class="fund-code">{{item.code}}</text>
+      </view>
+
+      <view class="row-cell metric-cell">
+        <text class="metric-main">{{item.venuePrice}}</text>
+        <text class="metric-accent up">{{item.changeRate}}</text>
+      </view>
+
+      <view class="row-cell spread-cell">
+        <text class="metric-main">{{item.daySpread}}</text>
+        <text class="metric-sub {{item.weekSpreadTone}}">{{item.weekSpread}}</text>
+      </view>
+
+      <view class="row-cell discount-cell">
+        <text class="metric-main">{{item.discountRate}}</text>
+        <text class="metric-sub">{{item.annualized}}</text>
+      </view>
+
+      <view class="row-cell action-cell">
+        <view
+          class="follow-switch {{item.followed ? 'active' : ''}}"
+          catchtap="onToggleFollow"
+          data-code="{{item.code}}"
+        >
+          <view class="follow-switch-thumb"></view>
+        </view>
+        <text class="remaining-badge">{{item.remainingText}}</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

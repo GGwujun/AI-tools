@@ -1,0 +1,66 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+    <!-- 上传区域 -->
+    <view class="card">
+      <view wx:if="{{!selectedImage}}" class="upload-area" bindtap="chooseImage">
+        <text class="upload-icon">📷</text>
+        <text class="upload-text">点击上传图片</text>
+        <text class="upload-tip">支持 JPG、PNG，最大 5MB</text>
+      </view>
+      <view wx:else class="preview-area">
+        <image class="preview-image" src="{{selectedImage}}" mode="aspectFit"></image>
+        <text class="change-btn" bindtap="chooseImage">更换图片</text>
+      </view>
+    </view>
+
+    <!-- 识别模式 -->
+    <view class="card">
+      <text class="card-title">识别模式</text>
+      <view class="mode-grid">
+        <view
+          wx:for="{{modes}}"
+          wx:key="id"
+          class="mode-item {{selectedMode === item.id ? 'active' : ''}}"
+          bindtap="selectMode"
+          data-id="{{item.id}}"
+        >
+          <text class="mode-icon">{{item.icon}}</text>
+          <text class="mode-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 识别按钮 -->
+    <button class="recognize-btn {{isRecognizing ? 'loading' : ''}}" bindtap="startRecognize" disabled="{{!selectedImage || isRecognizing}}">
+      {{isRecognizing ? '识别中...' : '🔍 开始识别'}}
+    </button>
+
+    <!-- 结果 -->
+    <view wx:if="{{result}}" class="card">
+      <view class="result-header">
+        <text class="card-title">识别结果</text>
+        <text class="action-btn" catchtap="copyResult">复制</text>
+      </view>
+      <view class="result-content">{{result}}</view>
+      <view class="result-info">
+        <text>识别耗时：{{costTime}}秒</text>
+        <text>文字数量：{{result.length}}字</text>
+      </view>
+    </view>
+
+    <!-- 历史 -->
+    <view wx:if="{{history.length > 0}}" class="card">
+      <view class="history-header">
+        <text class="card-title">识别历史</text>
+        <text class="clear-btn" catchtap="clearHistory">清空</text>
+      </view>
+      <view wx:for="{{history}}" wx:key="id" class="history-item" catchtap="loadHistory" data-index="{{index}}">
+        <image class="history-thumb" src="{{item.thumb}}" mode="aspectFill"></image>
+        <view class="history-info">
+          <text class="history-text">{{item.result}}</text>
+          <text class="history-time">{{item.time}}</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

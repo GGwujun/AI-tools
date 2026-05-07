@@ -1,0 +1,81 @@
+<view class="container">
+  <view class="converter-card">
+    <!-- 输入金额 -->
+    <view class="input-section">
+      <text class="label">金额</text>
+      <view class="input-box">
+        <input 
+          type="digit" 
+          value="{{amount}}"
+          bindinput="onInputAmount"
+          class="amount-input"
+          placeholder="请输入金额"
+        />
+      </view>
+    </view>
+
+    <!-- 货币选择 -->
+    <view class="currency-section">
+      <!-- 源货币 -->
+      <view class="currency-selector" bindtap="showFromPicker">
+        <text class="currency-symbol">{{fromSymbol}}</text>
+        <text class="currency-code">{{fromCurrency}}</text>
+        <text class="currency-name">{{fromName}}</text>
+        <text class="arrow">▼</text>
+      </view>
+
+      <!-- 交换按钮 -->
+      <view class="swap-btn" bindtap="swapCurrency">⇄</view>
+
+      <!-- 目标货币 -->
+      <view class="currency-selector" bindtap="showToPicker">
+        <text class="currency-symbol">{{toSymbol}}</text>
+        <text class="currency-code">{{toCurrency}}</text>
+        <text class="currency-name">{{toName}}</text>
+        <text class="arrow">▼</text>
+      </view>
+    </view>
+
+    <!-- 结果 -->
+    <view class="result-section" bindtap="copyResult">
+      <text class="result-label">换算结果</text>
+      <text class="result-amount">{{result || '0.00'}}</text>
+      <text class="result-currency">{{toName}}</text>
+      <text wx:if="{{result}}" class="copy-hint">点击复制</text>
+    </view>
+  </view>
+
+  <!-- 常用汇率 -->
+  <view class="common-rates">
+    <text class="section-title">常用汇率参考</text>
+    <view class="rate-list">
+      <view class="rate-item">
+        <text>100 {{fromCurrency}} ≈ 算汇率中...</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 货币选择器 -->
+<view wx:if="{{showFromPicker || showToPicker}}" class="picker-mask" bindtap="closePicker">
+  <view class="picker-content">
+    <view class="picker-header">
+      <text>选择货币</text>
+      <text bindtap="closePicker">✕</text>
+    </view>
+    <scroll-view scroll-y class="picker-list">
+      <view 
+        wx:for="{{currencies}}" 
+        wx:key="code"
+        class="picker-item"
+        bindtap="{{showFromPicker ? 'selectFrom' : 'selectTo'}}"
+        data-code="{{item.code}}"
+      >
+        <text class="picker-symbol">{{item.symbol}}</text>
+        <text class="picker-code">{{item.code}}</text>
+        <text class="picker-name">{{item.name}}</text>
+        <text wx:if="{{(showFromPicker && item.code === fromCurrency) || (showToPicker && item.code === toCurrency)}}" class="picker-check">✓</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>

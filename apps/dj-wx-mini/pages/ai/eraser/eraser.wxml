@@ -1,0 +1,241 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+    <view class="hero">
+      <view class="hero-mark">IMG Repair</view>
+      <text class="hero-title">图片局部去标</text>
+      <text class="hero-desc">这一页强调小面积、可控、快速修复。你应该总能知道当前选区规模、推荐模式和下一步怎么调。</text>
+    </view>
+
+    <view class="signal-strip">
+      <view class="signal-card">
+        <text class="signal-label">选区状态</text>
+        <text class="signal-value">{{selectionStage}}</text>
+      </view>
+      <view class="signal-card">
+        <text class="signal-label">当前模式</text>
+        <text class="signal-value">{{modeSuggestion.current}}</text>
+      </view>
+      <view class="signal-card accent">
+        <text class="signal-label">推荐模式</text>
+        <text class="signal-value">{{modeSuggestion.recommended}}</text>
+      </view>
+    </view>
+
+    <view class="hint-card">
+      <text class="hint-title">修复建议</text>
+      <text class="hint-desc">{{modeSuggestion.text}}</text>
+    </view>
+
+    <view class="card">
+      <text class="card-title">使用信号</text>
+      <view class="feature-list">
+        <text wx:for="{{detailSignals}}" wx:key="title" class="feature-item">{{item.title}}：{{item.desc}}</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <view wx:if="{{!selectedImage}}" class="upload-area" bindtap="chooseImage">
+        <text class="upload-icon">上传</text>
+        <text class="upload-text">选择一张需要处理的图片</text>
+        <text class="upload-tip">支持 JPG、PNG，大小不超过 10MB</text>
+      </view>
+
+      <view wx:else class="edit-area">
+        <view class="toolbar-row">
+          <view class="toolbar-group">
+            <text class="toolbar-label">笔刷预设</text>
+            <view class="chip-row">
+              <view
+                wx:for="{{brushPresets}}"
+                wx:key="id"
+                class="chip {{activeBrushPreset === item.id ? 'active' : ''}}"
+                bindtap="applyBrushPreset"
+                data-id="{{item.id}}"
+                data-size="{{item.size}}"
+              >
+                {{item.label}}
+              </view>
+            </view>
+          </view>
+
+          <view class="toolbar-group">
+            <text class="toolbar-label">修复模式</text>
+            <view class="chip-row">
+              <view
+                wx:for="{{repairModes}}"
+                wx:key="id"
+                class="chip {{repairMode === item.id ? 'active' : ''}}"
+                bindtap="setRepairMode"
+                data-mode="{{item.id}}"
+              >
+                {{item.label}}
+              </view>
+            </view>
+          </view>
+
+          <view class="toolbar-group">
+            <view class="toolbar-inline">
+              <text class="toolbar-label">自动识别</text>
+              <text class="toolbar-link {{isDetectingRegions ? 'disabled' : ''}}" bindtap="detectWatermarkSuggestions">{{isDetectingRegions ? '识别中...' : '识别候选区域'}}</text>
+            </view>
+            <text class="toolbar-tip">{{detectionSummary}}</text>
+            <view wx:if="{{detectedRegions.length}}" class="detect-list">
+              <view wx:for="{{detectedRegions}}" wx:key="id" class="detect-card">
+                <view class="detect-head">
+                  <text class="detect-name">{{item.label}}</text>
+                  <text class="detect-score">{{item.confidenceText}}</text>
+                </view>
+                <text class="detect-note">{{item.note}}</text>
+                <button class="detect-btn" bindtap="applyDetectedRegion" data-region-id="{{item.id}}">套用区域</button>
+              </view>
+            </view>
+            <button wx:if="{{detectedRegions.length > 1}}" class="detect-all-btn" bindtap="applyAllDetectedRegions">全部套用</button>
+          </view>
+
+          <view class="toolbar-group">
+            <text class="toolbar-label">模板选区</text>
+            <view class="chip-row">
+              <view
+                wx:for="{{selectionTemplates}}"
+                wx:key="id"
+                class="chip template-chip"
+                bindtap="applySelectionTemplate"
+                data-template-id="{{item.id}}"
+              >
+                {{item.label}}
+              </view>
+            </view>
+            <view class="chip-row compact-row">
+              <view
+                wx:for="{{templateSizes}}"
+                wx:key="id"
+                class="chip {{activeTemplateSize === item.id ? 'active' : ''}}"
+                bindtap="setTemplateSize"
+                data-size-id="{{item.id}}"
+              >
+                {{item.label}}
+              </view>
+            </view>
+            <text class="toolbar-tip">适合角标、底部水印条和居中贴纸。先点模板，再用笔刷补边会更快。</text>
+          </view>
+        </view>
+
+        <view class="canvas-stage">
+          <view class="image-wrapper">
+            <image class="edit-image" src="{{selectedImage}}" mode="aspectFit"></image>
+            <canvas
+              class="draw-canvas"
+              canvas-id="drawCanvas"
+              style="width: {{canvasDisplayWidth}}px; height: {{canvasDisplayHeight}}px;"
+              catchtouchstart="onCanvasStart"
+              catchtouchmove="onCanvasMove"
+              catchtouchend="onCanvasEnd"
+              catchtouchcancel="onCanvasEnd"
+            ></canvas>
+          </view>
+        </view>
+
+        <view class="meta-panel">
+          <view class="meta-card">
+            <text class="meta-label">已涂抹笔数</text>
+            <text class="meta-value">{{strokeCount}}</text>
+          </view>
+          <view class="meta-card">
+            <text class="meta-label">预计处理占比</text>
+            <text class="meta-value">{{selectionCoverage}}%</text>
+          </view>
+        </view>
+
+        <view class="edit-actions">
+          <text class="action-btn" bindtap="undoLastStroke">撤销一笔</text>
+          <text class="action-btn {{redoDepth ? '' : 'disabled'}}" bindtap="redoLastStroke">重做一笔</text>
+          <text class="action-btn" bindtap="resetCanvas">清空选区</text>
+          <text class="action-btn" bindtap="chooseImage">更换图片</text>
+        </view>
+
+        <view class="brush-section">
+          <text class="brush-label">画笔大小：{{brushSize}}</text>
+          <slider class="brush-slider" min="10" max="60" value="{{brushSize}}" bindchange="onBrushSizeChange" show-value />
+        </view>
+      </view>
+    </view>
+
+    <button
+      class="process-btn {{isProcessing ? 'loading' : ''}}"
+      bindtap="startProcess"
+      disabled="{{!selectedImage || isProcessing}}"
+    >
+      {{isProcessing ? '处理中...' : '开始去除'}}
+    </button>
+
+    <view wx:if="{{resultImage}}" class="card result-card">
+      <view class="result-head">
+        <text class="card-title no-space">处理结果</text>
+        <view class="preview-switch">
+          <view
+            class="preview-tab {{previewSource === 'result' ? 'active' : ''}}"
+            bindtap="setPreviewSource"
+            data-source="result"
+          >
+            处理后
+          </view>
+          <view
+            class="preview-tab {{previewSource === 'original' ? 'active' : ''}}"
+            bindtap="setPreviewSource"
+            data-source="original"
+          >
+            原图
+          </view>
+          <view
+            class="preview-tab {{previewSource === 'compare' ? 'active' : ''}}"
+            bindtap="setPreviewSource"
+            data-source="compare"
+          >
+            对比
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{previewSource === 'compare'}}" class="compare-stage">
+        <image class="result-main-image compare-base-image" src="{{selectedImage}}" mode="aspectFit"></image>
+        <view class="compare-overlay" style="width: {{compareRatio}}%;">
+          <image class="result-main-image compare-overlay-image" src="{{resultImage}}" mode="aspectFit"></image>
+        </view>
+        <view class="compare-divider" style="left: {{compareRatio}}%;"></view>
+      </view>
+      <image
+        wx:else
+        class="result-main-image"
+        src="{{previewSource === 'result' ? resultImage : selectedImage}}"
+        mode="aspectFit"
+      ></image>
+      <text class="preview-caption">{{previewSource === 'result' ? '当前查看：处理后的修复结果' : previewSource === 'original' ? '当前查看：原图细节' : '当前查看：处理前后对比'}}</text>
+      <view wx:if="{{previewSource === 'compare'}}" class="compare-slider-wrap">
+        <text class="compare-label">对比位置：{{compareRatio}}%</text>
+        <slider class="compare-slider" min="0" max="100" value="{{compareRatio}}" bindchanging="onCompareRatioChange" bindchange="onCompareRatioChange" show-value />
+      </view>
+
+      <view class="result-actions">
+        <button class="save-btn" bindtap="saveImage">保存图片</button>
+        <button class="share-btn" bindtap="shareImage">分享</button>
+      </view>
+    </view>
+
+    <view wx:if="{{selectedImage && !resultImage}}" class="tips-box">
+      <text class="tips-text">优先用更小的选区去掉核心水印，再逐步扩大。比起一次刷大范围，分两次处理通常更容易得到干净结果。</text>
+    </view>
+  </scroll-view>
+
+  <view class="canvas-workbench">
+    <canvas
+      canvas-id="processCanvas"
+      class="hidden-canvas"
+      style="width: {{processCanvasWidth}}px; height: {{processCanvasHeight}}px;"
+    ></canvas>
+    <canvas
+      canvas-id="maskCanvas"
+      class="hidden-canvas"
+      style="width: {{processCanvasWidth}}px; height: {{processCanvasHeight}}px;"
+    ></canvas>
+  </view>
+</view>

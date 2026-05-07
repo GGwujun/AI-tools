@@ -1,0 +1,68 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/kj/kj",
+    "pages/tools/tools",
+    "pages/about/about",
+    "pages/about/detail/detail",
+    "pages/about/complaint/complaint",
+    "pages/member/member",
+    "pages/parse-loading/parse-loading",
+    "pages/parse-fail/parse-fail",
+    "pages/doc-extract/doc-extract",
+    "pages/save/save",
+    "pages/save/switch/switch",
+    "pages/save/remind-settings/remind-settings",
+    "pages/save/arbitrage/arbitrage",
+    "pages/save/fund-detail/fund-detail",
+    "pages/save/chase-rise-strategy/chase-rise-strategy",
+    "pages/save/closed-fund/closed-fund",
+    "pages/save/bond-rights/bond-rights",
+    "pages/ai/ai",
+    "pages/ai/video-parse/video-parse",
+    "pages/ai/ocr/ocr",
+    "pages/ai/writer/writer",
+    "pages/ai/tts/tts",
+    "pages/ai/eraser/eraser",
+    "pages/video/video"
+  ],
+  "window": {
+    "navigationBarTitleText": "无水印助手",
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#f6f8ff",
+    "backgroundColor": "#f6f8ff",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#97a0b5",
+    "selectedColor": "#2563ff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "images/icons_png/tab-home_64.png",
+        "selectedIconPath": "images/icons_png/tab-home-active_64.png"
+      },
+      {
+        "pagePath": "pages/kj/kj",
+        "text": "素材库",
+        "iconPath": "images/icons_png/tab-library_64.png",
+        "selectedIconPath": "images/icons_png/tab-library-active_64.png"
+      },
+      {
+        "pagePath": "pages/tools/tools",
+        "text": "工具箱",
+        "iconPath": "images/icons_png/tab-tools_64.png",
+        "selectedIconPath": "images/icons_png/tab-tools-active_64.png"
+      },
+      {
+        "pagePath": "pages/about/about",
+        "text": "我的",
+        "iconPath": "images/icons_png/tab-me_64.png",
+        "selectedIconPath": "images/icons_png/tab-me-active_64.png"
+      }
+    ]
+  }
+}
