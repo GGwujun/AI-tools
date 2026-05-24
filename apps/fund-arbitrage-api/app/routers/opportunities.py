@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from datetime import datetime
 
 from fastapi import APIRouter, Body, HTTPException, Query
@@ -39,14 +41,14 @@ async def list_opportunities(
     level: str | None = Query(None),
 ):
     normalized_market_type = market_type.upper() if market_type else None
-    return opportunity_service.list_opportunities(market_type=normalized_market_type, level=level)
+    return await asyncio.to_thread(opportunity_service.list_opportunities, normalized_market_type, level)
 
 
 @router.get("/highlights", response_model=OpportunityHighlightResponse)
 async def opportunity_highlights(
     limit: int = Query(5, ge=1, le=20),
 ):
-    return list_highlights(limit=limit)
+    return await asyncio.to_thread(list_highlights, limit)
 
 
 @router.get("/trading-calendar/next", response_model=TradingCalendarResponse)
@@ -60,7 +62,7 @@ async def next_trade_date(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="from_date must be YYYY-MM-DD") from exc
 
-    next_day = trading_calendar_service.next_trade_date(market=market, from_date=parsed, offset=offset)
+    next_day = await asyncio.to_thread(trading_calendar_service.next_trade_date, market=market, from_date=parsed, offset=offset)
     return TradingCalendarResponse(
         success=True,
         market=market,
@@ -72,7 +74,7 @@ async def next_trade_date(
 
 @router.get("/valuation/{code}", response_model=StandardValuationResponse)
 async def get_standard_valuation(code: str):
-    return get_latest_standard_valuation(code=code)
+    return await asyncio.to_thread(get_latest_standard_valuation, code)
 
 
 @router.get("/valuation/{code}/history", response_model=StandardValuationHistoryResponse)
@@ -80,7 +82,7 @@ async def get_standard_valuation_history(
     code: str,
     limit: int = Query(20, ge=1, le=200),
 ):
-    return list_standard_valuation_history(code=code, limit=limit)
+    return await asyncio.to_thread(list_standard_valuation_history, code, limit)
 
 
 @router.get("/raw-events/{code}", response_model=RawDataEventListResponse)
@@ -89,7 +91,7 @@ async def get_raw_events(
     data_type: str | None = Query(None),
     limit: int = Query(20, ge=1, le=200),
 ):
-    return list_raw_events(code=code, data_type=data_type, limit=limit)
+    return await asyncio.to_thread(list_raw_events, code, data_type, limit)
 
 
 @router.get("/trading-calendar/day", response_model=TradingCalendarDayResponse)
@@ -102,7 +104,7 @@ async def get_trade_day(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="trade_date must be YYYY-MM-DD") from exc
 
-    item = trading_calendar_service.get_day(market=market, trade_date=parsed)
+    item = await asyncio.to_thread(trading_calendar_service.get_day, market=market, trade_date=parsed)
     if item is None:
         is_open = parsed.weekday() < 5
         return TradingCalendarDayResponse(
@@ -135,7 +137,7 @@ async def list_trade_days(
     if parsed_to < parsed_from:
         raise HTTPException(status_code=400, detail="date_to must be >= date_from")
 
-    items = trading_calendar_service.list_days(market=market, date_from=parsed_from, date_to=parsed_to)
+    items = await asyncio.to_thread(trading_calendar_service.list_days, market=market, date_from=parsed_from, date_to=parsed_to)
     return TradingCalendarListResponse(
         success=True,
         items=[
@@ -157,7 +159,8 @@ async def upsert_trade_day(payload: TradingCalendarUpsertRequest = Body(...)):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="trade_date must be YYYY-MM-DD") from exc
 
-    trading_calendar_service.set_day(
+    await asyncio.to_thread(
+        trading_calendar_service.set_day,
         market=payload.market,
         trade_date=parsed,
         is_open=payload.is_open,
@@ -179,12 +182,12 @@ async def get_backtest(
     code: str,
     threshold: float = Query(0.5),
 ):
-    return get_backtest_result(code=code, threshold=threshold)
+    return await asyncio.to_thread(get_backtest_result, code, threshold)
 
 
 @router.get("/condition-reference/{code}", response_model=ConditionReferenceResponse)
 async def condition_reference(code: str):
-    result = get_condition_reference(fund_code=code)
+    result = await asyncio.to_thread(get_condition_reference, code)
     if result is None:
         raise HTTPException(status_code=404, detail=f"Condition reference not found: {code}")
     return result
@@ -192,12 +195,12 @@ async def condition_reference(code: str):
 
 @router.get("/score/{market_type}/{code}", response_model=OpportunityScoreResponse)
 async def opportunity_score(market_type: str, code: str):
-    return get_latest_opportunity_score(code=code, market_type=market_type.upper())
+    return await asyncio.to_thread(get_latest_opportunity_score, code, market_type.upper())
 
 
 @router.get("/{market_type}/{code}", response_model=OpportunityDetailResponse)
 async def get_opportunity(market_type: str, code: str):
-    item = opportunity_service.get_opportunity(code=code, market_type=market_type.upper())
+    item = await asyncio.to_thread(opportunity_service.get_opportunity, code, market_type.upper())
     if item is None:
         raise HTTPException(status_code=404, detail=f"Opportunity not found: {market_type}/{code}")
     return item
@@ -211,7 +214,7 @@ async def rebuild_stats(
     if code:
         if not market_type:
             raise HTTPException(status_code=400, detail="market_type is required when code is provided")
-        result = arbitrage_backfill_service.rebuild_for_fund(code=code, market_type=market_type.upper())
+        result = await asyncio.to_thread(arbitrage_backfill_service.rebuild_for_fund, code, market_type.upper())
         return RebuildStatsResponse(
             success=True,
             processed=1,
@@ -221,7 +224,7 @@ async def rebuild_stats(
             market_type=market_type.upper(),
         )
 
-    result = arbitrage_backfill_service.rebuild_all()
+    result = await asyncio.to_thread(arbitrage_backfill_service.rebuild_all)
     return RebuildStatsResponse(success=True, processed=result["processed"], updated=result["updated"], filled=result["filled"])
 
 
@@ -233,7 +236,7 @@ async def backfill_daily(
     if code:
         if not market_type:
             raise HTTPException(status_code=400, detail="market_type is required when code is provided")
-        result = historical_snapshot_service.backfill_for_fund(code=code, market_type=market_type.upper())
+        result = await asyncio.to_thread(historical_snapshot_service.backfill_for_fund, code, market_type.upper())
         return RebuildStatsResponse(
             success=True,
             processed=1,
@@ -243,5 +246,5 @@ async def backfill_daily(
             market_type=market_type.upper(),
         )
 
-    result = historical_snapshot_service.backfill_all()
+    result = await asyncio.to_thread(historical_snapshot_service.backfill_all)
     return RebuildStatsResponse(success=True, processed=result["processed"], updated=result["updated"], filled=result["filled"])

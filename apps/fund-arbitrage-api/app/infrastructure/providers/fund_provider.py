@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.infrastructure.providers.base import FeeProviderResult, NavProviderResult, QuoteProviderResult, StatusProviderResult
 from app.services import arbitrage_service, fund_service
@@ -25,7 +25,7 @@ def get_realtime_quote(code: str, market_type: str, market: str = "") -> QuotePr
 
     return QuoteProviderResult(
         source="legacy-fund-service",
-        as_of=datetime.utcnow(),
+        as_of=datetime.now(timezone.utc),
         code=code,
         market=market,
         last_price=realtime.get("market_price"),
@@ -51,7 +51,7 @@ def get_official_nav(code: str, market_type: str) -> NavProviderResult:
 
     return NavProviderResult(
         source="legacy-fund-service",
-        as_of=datetime.utcnow(),
+        as_of=datetime.now(timezone.utc),
         code=code,
         nav_type="official",
         nav_value=nav_value,
@@ -79,7 +79,7 @@ def get_estimated_nav(code: str, market_type: str) -> NavProviderResult:
 
     return NavProviderResult(
         source=source,
-        as_of=datetime.utcnow(),
+        as_of=datetime.now(timezone.utc),
         code=code,
         nav_type="estimate",
         nav_value=nav_value,
@@ -90,7 +90,7 @@ def get_estimated_nav(code: str, market_type: str) -> NavProviderResult:
 
 def get_iopv_nav(code: str, market_type: str) -> NavProviderResult:
     if market_type != "ETF":
-        return NavProviderResult(source="legacy-fund-service", as_of=datetime.utcnow(), code=code, nav_type="iopv")
+        return NavProviderResult(source="legacy-fund-service", as_of=datetime.now(timezone.utc), code=code, nav_type="iopv")
     nav_value, nav_time, nav_change, source = fund_service.get_etf_iopv_info(code)
     if nav_value is None:
         estimate = get_estimated_nav(code, market_type)
@@ -110,7 +110,7 @@ def get_iopv_nav(code: str, market_type: str) -> NavProviderResult:
 
     return NavProviderResult(
         source=source,
-        as_of=datetime.utcnow(),
+        as_of=datetime.now(timezone.utc),
         code=code,
         nav_type="iopv",
         nav_value=nav_value,
@@ -139,7 +139,7 @@ def get_fee_profile(code: str, *, market_type: str = "LOF", is_qdii: bool = Fals
 
     return FeeProviderResult(
         source=fee_info.get("source", "unknown"),
-        as_of=datetime.utcnow(),
+        as_of=datetime.now(timezone.utc),
         code=code,
         fee_text=fee_info.get("fee_text", ""),
         purchase_fee_rate=fee_info.get("purchase_fee_rate"),
@@ -159,7 +159,7 @@ def get_status(code: str) -> StatusProviderResult:
 
     return StatusProviderResult(
         source="legacy-fund-service",
-        as_of=datetime.utcnow(),
+        as_of=datetime.now(timezone.utc),
         code=code,
         can_subscribe=can_subscribe,
         can_redeem=can_redeem,

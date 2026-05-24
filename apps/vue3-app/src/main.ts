@@ -11,6 +11,8 @@ if (import.meta.env.VITE_ENABLE_SAVE_MOCK === 'true') {
   setupMock()
 }
 
+document.title = '基金套利H5监控工具'
+
 const app = createApp(App)
 
 app.use(createPinia())

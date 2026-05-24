@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 const deviceId = getDeviceId()
+
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -15,14 +16,14 @@ const settings = ref<AdvancedSettings | null>(null)
 const needsMobileBinding = computed(() => authStore.isLoggedIn && authStore.user?.mobile_bound !== true)
 
 const toggleItems = computed(() => [
-  { key: 'fund_arbitrage_enabled', label: '溢价机会' },
-  { key: 'realtime_premium_enabled', label: '限额申购' },
-  { key: 'morning_subscribe_enabled', label: '申购状态变化' },
-  { key: 'convertible_bond_list_enabled', label: '到账提醒' },
-  { key: 'convertible_bond_redeem_enabled', label: '可转债提醒' },
-  { key: 'convertible_bond_expected_redeem_enabled', label: '双低区间' },
-  { key: 'convertible_bond_lag_enabled', label: '强赎预警' },
-  { key: 'closed_fund_discount_enabled', label: '折价机会' },
+  { key: 'fund_arbitrage_enabled', label: '溢价机会', note: '盘中溢价超过阈值时提醒' },
+  { key: 'closed_fund_discount_enabled', label: '折价机会', note: '折价区间扩张时提醒' },
+  { key: 'realtime_premium_enabled', label: '限额申购', note: '限额与申购状态变化提醒' },
+  { key: 'morning_subscribe_enabled', label: '申购状态', note: '开放、暂停、限额切换提醒' },
+  { key: 'convertible_bond_list_enabled', label: '到账提醒', note: '基金到账与可卖时间提醒' },
+  { key: 'convertible_bond_lag_enabled', label: '强赎预警', note: '可转债强赎风险变化提醒' },
+  { key: 'convertible_bond_expected_redeem_enabled', label: '双低区间', note: '双低变化进入关注区间时提醒' },
+  { key: 'convertible_bond_redeem_enabled', label: '转债提醒', note: '转债列表异动和重点事件提醒' },
 ] as const)
 
 async function loadSettings() {
@@ -60,10 +61,6 @@ function toggleSetting(key: keyof AdvancedSettings) {
   }
 }
 
-function goToBindMobile() {
-  router.push('/login')
-}
-
 onMounted(() => {
   void loadSettings()
 })
@@ -72,89 +69,279 @@ onMounted(() => {
 <template>
   <div class="page">
     <header class="topbar">
-      <button class="back" @click="router.back()"></button>
-      <div class="title">高级提醒设置</div>
+      <button class="nav-btn" @click="router.back()">‹</button>
+      <div class="title-block">
+        <span class="kicker">高级提醒配置</span>
+        <h1>高级提醒设置</h1>
+        <p>把提醒从“是否推送”，进一步细分成“什么时候推送”。</p>
+      </div>
+      <div class="topbar-space"></div>
     </header>
 
-    <section v-if="needsMobileBinding" class="binding-card">
+    <section v-if="needsMobileBinding" class="notice-card warning">
       <strong>绑定手机号后才能开启高级提醒</strong>
-      <p>高级提醒会关联你的个人提醒配置与后续通知触达。请先完成手机号绑定，再继续配置。</p>
-      <button class="binding-btn" @click="goToBindMobile">去绑定手机号</button>
+      <p>高级提醒会关联你的个人配置与后续通知触达。请先完成手机号绑定，再继续配置。</p>
+      <button class="warning-btn" @click="router.push('/login')">去绑定手机号</button>
     </section>
 
-    <section class="card">
-      <h2>提醒类型</h2>
-      <div v-if="error" class="hint error-text">{{ error }}</div>
-      <div v-else-if="loading" class="hint">正在加载提醒设置...</div>
-      <div v-else class="icon-grid">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>提醒类型</h2>
+        <span>按需开启，避免信息过载</span>
+      </div>
+      <div v-if="error" class="state-line">{{ error }}</div>
+      <div v-else-if="loading" class="state-line">正在加载提醒设置...</div>
+      <div v-else class="toggle-list">
         <button
           v-for="item in toggleItems"
           :key="item.key"
-          :class="['icon-item', { active: settings?.[item.key] }]"
+          :class="['toggle-row', { active: settings?.[item.key] }]"
           :disabled="needsMobileBinding"
           @click="toggleSetting(item.key)"
         >
-          <span class="badge"></span>
-          <strong>{{ item.label }}</strong>
+          <div>
+            <strong>{{ item.label }}</strong>
+            <p>{{ item.note }}</p>
+          </div>
+          <span class="toggle-state">{{ settings?.[item.key] ? '开启' : '关闭' }}</span>
         </button>
       </div>
     </section>
 
-    <section class="card">
-      <h2>提醒条件</h2>
-      <div class="field"><span>标的</span><strong>鹏华中证传媒LOF 160629</strong></div>
-      <div class="field"><span>溢价率</span><strong>高于 {{ settings?.premium_threshold ?? 2.0 }}%</strong></div>
-      <div class="field"><span>触发频率</span><strong>每日一次</strong></div>
-      <div class="field"><span>提醒时间</span><strong>09:00-21:00</strong></div>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>提醒条件</h2>
+        <span>当前使用的关键阈值</span>
+      </div>
+      <div class="metrics-grid">
+        <article class="metric-card">
+          <span>溢价阈值</span>
+          <strong>{{ settings?.premium_threshold ?? '--' }}%</strong>
+        </article>
+        <article class="metric-card">
+          <span>折价阈值</span>
+          <strong>{{ settings?.discount_threshold ?? '--' }}%</strong>
+        </article>
+        <article class="metric-card">
+          <span>成交额阈值</span>
+          <strong>{{ settings?.turnover_threshold ?? '--' }}</strong>
+        </article>
+        <article class="metric-card">
+          <span>盘口阈值</span>
+          <strong>{{ settings?.realtime_premium_threshold ?? '--' }}%</strong>
+        </article>
+      </div>
     </section>
 
-    <section class="card">
-      <h2>通知方式</h2>
-      <div class="switch-row">
-        <span>公众号服务通知</span>
-        <span class="switch active"></span>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>通知方式</h2>
       </div>
-      <div class="switch-row">
-        <span>模板消息（可选）</span>
-        <span class="switch active"></span>
-      </div>
+      <div class="row-item"><span>公众号服务通知</span><strong>{{ needsMobileBinding ? '绑定后可用' : '按主配置触达' }}</strong></div>
+      <div class="row-item"><span>提醒频率</span><strong>按阈值触发后汇总展示</strong></div>
     </section>
 
-    <footer class="footer">
-      <button class="primary" :disabled="needsMobileBinding" @click="persist">{{ saving ? '保存中...' : '保存提醒' }}</button>
+    <footer class="bottom-bar">
+      <button class="primary-btn" :disabled="needsMobileBinding" @click="persist">{{ saving ? '保存中...' : '保存提醒' }}</button>
     </footer>
   </div>
 </template>
 
 <style scoped>
-.page { min-height:100vh; padding: calc(14px + env(safe-area-inset-top)) 16px 92px; background: var(--lof-bg); }
-.topbar { display:grid; grid-template-columns:18px 1fr 18px; align-items:center; margin-bottom:14px; }
-.title { text-align:center; font-size:18px; font-weight:700; }
-.back { width:18px; height:18px; border:0; background:none; position:relative; }
-.back::before { content:''; position:absolute; left:2px; top:7px; width:10px; height:10px; border-left:2px solid #1f3348; border-bottom:2px solid #1f3348; transform:rotate(45deg); }
-.binding-card { margin-top:14px; padding:16px; border-radius:22px; background:#fff7ed; box-shadow:var(--lof-shadow); }
-.binding-card strong { display:block; color:#9a3412; font-size:15px; }
-.binding-card p { margin-top:8px; color:#9a3412; font-size:12px; line-height:1.7; }
-.binding-btn { margin-top:12px; height:40px; padding:0 14px; border:0; border-radius:12px; background:#ea580c; color:#fff; font-size:13px; font-weight:700; }
-.card { margin-top:14px; padding:16px; border-radius:22px; background:#fff; box-shadow:var(--lof-shadow); }
-.card h2 { font-size:16px; margin-bottom:12px; }
-.hint { font-size:13px; color:var(--lof-muted); }
-.error-text { color:#dc2626; }
-.icon-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-.icon-item { padding:12px 8px; border:1px solid var(--lof-border); border-radius:18px; text-align:center; background:#fff; }
-.icon-item:disabled { opacity:.48; }
-.icon-item.active { background:#eef8f5; border-color:rgba(20, 159, 135, .28); }
-.badge { display:block; width:26px; height:26px; margin:0 auto 8px; border-radius:10px; background:linear-gradient(180deg, #f4f8fb 0%, #dde7f0 100%); }
-.icon-item.active .badge { background:linear-gradient(180deg, #9de3d2 0%, #16ac93 100%); }
-.icon-item strong { font-size:11px; }
-.field, .switch-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--lof-border); font-size:13px; gap:12px; }
-.field:last-child, .switch-row:last-child { border-bottom:0; }
-.field span, .switch-row span:first-child { color:var(--lof-muted); }
-.switch { width:42px; height:24px; border-radius:999px; background:#d5dde6; position:relative; }
-.switch::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.12); }
-.switch.active { background:var(--lof-primary); }
-.switch.active::after { left:20px; }
-.footer { position:fixed; left:0; right:0; bottom:0; padding:14px 16px calc(14px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.95); border-top:1px solid var(--lof-border); }
-.primary { width:100%; height:48px; border:0; border-radius:16px; background:linear-gradient(180deg, #16ac93 0%, #10947d 100%); color:#fff; font-size:16px; font-weight:700; }
-.primary:disabled { opacity:.48; }
+.page {
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top, rgba(74, 144, 226, 0.16), transparent 32%),
+    #1a1e2b;
+}
+.topbar,
+.panel-head,
+.row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.nav-btn,
+.warning-btn,
+.primary-btn,
+.toggle-row {
+  font: inherit;
+  cursor: pointer;
+}
+.nav-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(234, 236, 240, 0.08);
+  border-radius: 12px;
+  background: rgba(36, 43, 61, 0.9);
+  color: var(--lof-text);
+  font-size: 24px;
+}
+.title-block { flex: 1; }
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(74, 144, 226, 0.12);
+  color: #c8ddff;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.title-block h1,
+.panel h2,
+.toggle-row strong,
+.metric-card strong {
+  color: var(--lof-text);
+  font-weight: 800;
+}
+.title-block h1 {
+  margin-top: 6px;
+  font-size: 22px;
+  line-height: 28px;
+}
+.title-block p,
+.panel-head span,
+.state-line,
+.row-item span,
+.notice-card p,
+.toggle-row p,
+.metric-card span {
+  color: var(--lof-muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+.topbar-space { width: 38px; }
+.notice-card,
+.panel {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(234, 236, 240, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02)),
+    rgba(36, 43, 61, 0.96);
+  box-shadow: var(--lof-shadow);
+}
+.notice-card strong {
+  display: block;
+  color: #ffd0ba;
+  font-size: 15px;
+  line-height: 22px;
+}
+.warning {
+  background: linear-gradient(180deg, rgba(234, 88, 12, 0.16), rgba(255,255,255,0.03)), rgba(36,43,61,0.96);
+}
+.warning-btn {
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #ea580c;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 12px;
+  border: 1px solid rgba(234, 236, 240, 0.08);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.035);
+  text-align: left;
+}
+.toggle-row.active {
+  border-color: rgba(74, 144, 226, 0.2);
+  background: rgba(74, 144, 226, 0.12);
+}
+.toggle-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  color: var(--lof-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.toggle-row.active .toggle-state {
+  background: rgba(74, 144, 226, 0.16);
+  color: #dceaff;
+}
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.metric-card {
+  padding: 14px 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(234, 236, 240, 0.05);
+}
+.metric-card strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 16px;
+  line-height: 22px;
+}
+.row-item {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(234,236,240,0.08);
+}
+.row-item:last-child { border-bottom: 0; }
+.row-item strong {
+  color: var(--lof-text);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+}
+.bottom-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(430px, calc(100vw - 20px));
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(22, 26, 35, 0.96);
+  border-top: 1px solid rgba(234,236,240,0.08);
+}
+.primary-btn {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #2d6bc4 0%, #4a90e2 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+.primary-btn:disabled { opacity: 0.5; }
+@media (max-width: 380px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

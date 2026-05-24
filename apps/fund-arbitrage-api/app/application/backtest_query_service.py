@@ -1,26 +1,10 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import Iterator
-
 from sqlalchemy import select
 
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import FundArbitrageEvent, FundArbitrageStat
 from app.models.opportunity import BacktestEventItem, BacktestResultResponse, BacktestStatItem
-
-
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 def get_backtest_result(*, code: str, threshold: float = 0.5) -> BacktestResultResponse:

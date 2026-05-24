@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from app.domain.models import (
     FundProfile,
@@ -14,6 +14,93 @@ from app.domain.models import (
 ALGORITHM_VERSION = "v2"
 
 
+def calculate_z_score(current_premium: float | None, historical_premiums: list[float]) -> tuple[float, str]:
+    """Calculate Z-score for premium rate anomaly detection.
+
+    Requires at least 30 historical observations for statistical significance.
+    Z-score = (current_premium - mean) / std
+    Level: |z| >= 2 -> "ANOMALY", |z| >= 1.5 -> "NOTABLE", else "NORMAL"
+
+    Returns (z_score, z_score_level).
+    """
+    if current_premium is None or len(historical_premiums) < 30:
+        return 0.0, "NORMAL"
+
+    import statistics
+    mean = statistics.mean(historical_premiums)
+    stdev = statistics.stdev(historical_premiums)
+
+    if stdev == 0:
+        # All historical premiums are the same — no deviation is possible
+        return 0.0, "NORMAL"
+
+    z = (current_premium - mean) / stdev
+    z = round(z, 2)
+
+    abs_z = abs(z)
+    if abs_z >= 2.0:
+        return z, "ANOMALY"
+    if abs_z >= 1.5:
+        return z, "NOTABLE"
+    return z, "NORMAL"
+
+
+def calculate_arbitrage_cost(
+    *,
+    profile: FundProfile,
+    quote: MarketQuote,
+    arbitrage_type: str = "premium",
+    holding_days: int = 7,
+) -> tuple[float, float, float]:
+    """Calculate detailed arbitrage cost rates (all in percent-point units).
+
+    Args:
+        profile: Fund profile
+        quote: Market quote for slippage estimation
+        arbitrage_type: "premium" (申购→卖出) or "discount" (买入→赎回)
+        holding_days: Expected holding days (affects redemption fee tier)
+
+    Returns:
+        (fee_cost_rate, slippage_cost_rate, total_cost_rate) all in percent-points
+        e.g. 0.17 means 0.17%, 1.5 means 1.5%
+    """
+    if arbitrage_type == "premium":
+        # 溢价套利: 场外申购 → 场内卖出
+        # 申购费: LOF 0.15%, ETF通常0 (institutional), QDII额外0.10%
+        subscription_fee = 0.15  # LOF申购费率默认
+        if profile.is_etf:
+            subscription_fee = 0.0  # ETF申购通常免申购费(券商通道)
+        if profile.is_qdii:
+            subscription_fee += 0.10
+
+        # 佣金: 万2.5 = 0.025%
+        commission = 0.025
+        fee_cost_rate = subscription_fee + commission
+
+    else:
+        # 折价套利: 场内买入 → 场外赎回
+        # 佣金: 万2.5 = 0.025%
+        commission = 0.025
+
+        # 赎回费按持有天数分档
+        if holding_days < 7:
+            redemption_fee = 1.5  # <7天: 1.5%
+        elif holding_days < 30:
+            redemption_fee = 0.5  # 7-30天: 0.5%
+        else:
+            redemption_fee = 0.0  # >=30天: 0%
+
+        fee_cost_rate = commission + redemption_fee
+
+    # 冲击成本: 低流动性基金更高
+    slippage_cost_rate = 0.05  # 基础0.05%
+    if quote.amount is not None and quote.amount < 5_000_000:
+        slippage_cost_rate = 0.25  # 低流动性: 0.25%
+
+    total_cost_rate = round(fee_cost_rate + slippage_cost_rate, 4)
+    return round(fee_cost_rate, 4), round(slippage_cost_rate, 4), total_cost_rate
+
+
 def select_benchmark(profile: FundProfile, official_nav: NavSnapshot | None, estimate_nav: NavSnapshot | None, iopv_nav: NavSnapshot | None) -> NavSnapshot | None:
     if profile.is_etf and iopv_nav and iopv_nav.nav_value is not None:
         return iopv_nav
@@ -24,10 +111,36 @@ def select_benchmark(profile: FundProfile, official_nav: NavSnapshot | None, est
     return None
 
 
-def build_rhythm(*, profile: FundProfile, trade_date: date | None = None) -> tuple[date | None, date | None, date | None]:
-    base_date = trade_date or datetime.utcnow().date()
+def build_rhythm(
+    *,
+    profile: FundProfile,
+    trade_date: date | None = None,
+    trading_calendar_service: object | None = None,
+) -> tuple[date | None, date | None, date | None]:
+    """Calculate T+N rhythm dates.
+
+    If trading_calendar_service is provided, uses next_trade_date() for proper
+    trading-day calculation. Otherwise falls back to naive timedelta.
+    """
+    base_date = trade_date or datetime.now(timezone.utc).date()
     confirm_days = profile.default_subscribe_t_plus or 1
     arrival_days = profile.default_redeem_t_plus or 3
+
+    if trading_calendar_service is not None and hasattr(trading_calendar_service, "next_trade_date"):
+        try:
+            confirm_date = trading_calendar_service.next_trade_date(
+                market=profile.calendar_market, from_date=base_date, offset=confirm_days,
+            )
+            arrival_date = trading_calendar_service.next_trade_date(
+                market=profile.calendar_market, from_date=base_date, offset=arrival_days,
+            )
+            sell_date = trading_calendar_service.next_trade_date(
+                market=profile.calendar_market, from_date=arrival_date, offset=0,
+            )
+            return confirm_date, arrival_date, sell_date
+        except Exception:
+            pass  # Fall back to naive calculation
+
     confirm_date = base_date + timedelta(days=confirm_days)
     arrival_date = base_date + timedelta(days=arrival_days)
     sell_date = arrival_date
@@ -89,6 +202,8 @@ def calculate_opportunity(
     expected_sell_date: date | None = None,
     data_quality_status: str = "OK",
     quality_flags: list[str] | None = None,
+    z_score: float = 0.0,
+    z_score_level: str = "NORMAL",
 ) -> OpportunitySnapshotModel:
     benchmark = select_benchmark(profile, official_nav, estimate_nav, iopv_nav)
     benchmark_value = benchmark.nav_value if benchmark else None
@@ -102,15 +217,13 @@ def calculate_opportunity(
     if quote.last_price is not None and estimate_nav is not None and estimate_nav.nav_value is not None and estimate_nav.nav_value > 0:
         estimate_premium_rate = round((quote.last_price - estimate_nav.nav_value) / estimate_nav.nav_value * 100, 2)
 
-    fee_cost_rate = 0.02
-    if profile.is_lof:
-        fee_cost_rate += 0.15
-    if profile.is_qdii:
-        fee_cost_rate += 0.10
+    # Determine arbitrage type based on premium direction
+    arbitrage_type = "premium" if (gross_premium_rate is None or gross_premium_rate >= 0) else "discount"
 
-    slippage_cost_rate = 0.05
-    if quote.amount is not None and quote.amount < 5_000_000:
-        slippage_cost_rate += 0.20
+    # Use refined cost model
+    fee_cost_rate, slippage_cost_rate, total_cost = calculate_arbitrage_cost(
+        profile=profile, quote=quote, arbitrage_type=arbitrage_type,
+    )
 
     estimated_net_profit_rate = None
     if gross_premium_rate is not None:
@@ -171,12 +284,18 @@ def calculate_opportunity(
     if estimated_net_profit_rate is None:
         opportunity_level = "watch"
         displayable = False
+    elif z_score_level == "ANOMALY" and estimated_net_profit_rate >= 1.5 and quality_score >= 0.6 and displayable and risk_level != "HIGH":
+        # Z-score anomaly + high net profit = strong signal
+        opportunity_level = "strong"
     elif estimated_net_profit_rate >= 1.5 and quality_score >= 0.6 and displayable and risk_level != "HIGH":
         opportunity_level = "strong"
     elif estimated_net_profit_rate >= 0.5 and quality_score >= 0.5 and displayable:
         opportunity_level = "candidate"
     elif displayable:
         opportunity_level = "watch"
+
+    if z_score_level == "ANOMALY":
+        risk_tags.append("溢价率异常偏离")
 
     if data_quality_status == "WARN":
         risk_tags.append("数据质量需复核")
@@ -215,6 +334,9 @@ def calculate_opportunity(
         expected_confirm_date=expected_confirm_date,
         expected_arrival_date=expected_arrival_date,
         expected_sell_date=expected_sell_date,
-        calculated_at=datetime.utcnow(),
+        calculated_at=datetime.now(timezone.utc),
         algorithm_version=ALGORITHM_VERSION,
+        z_score=z_score,
+        z_score_level=z_score_level,
+        arbitrage_type=arbitrage_type,
     )

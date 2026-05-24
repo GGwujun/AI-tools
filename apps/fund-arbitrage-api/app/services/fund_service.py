@@ -1,77 +1,36 @@
-# -*- coding: utf-8 -*-
-"""
-基金数据服务
-"""
 from __future__ import annotations
 
 from datetime import datetime
-from functools import lru_cache
 import re
-from typing import List, Optional, Tuple
 
-import concurrent.futures
 import logging
 
 import akshare as ak
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 
 from app.config import NO_GAP_KEYWORDS
+from app.infrastructure.utils import safe_float as _safe_float, normalize_date_value as _normalize_date_value, format_limit
+from app.infrastructure.cache.ttl_cache import ttl_lru_cache
 
 logger = logging.getLogger(__name__)
 
-
-DATE_FORMAT_CANDIDATES = (
-    "%Y-%m-%d",
-    "%Y/%m/%d",
-    "%Y%m%d",
-    "%m-%d",
-    "%m/%d",
+# 共享 HTTP Session：连接池复用 + 自动重试
+_retry_strategy = Retry(
+    total=3,
+    backoff_factor=0.5,
+    status_forcelist=[429, 500, 502, 503, 504],
+    raise_on_status=False,
 )
+_http_session = requests.Session()
+_http_session.mount("https://", HTTPAdapter(max_retries=_retry_strategy, pool_maxsize=10))
+_http_session.mount("http://", HTTPAdapter(max_retries=_retry_strategy, pool_maxsize=10))
 
 
-def _normalize_date_value(value: object) -> Optional[str]:
-    if value is None:
-        return None
-    if hasattr(value, "strftime"):
-        try:
-            return value.strftime("%Y-%m-%d")
-        except Exception:
-            pass
-
-    text = str(value).strip()
-    if not text or text.lower() == "nan":
-        return None
-
-    for fmt in DATE_FORMAT_CANDIDATES:
-        try:
-            parsed = datetime.strptime(text, fmt)
-            if fmt in {"%m-%d", "%m/%d"}:
-                parsed = parsed.replace(year=datetime.now().year)
-            return parsed.strftime("%Y-%m-%d")
-        except ValueError:
-            continue
-
-    parsed = pd.to_datetime(text, errors="coerce", format="mixed")
-    if pd.isna(parsed):
-        return None
-    return parsed.strftime("%Y-%m-%d")
-
-
-def _safe_float(value: object) -> Optional[float]:
-    try:
-        if value is None or (isinstance(value, float) and pd.isna(value)):
-            return None
-        text = str(value).strip()
-        if not text or text.lower() == "nan":
-            return None
-        return float(text)
-    except (TypeError, ValueError):
-        return None
-
-
-def _first_float(row: pd.Series, *keys: str) -> Optional[float]:
+def _first_float(row: pd.Series, *keys: str) -> float | None:
     for key in keys:
         if key in row.index:
             value = _safe_float(row[key])
@@ -88,34 +47,34 @@ def _normalize_market_code(code_with_prefix: str) -> tuple[str, str]:
     return "", code_with_prefix
 
 
-@lru_cache(maxsize=1)
+@ttl_lru_cache(maxsize=1, ttl_seconds=120)
 def _estimated_nav_frame() -> pd.DataFrame:
     try:
         return ak.fund_value_estimation_em(symbol="全部")
     except Exception as e:
-        print(f"获取基金净值估算失败: {e}")
+        logger.warning(f"获取基金净值估算失败: {e}")
         return pd.DataFrame()
 
 
-@lru_cache(maxsize=1)
+@ttl_lru_cache(maxsize=1, ttl_seconds=120)
 def _etf_spot_frame() -> pd.DataFrame:
     try:
         return ak.fund_etf_spot_em()
     except Exception as e:
-        print(f"获取ETF实时估值失败: {e}")
+        logger.warning(f"获取ETF实时估值失败: {e}")
         return pd.DataFrame()
 
 
-@lru_cache(maxsize=1)
+@ttl_lru_cache(maxsize=1, ttl_seconds=300)
 def _fund_fee_frame() -> pd.DataFrame:
     try:
         return ak.fund_open_fund_rank_em(symbol="全部")
     except Exception as e:
-        print(f"获取基金费率信息失败: {e}")
+        logger.warning(f"获取基金费率信息失败: {e}")
         return pd.DataFrame()
 
 
-@lru_cache(maxsize=512)
+@ttl_lru_cache(maxsize=512, ttl_seconds=86400)
 def get_fund_page_profile(code: str) -> dict:
     result = {
         "fund_company": "",
@@ -123,7 +82,7 @@ def get_fund_page_profile(code: str) -> dict:
         "fee_text": "",
     }
     try:
-        response = requests.get(f"https://fund.eastmoney.com/{code}.html", timeout=10)
+        response = _http_session.get(f"https://fund.eastmoney.com/{code}.html", timeout=10)
         response.encoding = response.apparent_encoding
         if response.status_code != 200:
             return result
@@ -188,7 +147,7 @@ def get_etf_fund_list_with_price() -> pd.DataFrame:
             )
         return pd.DataFrame(result)
     except Exception as e:
-        print(f"获取ETF基金列表失败: {e}")
+        logger.warning(f"获取ETF基金列表失败: {e}")
         return pd.DataFrame(columns=["market", "code", "name", "market_price", "market_change_pct", "is_no_gap"])
 
 
@@ -211,13 +170,24 @@ def get_lof_fund_list_with_price() -> pd.DataFrame:
             )
         return pd.DataFrame(result)
     except Exception as e:
-        print(f"获取LOF基金列表失败: {e}")
+        logger.warning(f"获取LOF基金列表失败: {e}")
         return pd.DataFrame(columns=["market", "code", "name", "market_price", "market_change_pct"])
 
 
-# ── 批量行情接口（东方财富 push2delay）──
+# ── 批量行情接口（东方财富多节点回退）──
 
-_EASTMONEY_PUSH_URL = "https://push2delay.eastmoney.com/api/qt/clist/get"
+_EASTMONEY_PUSH_NODES = [
+    "https://push2delay.eastmoney.com/api/qt/clist/get",
+    "https://push2.eastmoney.com/api/qt/clist/get",
+    "https://82.push2.eastmoney.com/api/qt/clist/get",
+    "https://11.push2.eastmoney.com/api/qt/clist/get",
+]
+
+_USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+]
 _EASTMONEY_PUSH_FIELDS = "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f23,f24,f25,f22,f11,f62,f128,f136,f115,f152"
 _EASTMONEY_COLUMN_MAP = {
     "f12": "code", "f14": "name", "f2": "market_price",
@@ -239,85 +209,92 @@ _ETF_FS = "b:MK0021,b:MK0022,b:MK0023,b:MK0025"
 
 
 def _fetch_eastmoney_bulk(fs: str, fallback_fn) -> pd.DataFrame:
-    """从东方财富 push2delay API 批量获取基金行情，失败时回退到旧接口。"""
-    try:
-        base_params = {
-            "pn": "1", "pz": "200", "po": "1", "np": "1",
-            "ut": "bd1d9ddb04089700cf9c27f6f7426281",
-            "fltt": "2", "invt": "2",
-            "wbp2u": "|0|0|0|web",
-            "fid": "f3",
-            "fs": fs,
-            "fields": _EASTMONEY_PUSH_FIELDS,
-        }
+    """从东方财富 push2 API 批量获取基金行情，多节点回退，最终回退到旧接口。"""
+    import random
 
-        # 第一页
-        r = requests.get(_EASTMONEY_PUSH_URL, params=base_params, timeout=30)
-        r.raise_for_status()
-        data_json = r.json()
-        if not data_json.get("data") or not data_json["data"].get("diff"):
-            logger.warning("东方财富批量接口返回空数据，回退到旧接口")
-            return fallback_fn()
+    base_params = {
+        "pn": "1", "pz": "200", "po": "1", "np": "1",
+        "ut": "bd1d9ddb04089700cf9c27f6f7426281",
+        "fltt": "2", "invt": "2",
+        "wbp2u": "|0|0|0|web",
+        "fid": "f3",
+        "fs": fs,
+        "fields": _EASTMONEY_PUSH_FIELDS,
+    }
+    headers = {"User-Agent": random.choice(_USER_AGENTS)}
 
-        per_page = len(data_json["data"]["diff"])
-        total = data_json["data"]["total"]
-        total_page = (total + per_page - 1) // per_page
-
-        pages = [pd.DataFrame(data_json["data"]["diff"])]
-
-        # 剩余页
-        for page in range(2, total_page + 1):
-            params = base_params.copy()
-            params["pn"] = str(page)
-            r = requests.get(_EASTMONEY_PUSH_URL, params=params, timeout=30)
+    for url in _EASTMONEY_PUSH_NODES:
+        try:
+            # 第一页
+            r = _http_session.get(url, params=base_params, headers=headers, timeout=15)
             r.raise_for_status()
-            page_json = r.json()
-            if page_json.get("data") and page_json["data"].get("diff"):
-                pages.append(pd.DataFrame(page_json["data"]["diff"]))
+            data_json = r.json()
+            if not data_json.get("data") or not data_json["data"].get("diff"):
+                continue  # try next node
 
-        df = pd.concat(pages, ignore_index=True)
-        df.rename(columns=_EASTMONEY_COLUMN_MAP, inplace=True)
+            per_page = len(data_json["data"]["diff"])
+            total = data_json["data"]["total"]
+            total_page = (total + per_page - 1) // per_page
 
-        # 市场 prefix
-        if "f13" in df.columns:
-            df["market"] = df["f13"].map(_MARKET_CODE_MAP).fillna("")
+            pages = [pd.DataFrame(data_json["data"]["diff"])]
 
-        # 数值转换
-        for col in _EASTMONEY_NUMERIC_COLS:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors="coerce")
+            # 剩余页
+            for page in range(2, total_page + 1):
+                params = base_params.copy()
+                params["pn"] = str(page)
+                r = _http_session.get(url, params=params, headers=headers, timeout=15)
+                r.raise_for_status()
+                page_json = r.json()
+                if page_json.get("data") and page_json["data"].get("diff"):
+                    pages.append(pd.DataFrame(page_json["data"]["diff"]))
 
-        # ETF 无时差标记
-        if fs == _ETF_FS and "name" in df.columns:
-            df["is_no_gap"] = df["name"].apply(
-                lambda n: any(keyword in str(n) for keyword in NO_GAP_KEYWORDS)
-            )
-        else:
-            df["is_no_gap"] = False
+            df = pd.concat(pages, ignore_index=True)
+            df.rename(columns=_EASTMONEY_COLUMN_MAP, inplace=True)
 
-        # 保留需要的列
-        keep_cols = [
-            "market", "code", "name", "market_price", "market_change_pct",
-            "volume", "amount", "open_price", "high_price", "low_price",
-            "prev_close", "total_market_cap",
-        ]
-        if fs == _ETF_FS:
-            keep_cols.append("is_no_gap")
-        existing = [c for c in keep_cols if c in df.columns]
-        return df[existing]
+            # 市场 prefix
+            if "f13" in df.columns:
+                df["market"] = df["f13"].map(_MARKET_CODE_MAP).fillna("")
 
-    except Exception as e:
-        logger.warning(f"东方财富批量接口失败(fs={fs}): {e}, 回退到旧接口")
-        return fallback_fn()
+            # 数值转换
+            for col in _EASTMONEY_NUMERIC_COLS:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+
+            # ETF 无时差标记
+            if fs == _ETF_FS and "name" in df.columns:
+                df["is_no_gap"] = df["name"].apply(
+                    lambda n: any(keyword in str(n) for keyword in NO_GAP_KEYWORDS)
+                )
+            else:
+                df["is_no_gap"] = False
+
+            # 保留需要的列
+            keep_cols = [
+                "market", "code", "name", "market_price", "market_change_pct",
+                "volume", "amount", "open_price", "high_price", "low_price",
+                "prev_close", "total_market_cap",
+            ]
+            if fs == _ETF_FS:
+                keep_cols.append("is_no_gap")
+            existing = [c for c in keep_cols if c in df.columns]
+            logger.info(f"东方财富批量接口成功(url={url}), 获取{len(df)}条数据")
+            return df[existing]
+
+        except Exception as e:
+            logger.warning(f"东方财富节点失败(url={url}): {e}")
+            continue
+
+    logger.warning("所有东方财富节点均失败，回退到旧接口")
+    return fallback_fn()
 
 
-@lru_cache(maxsize=1)
+@ttl_lru_cache(maxsize=1, ttl_seconds=60)
 def get_lof_fund_list_bulk() -> pd.DataFrame:
     """批量获取 LOF 实时行情（东方财富 push2delay），失败回退到 Sina。"""
     return _fetch_eastmoney_bulk(_LOF_FS, get_lof_fund_list_with_price)
 
 
-@lru_cache(maxsize=1)
+@ttl_lru_cache(maxsize=1, ttl_seconds=60)
 def get_etf_fund_list_bulk() -> pd.DataFrame:
     """批量获取 ETF 实时行情（东方财富 push2delay），失败回退到 Sina。"""
     return _fetch_eastmoney_bulk(_ETF_FS, get_etf_fund_list_with_price)
@@ -325,22 +302,7 @@ def get_etf_fund_list_bulk() -> pd.DataFrame:
 
 # ── 申购限额批量接口 ──
 
-def format_limit(value) -> str:
-    """格式化日申购限额金额为显示字符串。"""
-    if value is None:
-        return "--"
-    if isinstance(value, float) and pd.isna(value):
-        return "--"
-    if value == 0:
-        return "--"
-    if value >= 1e8:
-        return "不限"
-    if value < 10000:
-        return f"{value:.0f}元/日"
-    return f"{value / 10000:.0f}万/日"
-
-
-@lru_cache(maxsize=1)
+@ttl_lru_cache(maxsize=1, ttl_seconds=300)
 def get_purchase_limit_data() -> pd.DataFrame:
     """批量获取基金净值 + 申购限额 + 申购状态（ak.fund_purchase_em）。"""
     try:
@@ -361,7 +323,7 @@ def get_purchase_limit_data() -> pd.DataFrame:
         return pd.DataFrame(columns=["code", "nav_from_purchase", "purchase_limit_amount", "purchase_status"])
 
 
-def get_etf_nav_price(code: str) -> Tuple[Optional[float], Optional[str]]:
+def get_etf_nav_price(code: str) -> tuple[float | None, str | None]:
     try:
         today = datetime.now().strftime("%Y%m%d")
         start = datetime.now().replace(month=1, day=1).strftime("%Y%m%d")
@@ -376,7 +338,7 @@ def get_etf_nav_price(code: str) -> Tuple[Optional[float], Optional[str]]:
         return None, None
 
 
-def get_lof_nav_price(code: str) -> Tuple[Optional[float], Optional[str]]:
+def get_lof_nav_price(code: str) -> tuple[float | None, str | None]:
     try:
         today = datetime.now().strftime("%Y%m%d")
         start = datetime.now().replace(month=1, day=1).strftime("%Y%m%d")
@@ -392,12 +354,12 @@ def get_lof_nav_price(code: str) -> Tuple[Optional[float], Optional[str]]:
         return None, None
 
 
-def parse_fund_state(code: str) -> Tuple[str, str]:
+def parse_fund_state(code: str) -> tuple[str, str]:
     url = f"https://fund.eastmoney.com/{code}.html"
     fund_state = ""
     fund_type = ""
     try:
-        response = requests.get(url, timeout=10)
+        response = _http_session.get(url, timeout=10)
         response.encoding = response.apparent_encoding
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "html.parser")
@@ -418,7 +380,7 @@ def parse_fund_state(code: str) -> Tuple[str, str]:
     return fund_state, fund_type
 
 
-def get_estimated_nav_info(code: str) -> Tuple[Optional[float], Optional[str], Optional[float], str]:
+def get_estimated_nav_info(code: str) -> tuple[float | None, str | None, float | None, str]:
     df = _estimated_nav_frame()
     if df is None or df.empty:
         return None, None, None, "unavailable"
@@ -444,7 +406,7 @@ def get_estimated_nav_info(code: str) -> Tuple[Optional[float], Optional[str], O
     return nav_value, nav_time, nav_change, "eastmoney_estimate"
 
 
-def get_etf_iopv_info(code: str) -> Tuple[Optional[float], Optional[str], Optional[float], str]:
+def get_etf_iopv_info(code: str) -> tuple[float | None, str | None, float | None, str]:
     df = _etf_spot_frame()
     if df is None or df.empty:
         return None, None, None, "unavailable"
@@ -505,113 +467,101 @@ def get_fund_fee_info(code: str) -> dict:
     }
 
 
-def get_all_etf_data() -> List[dict]:
-    fund_df = get_etf_fund_list_with_price()
-    if fund_df.empty:
-        return []
-
-    result = []
-    market_time = datetime.now().strftime("%H:%M:%S")
-    for _, row in fund_df.iterrows():
-        code = row["code"]
-        market_price = row["market_price"]
-        market_change_pct = row.get("market_change_pct")
-        is_no_gap = bool(row["is_no_gap"])
-        nav_price, nav_date = get_etf_nav_price(code)
-        fund_state, fund_type = parse_fund_state(code)
-        if not fund_type:
-            fund_type = "ETF(无时差)" if is_no_gap else "ETF"
-        premium_rate = None
-        if market_price and nav_price and nav_price > 0:
-            premium_rate = round((market_price - nav_price) / nav_price * 100, 2)
-        result.append(
-            {
-                "code": code,
-                "name": row["name"],
-                "market": row["market"],
-                "market_price": market_price,
-                "market_change_pct": market_change_pct,
-                "market_time": market_time,
-                "nav_price": nav_price,
-                "nav_date": nav_date,
-                "fund_state": fund_state,
-                "fund_type": fund_type,
-                "is_no_gap": is_no_gap,
-                "premium_rate": premium_rate,
-            }
-        )
-    return result
-
-
-def get_all_lof_data() -> List[dict]:
-    fund_df = get_lof_fund_list_with_price()
-    if fund_df.empty:
-        return []
-
-    result = []
-    market_time = datetime.now().strftime("%H:%M:%S")
-    for _, row in fund_df.iterrows():
-        code = row["code"]
-        market_price = row["market_price"]
-        market_change_pct = row.get("market_change_pct")
-        nav_price, nav_date = get_lof_nav_price(code)
-        fund_state, fund_type = parse_fund_state(code)
-        premium_rate = None
-        if market_price and nav_price and nav_price > 0:
-            premium_rate = round((market_price - nav_price) / nav_price * 100, 2)
-        result.append(
-            {
-                "code": code,
-                "name": row["name"],
-                "market": row["market"],
-                "market_price": market_price,
-                "market_change_pct": market_change_pct,
-                "market_time": market_time,
-                "nav_price": nav_price,
-                "nav_date": nav_date,
-                "fund_state": fund_state,
-                "fund_type": fund_type,
-                "is_no_gap": False,
-                "premium_rate": premium_rate,
-            }
-        )
-    return result
-
-
-def get_fund_realtime_data(code: str, fund_type: str) -> Optional[dict]:
+def _fetch_price_from_eastmoney(code: str) -> float | None:
+    """Fetch single fund price from Eastmoney push2 API."""
+    prefix = "1." if code.startswith(("5", "6")) else "0."
+    secid = f"{prefix}{code}"
+    url = "https://push2.eastmoney.com/api/qt/stock/get"
+    params = {
+        "ut": "fa5fd1943c7b386f172d6893dbfba10b",
+        "fltt": "2", "invt": "2",
+        "fields": "f43,f170,f46,f44",
+        "secid": secid,
+    }
     try:
-        current_price = None
-        current_change_pct = None
-        if fund_type == "ETF":
-            etf_df = ak.fund_etf_category_sina(symbol="ETF基金")
-            fund_row = etf_df[etf_df["代码"].astype(str).str.contains(code)]
-            if not fund_row.empty:
-                current_price = _safe_float(fund_row.iloc[0]["最新价"])
-                current_change_pct = _first_float(fund_row.iloc[0], "涨跌幅", "涨跌")
-        else:
-            lof_df = ak.fund_etf_category_sina(symbol="LOF基金")
-            fund_row = lof_df[lof_df["代码"].astype(str).str.contains(code)]
-            if not fund_row.empty:
-                current_price = _safe_float(fund_row.iloc[0]["最新价"])
-                current_change_pct = _first_float(fund_row.iloc[0], "涨跌幅", "涨跌")
-
-        if fund_type == "ETF":
-            nav_price, nav_date = get_etf_nav_price(code)
-        else:
-            nav_price, nav_date = get_lof_nav_price(code)
-
-        premium_rate = None
-        if current_price and nav_price and nav_price > 0:
-            premium_rate = round((current_price - nav_price) / nav_price * 100, 2)
-
-        return {
-            "code": code,
-            "market_price": current_price,
-            "market_change_pct": current_change_pct,
-            "nav_price": nav_price,
-            "nav_date": nav_date,
-            "premium_rate": premium_rate,
-        }
+        r = _http_session.get(url, params=params, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        if data.get("data") and data["data"].get("f43") != "-":
+            return _safe_float(data["data"]["f43"])
     except Exception as e:
-        print(f"获取实时数据失败: {e}")
-        return None
+        logger.warning(f"东方财富单基金价格获取失败({code}): {e}")
+    return None
+
+
+def _fetch_price_from_sina(code: str) -> float | None:
+    """Fetch fund price from Sina Finance API."""
+    # Sina uses sz/sh prefix
+    prefix = "sz" if code.startswith(("1", "3", "5")) else "sh"
+    url = f"http://hq.sinajs.cn/list={prefix}{code}"
+    try:
+        r = _http_session.get(url, timeout=10,
+                         headers={"Referer": "http://finance.sina.com.cn"})
+        r.encoding = "gbk"
+        if r.text and '=' in r.text:
+            fields = r.text.split('"')[1].split(",")
+            if len(fields) > 3:
+                return _safe_float(fields[3])  # current price
+    except Exception as e:
+        logger.warning(f"新浪价格获取失败({code}): {e}")
+    return None
+
+
+def _fetch_price_from_tencent(code: str) -> float | None:
+    """Fetch fund price from Tencent Finance API."""
+    prefix = "sz" if code.startswith(("1", "3", "5")) else "sh"
+    url = f"http://qt.gtimg.cn/q={prefix}{code}"
+    try:
+        r = _http_session.get(url, timeout=10)
+        if r.text and '~' in r.text:
+            fields = r.text.split('~')
+            if len(fields) > 3:
+                return _safe_float(fields[3])  # current price
+    except Exception as e:
+        logger.warning(f"腾讯价格获取失败({code}): {e}")
+    return None
+
+
+def get_fund_realtime_data(code: str, fund_type: str) -> dict | None:
+    """获取基金实时数据，三源回退：东方财富→新浪→腾讯"""
+    current_price = None
+    current_change_pct = None
+
+    # 尝试三源回退获取价格
+    for fetch_fn in (_fetch_price_from_eastmoney, _fetch_price_from_sina, _fetch_price_from_tencent):
+        price = fetch_fn(code)
+        if price is not None and price > 0:
+            current_price = price
+            break
+
+    if current_price is None:
+        # 最终回退到 AkShare 全量数据（较慢）
+        try:
+            if fund_type == "ETF":
+                df = ak.fund_etf_category_sina(symbol="ETF基金")
+            else:
+                df = ak.fund_etf_category_sina(symbol="LOF基金")
+            row = df[df["代码"].astype(str).str.contains(code)]
+            if not row.empty:
+                current_price = _safe_float(row.iloc[0]["最新价"])
+                current_change_pct = _first_float(row.iloc[0], "涨跌幅", "涨跌")
+        except Exception as e:
+            logger.warning(f"AkShare价格获取失败({code}): {e}")
+
+    if fund_type == "ETF":
+        nav_price, nav_date = get_etf_nav_price(code)
+    else:
+        nav_price, nav_date = get_lof_nav_price(code)
+
+    premium_rate = None
+    if current_price and nav_price and nav_price > 0:
+        premium_rate = round((current_price - nav_price) / nav_price * 100, 2)
+
+    return {
+        "code": code,
+        "market_price": current_price,
+        "market_change_pct": current_change_pct,
+        "nav_price": nav_price,
+        "nav_date": nav_date,
+        "premium_rate": premium_rate,
+    }

@@ -28,6 +28,7 @@ class SaveFundItem(BaseModel):
     market_price_display: str = "--"
     market_change_pct: float | None = None
     market_change_display: str = "--"
+    amount_display: str = "--"
     nav_price: float | None = None
     nav_price_display: str = "--"
     premium_rate: float | None = None

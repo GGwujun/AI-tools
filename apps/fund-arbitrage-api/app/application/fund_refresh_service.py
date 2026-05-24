@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 
 from app.application.cache_invalidation_service import invalidate_all_for_fund
-from app.db_models import FundArbitrageStat, FundSnapshot
+from app.db_models import FundArbitrageStat, FundDailySnapshot, FundSnapshot
 from app.domain.models import FundProfile, FundStatusSnapshot, MarketQuote, NavSnapshot
-from app.domain.services import calculate_opportunity
+from app.domain.services import calculate_opportunity, calculate_z_score
 from app.application.data_quality_service import assess_valuation_quality
 from app.application.fund_refresh_helpers import (
     build_detail_payload,
@@ -22,6 +22,7 @@ from app.application.crowding_score_service import sync_crowding_score
 from app.application.condition_reference_service import build_and_store_condition_reference
 from app.application.opportunity_score_service import sync_opportunity_score
 from app.infrastructure.providers import fund_provider
+from app.infrastructure.utils import sanitize_json_value
 from app.application.trading_calendar_service import trading_calendar_service
 from app.application.valuation_service import merge_valuation_sources
 from app.services import arbitrage_service, fund_service
@@ -192,7 +193,7 @@ def refresh_snapshot_detail(session, snapshot: FundSnapshot, market_record: dict
     snapshot.max_down_days = max(snapshot.max_down_days, negative_days)
     snapshot.scale, snapshot.turnover = arbitrage_service.get_fund_scale_turnover(snapshot.code)
 
-    trade_date = datetime.utcnow().date()
+    trade_date = datetime.now(timezone.utc).date()
     expected_confirm_date = trading_calendar_service.next_trade_date(
         market=profile.calendar_market,
         from_date=trade_date,
@@ -209,6 +210,27 @@ def refresh_snapshot_detail(session, snapshot: FundSnapshot, market_record: dict
         offset=0,
     )
 
+    # Compute Z-score from historical daily premium rates
+    z_score, z_score_level = 0.0, "NORMAL"
+    try:
+        daily_rows = session.execute(
+            select(FundDailySnapshot.close_premium_rate)
+            .where(
+                FundDailySnapshot.fund_code == snapshot.code,
+                FundDailySnapshot.close_premium_rate.isnot(None),
+            )
+            .order_by(FundDailySnapshot.trade_date.desc())
+            .limit(60)
+        ).scalars().all()
+        current_premium = snapshot.premium_rate
+        if len(daily_rows) >= 30 and current_premium is not None:
+            z_score, z_score_level = calculate_z_score(
+                current_premium,
+                [r for r in daily_rows if r is not None],
+            )
+    except Exception:
+        pass  # Z-score is optional enhancement, don't break the main flow
+
     opportunity = calculate_opportunity(
         profile=profile,
         quote=quote,
@@ -221,6 +243,8 @@ def refresh_snapshot_detail(session, snapshot: FundSnapshot, market_record: dict
         expected_sell_date=expected_sell_date,
         data_quality_status=valuation_quality_status,
         quality_flags=quality_flags,
+        z_score=z_score,
+        z_score_level=z_score_level,
     )
 
     stat_record = _get_arbitrage_stats(session, code=snapshot.code)
@@ -236,7 +260,7 @@ def refresh_snapshot_detail(session, snapshot: FundSnapshot, market_record: dict
         purchase_limit_amount=snapshot.purchase_limit_amount,
     )
 
-    snapshot.detail_payload = build_detail_payload(
+    snapshot.detail_payload = sanitize_json_value(build_detail_payload(
         quote_result=quote_result,
         quote=quote,
         opportunity=opportunity,
@@ -248,9 +272,9 @@ def refresh_snapshot_detail(session, snapshot: FundSnapshot, market_record: dict
         iopv_result=iopv_result,
         fee_result=fee_result,
         profile=profile,
-    )
-    snapshot.detail_updated_at = datetime.utcnow()
-    snapshot.updated_at = datetime.utcnow()
+    ))
+    snapshot.detail_updated_at = datetime.now(timezone.utc)
+    snapshot.updated_at = datetime.now(timezone.utc)
 
     sync_nav_history(session, fund_id=snapshot.id, history_rows=history_rows)
     sync_profile_record(session, code=snapshot.code, market_type=snapshot.market_type, profile=profile)

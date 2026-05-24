@@ -15,14 +15,24 @@ const response = ref<SaveWatchlistResponse | null>(null)
 
 const segmentTabs = [
   { key: 'all', label: '全部' },
-  { key: 'fund', label: '基金' },
-  { key: 'bond', label: '转债' },
+  { key: 'fund', label: '基金套利' },
+  { key: 'bond', label: '可转债' },
 ] as const
 
 const visibleItems = computed(() => {
   const items = response.value?.items ?? []
   if (lofStore.watchlistSegment === 'all') return items
   return items.filter((item) => item.type === lofStore.watchlistSegment)
+})
+
+const summaryItems = computed(() => {
+  const summary = response.value?.summary
+  return [
+    { label: '基金自选', value: String(summary?.funds ?? 0) },
+    { label: '转债自选', value: String(summary?.bonds ?? 0) },
+    { label: '今日异动', value: String(summary?.changed ?? 0) },
+    { label: '待处理提醒', value: String(summary?.pending ?? 0) },
+  ]
 })
 
 async function loadWatchlist() {
@@ -53,25 +63,38 @@ onMounted(() => {
 <template>
   <div class="page">
     <header class="topbar">
-      <h1>自选</h1>
-      <div></div>
+      <div>
+        <h1>我的自选</h1>
+        <p>统一查看你关注的基金与转债</p>
+      </div>
+      <button class="ghost-btn" @click="router.push('/')">去看今日机会</button>
     </header>
 
     <nav class="segment-tabs">
       <button
         v-for="item in segmentTabs"
         :key="item.key"
-        :class="{ active: lofStore.watchlistSegment === item.key }"
+        :class="['segment-btn', { active: lofStore.watchlistSegment === item.key }]"
         @click="lofStore.watchlistSegment = item.key"
       >
         {{ item.label }}
       </button>
     </nav>
 
+    <section class="summary-card">
+      <article v-for="item in summaryItems" :key="item.label" class="summary-item">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+      </article>
+    </section>
+
     <section v-if="error" class="state-card">{{ error }}</section>
     <section v-else-if="loading" class="state-card">正在加载自选数据...</section>
+    <section v-else-if="visibleItems.length === 0" class="state-card">
+      你还没有添加自选。先把关注的基金或转债加入自选，后续更方便接收提醒。
+    </section>
 
-    <section v-else class="list">
+    <section v-else class="card-list">
       <article
         v-for="item in visibleItems"
         :key="item.code"
@@ -79,19 +102,17 @@ onMounted(() => {
         @click="openDetail(item)"
       >
         <div class="card-head">
-          <div class="name-block">
-            <strong>{{ item.name }}</strong>
-            <p>{{ item.code }}</p>
+          <div>
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.code }} · {{ item.type === 'fund' ? '基金套利' : '可转债' }}</p>
           </div>
-          <button class="star" :class="{ active: item.starred }" @click.stop="lofStore.toggleFavorite(item.code)"></button>
+          <span class="badge">{{ item.badge }}</span>
         </div>
-
-        <div class="card-main">
-          <div class="left">
-            <div class="primary" :class="{ red: item.type === 'fund', green: item.type === 'bond' }">{{ item.change }}</div>
-            <div class="secondary">{{ item.subtitle }}</div>
+        <div class="card-body">
+          <div>
+            <strong :class="item.type === 'fund' ? 'text-danger' : 'text-success'">{{ item.change }}</strong>
+            <p>{{ item.subtitle }}</p>
           </div>
-
           <svg class="chart" viewBox="0 0 80 28" preserveAspectRatio="none">
             <polyline
               :stroke="item.chart_color"
@@ -103,10 +124,9 @@ onMounted(() => {
             />
           </svg>
         </div>
-
         <div class="card-foot">
-          <span class="badge">{{ item.badge }}</span>
-          <span class="time">{{ item.time }}</span>
+          <span>{{ item.time }}</span>
+          <span class="detail-link">查看详情</span>
         </div>
       </article>
     </section>
@@ -118,173 +138,170 @@ onMounted(() => {
   min-height: 100vh;
   max-width: 430px;
   margin: 0 auto;
-  padding: calc(16px + env(safe-area-inset-top)) 16px 12px;
+  padding: calc(14px + env(safe-area-inset-top)) 16px calc(92px + env(safe-area-inset-bottom));
   background:
-    radial-gradient(circle at top, rgba(227, 246, 248, 0.88) 0, rgba(255, 255, 255, 0) 34%),
-    linear-gradient(180deg, #fbfdfd 0%, #f4f8fb 100%);
+    radial-gradient(circle at top, rgba(74, 144, 226, 0.14), transparent 32%),
+    #1a1e2b;
 }
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.topbar h1 {
-  color: #162839;
-  font-size: 24px;
-  line-height: 32px;
-  font-weight: 800;
-}
-
-.segment-tabs {
-  display: flex;
-  gap: 20px;
-  margin-top: 14px;
-  padding: 0 2px 10px;
-  border-bottom: 1px solid #edf2f6;
-}
-
-.segment-tabs button {
-  position: relative;
-  border: 0;
-  background: none;
-  color: #718290;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.segment-tabs button.active {
-  color: #149c8a;
-}
-
-.segment-tabs button.active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -11px;
-  height: 3px;
-  border-radius: 999px;
-  background: #149c8a;
-}
-
-.state-card {
-  margin-top: 14px;
-  padding: 20px;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 10px 28px rgba(27, 53, 74, 0.08);
-  text-align: center;
-  color: #6d7f8e;
-  font-size: 13px;
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.watch-card {
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 10px 28px rgba(27, 53, 74, 0.08);
-  cursor: pointer;
-}
-
+.topbar,
 .card-head,
-.card-main,
+.card-body,
 .card-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.name-block strong {
-  color: #1c3042;
-  font-size: 15px;
-  line-height: 22px;
-  font-weight: 700;
-}
-
-.name-block p {
-  margin-top: 4px;
-  color: #81909d;
-  font-size: 12px;
-  line-height: 16px;
-}
-
-.star {
-  width: 20px;
-  height: 20px;
-  border: 1px solid #d3dde5;
-  background: #fff;
-  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 92%, 50% 72%, 21% 92%, 32% 57%, 2% 35%, 39% 35%);
-}
-
-.star.active {
-  background: #f6d76d;
-  border-color: #f6d76d;
-}
-
-.card-main {
-  margin-top: 12px;
   gap: 12px;
 }
-
-.left {
-  min-width: 0;
+.topbar {
+  align-items: flex-start;
 }
-
-.primary {
+.topbar h1 {
+  color: var(--lof-text);
   font-size: 24px;
-  line-height: 28px;
-  font-weight: 800;
+  line-height: 32px;
+  font-weight: 700;
 }
-
-.primary.red {
-  color: #ff5a5f;
-}
-
-.primary.green {
-  color: #20a066;
-}
-
-.secondary {
-  margin-top: 4px;
-  color: #80909d;
+.topbar p,
+.card-head p,
+.card-body p,
+.card-foot span {
+  color: var(--lof-muted);
   font-size: 12px;
+  line-height: 18px;
+}
+.ghost-btn {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(74, 144, 226, 0.16);
+  color: var(--lof-link);
+  font-size: 12px;
+  font-weight: 700;
+}
+.segment-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.segment-btn {
+  min-height: 40px;
+  border: 1px solid rgba(234, 236, 240, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--lof-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.segment-btn.active {
+  border-color: rgba(74, 144, 226, 0.28);
+  background: rgba(74, 144, 226, 0.18);
+  color: var(--lof-text);
+}
+.summary-card,
+.watch-card,
+.state-card {
+  margin-top: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(234, 236, 240, 0.08);
+  background: rgba(36, 43, 61, 0.94);
+  box-shadow: var(--lof-shadow);
+}
+.summary-card {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+.summary-item {
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: center;
+}
+.summary-item span {
+  display: block;
+  color: var(--lof-muted);
+  font-size: 11px;
   line-height: 16px;
 }
-
+.summary-item strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--lof-link);
+  font-size: 22px;
+  line-height: 26px;
+  font-weight: 700;
+}
+.state-card {
+  padding: 20px;
+  text-align: center;
+  color: var(--lof-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.watch-card {
+  padding: 14px;
+}
+.watch-card h3 {
+  color: var(--lof-text);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(74, 144, 226, 0.16);
+  color: var(--lof-link);
+  font-size: 11px;
+  font-weight: 700;
+}
+.card-body {
+  margin-top: 12px;
+}
+.card-body strong {
+  display: block;
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 700;
+}
 .chart {
   width: 104px;
   height: 36px;
   flex: 0 0 auto;
 }
-
-.card-foot {
-  margin-top: 12px;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #eef8f5;
-  color: #149c8a;
-  font-size: 11px;
-  line-height: 16px;
+.detail-link {
+  color: var(--lof-link) !important;
   font-weight: 700;
 }
-
-.time {
-  color: #8ea0ad;
-  font-size: 11px;
-  line-height: 16px;
+.text-danger {
+  color: var(--lof-danger);
+}
+.text-success {
+  color: var(--lof-success);
+}
+@media (max-width: 380px) {
+  .summary-card,
+  .segment-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .topbar,
+  .card-head,
+  .card-body,
+  .card-foot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

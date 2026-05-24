@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const currentTab = ref(0)
 
-const tabs = ['股票型LOF', '指数型LOF', '机会多多', '无时差ETF', '我的自选']
+const tabs = ['股债型LOF', '指数型LOF', '机会多多', '无时差ETF', '我的自选']
 
 const tabDescs = [
   '主要投资主动型股票的LOF基金，适合长期持有并关注溢价机会',

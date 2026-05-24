@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import asyncio
 import re
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Header, HTTPException
 from sqlalchemy import delete, select, update
 
-from app.config import AUTH_CODE_EXPIRE_MINUTES, AUTH_SESSION_EXPIRE_DAYS
-from app.database import SessionLocal
+from app.config import AUTH_CODE_EXPIRE_MINUTES, AUTH_DEV_MODE, AUTH_SESSION_EXPIRE_DAYS
+from app.infrastructure.db.session import session_scope
 from app.db_models import AuthSession, AuthUser, AuthVerificationCode
 from app.models.auth import (
     AuthUserProfile,
@@ -59,10 +60,25 @@ def _get_bearer_token(authorization: str | None) -> str:
 @router.post("/send-code", response_model=SendCodeResponse)
 async def send_code(payload: SendCodeRequest):
     mobile = _validate_mobile(payload.mobile)
-    code = "123456"
-    expires_at = datetime.utcnow() + timedelta(minutes=AUTH_CODE_EXPIRE_MINUTES)
+    if AUTH_DEV_MODE:
+        code = "123456"
+    else:
+        code = secrets.token_hex(3).upper()[:6]  # 6-digit random code
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=AUTH_CODE_EXPIRE_MINUTES)
 
-    with SessionLocal() as session:
+    await asyncio.to_thread(_send_code_db, mobile, code, expires_at)
+
+    return SendCodeResponse(
+        success=True,
+        message="验证码已发送" + ("，开发环境请使用 123456" if AUTH_DEV_MODE else ""),
+        expires_in_seconds=AUTH_CODE_EXPIRE_MINUTES * 60,
+        debug_code=code,
+    )
+
+
+def _send_code_db(mobile: str, code: str, expires_at: datetime) -> None:
+    """同步写入验证码到数据库（在子线程中执行）。"""
+    with session_scope() as session:
         session.execute(
             update(AuthVerificationCode)
             .where(AuthVerificationCode.mobile == mobile, AuthVerificationCode.consumed.is_(False))
@@ -76,23 +92,23 @@ async def send_code(payload: SendCodeRequest):
                 expires_at=expires_at,
             )
         )
-        session.commit()
-
-    return SendCodeResponse(
-        success=True,
-        message="验证码已发送，开发环境请使用 123456",
-        expires_in_seconds=AUTH_CODE_EXPIRE_MINUTES * 60,
-        debug_code=code,
-    )
 
 
 @router.post("/login", response_model=LoginResponse)
 async def login(payload: LoginRequest):
     mobile = _validate_mobile(payload.mobile)
     code = payload.code.strip()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
-    with SessionLocal() as session:
+    result = await asyncio.to_thread(_login_db, mobile, code, now)
+    if result is None:
+        raise HTTPException(status_code=400, detail="invalid_code")
+    return result
+
+
+def _login_db(mobile: str, code: str, now: datetime) -> LoginResponse | None:
+    """同步登录逻辑（在子线程中执行）。返回 None 表示验证码无效。"""
+    with session_scope() as session:
         code_record = session.execute(
             select(AuthVerificationCode)
             .where(
@@ -104,7 +120,7 @@ async def login(payload: LoginRequest):
             .order_by(AuthVerificationCode.id.desc())
         ).scalar_one_or_none()
         if code_record is None:
-            raise HTTPException(status_code=400, detail="invalid_code")
+            return None
 
         code_record.consumed = True
 
@@ -127,8 +143,7 @@ async def login(payload: LoginRequest):
                 expires_at=now + timedelta(days=AUTH_SESSION_EXPIRE_DAYS),
             )
         )
-        session.commit()
-        session.refresh(user)
+        session.flush()
 
         return LoginResponse(success=True, token=token, user=_build_user_profile(user))
 
@@ -136,18 +151,26 @@ async def login(payload: LoginRequest):
 @router.get("/me", response_model=MeResponse)
 async def me(authorization: str | None = Header(default=None)):
     token = _get_bearer_token(authorization)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
-    with SessionLocal() as session:
+    result = await asyncio.to_thread(_me_db, token, now)
+    if result is None:
+        raise HTTPException(status_code=401, detail="session_expired")
+    return result
+
+
+def _me_db(token: str, now: datetime) -> MeResponse | None:
+    """同步查询用户信息（在子线程中执行）。返回 None 表示 session 无效。"""
+    with session_scope() as session:
         auth_session = session.execute(
             select(AuthSession).where(AuthSession.token == token, AuthSession.expires_at >= now)
         ).scalar_one_or_none()
         if auth_session is None:
-            raise HTTPException(status_code=401, detail="session_expired")
+            return None
 
         user = session.execute(select(AuthUser).where(AuthUser.id == auth_session.user_id)).scalar_one_or_none()
         if user is None:
-            raise HTTPException(status_code=401, detail="user_not_found")
+            return None
 
         return MeResponse(success=True, user=_build_user_profile(user))
 
@@ -156,8 +179,12 @@ async def me(authorization: str | None = Header(default=None)):
 async def logout(authorization: str | None = Header(default=None)):
     token = _get_bearer_token(authorization)
 
-    with SessionLocal() as session:
-        session.execute(delete(AuthSession).where(AuthSession.token == token))
-        session.commit()
+    await asyncio.to_thread(_logout_db, token)
 
     return LogoutResponse(success=True, message="logged_out")
+
+
+def _logout_db(token: str) -> None:
+    """同步删除 session（在子线程中执行）。"""
+    with session_scope() as session:
+        session.execute(delete(AuthSession).where(AuthSession.token == token))

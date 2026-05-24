@@ -1,26 +1,11 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 from datetime import date, timedelta
-from typing import Iterator
 
 from sqlalchemy import select
 
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import TradingCalendarDay
-
-
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 class TradingCalendarService:

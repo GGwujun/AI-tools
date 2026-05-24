@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.models.save import (
@@ -19,7 +21,7 @@ from app.models.save import (
     SaveWatchlistResponse,
     SyncResponse,
 )
-from app.application import save_facade
+from app.services import save_service
 
 
 router = APIRouter(prefix="/api/save", tags=["save-assistant"])
@@ -32,7 +34,7 @@ async def get_save_funds(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
 ):
-    return save_facade.get_fund_list(tab=tab, device_id=device_id, page=page, page_size=page_size)
+    return await asyncio.to_thread(save_service.get_fund_list, tab, device_id, page, page_size)
 
 
 @router.get("/funds/{market_type}/{code}", response_model=SaveFundDetailResponse)
@@ -41,7 +43,7 @@ async def get_save_fund_detail(
     code: str,
     device_id: str = Query("anonymous"),
 ):
-    detail = save_facade.get_fund_detail(code=code, market_type=market_type.upper(), device_id=device_id)
+    detail = await asyncio.to_thread(save_service.get_fund_detail, code, market_type.upper(), device_id)
     if detail is None:
         raise HTTPException(status_code=404, detail=f"Fund not found: {market_type}/{code}")
     return detail
@@ -49,7 +51,7 @@ async def get_save_fund_detail(
 
 @router.get("/settings", response_model=SettingsResponse)
 async def get_save_settings(device_id: str = Query(...)):
-    return save_facade.get_settings(device_id)
+    return await asyncio.to_thread(save_service.get_settings, device_id)
 
 
 @router.put("/settings/basic", response_model=SettingsResponse)
@@ -57,7 +59,7 @@ async def update_basic_settings(
     payload: BasicSettings,
     device_id: str = Query(...),
 ):
-    return save_facade.update_basic_settings(device_id=device_id, payload=payload)
+    return await asyncio.to_thread(save_service.update_basic_settings, device_id=device_id, payload=payload)
 
 
 @router.put("/settings/advanced", response_model=SettingsResponse)
@@ -65,7 +67,7 @@ async def update_advanced_settings(
     payload: AdvancedSettings,
     device_id: str = Query(...),
 ):
-    return save_facade.update_advanced_settings(device_id=device_id, payload=payload)
+    return await asyncio.to_thread(save_service.update_advanced_settings, device_id=device_id, payload=payload)
 
 
 @router.put("/favorites/{market_type}/{code}", response_model=FavoriteUpdateResponse)
@@ -75,7 +77,8 @@ async def update_favorite(
     payload: FavoriteUpdateRequest,
 ):
     try:
-        return save_facade.update_favorite(
+        return await asyncio.to_thread(
+            save_service.update_favorite,
             device_id=payload.device_id,
             code=code,
             market_type=market_type.upper(),
@@ -89,12 +92,13 @@ async def update_favorite(
 
 @router.get("/status", response_model=SyncResponse)
 async def get_sync_status():
-    return SyncResponse(success=True, message="ok", sync_status=save_facade.get_sync_status())
+    return SyncResponse(success=True, message="ok", sync_status=await asyncio.to_thread(save_service.get_sync_status))
 
 
 @router.post("/sync", response_model=SyncResponse)
 async def trigger_sync():
-    sync_status = save_facade.refresh_all_data()
+    from main import _stop_sync_event
+    sync_status = await asyncio.to_thread(save_service.refresh_all_data, _stop_sync_event)
     return SyncResponse(success=True, message="sync finished", sync_status=sync_status)
 
 
@@ -103,12 +107,12 @@ async def get_save_home(
     tab: str = Query("stock_lof"),
     device_id: str = Query("anonymous"),
 ):
-    return save_facade.get_home(tab=tab, device_id=device_id)
+    return await asyncio.to_thread(save_service.get_home, tab, device_id)
 
 
 @router.get("/watchlist", response_model=SaveWatchlistResponse)
 async def get_save_watchlist(device_id: str = Query("anonymous")):
-    return save_facade.get_watchlist(device_id=device_id)
+    return await asyncio.to_thread(save_service.get_watchlist, device_id)
 
 
 @router.get("/calendar", response_model=SaveCalendarResponse)
@@ -116,12 +120,12 @@ async def get_save_calendar(
     filter: str = Query("all"),
     device_id: str = Query("anonymous"),
 ):
-    return save_facade.get_calendar(filter_key=filter, device_id=device_id)
+    return await asyncio.to_thread(save_service.get_calendar, filter, device_id)
 
 
 @router.get("/profile", response_model=SaveProfileResponse)
 async def get_save_profile(device_id: str = Query("anonymous")):
-    return save_facade.get_profile(device_id=device_id)
+    return await asyncio.to_thread(save_service.get_profile, device_id=device_id)
 
 
 @router.get("/analysis", response_model=SaveAiAnalysisResponse)
@@ -129,14 +133,14 @@ async def get_save_analysis(
     tab: str = Query("opportunity"),
     device_id: str = Query("anonymous"),
 ):
-    return save_facade.get_analysis(tab=tab, device_id=device_id)
+    return await asyncio.to_thread(save_service.get_analysis, tab, device_id)
 
 
 @router.get("/filter-options", response_model=SaveFilterOptionsResponse)
 async def get_filter_options(device_id: str = Query("anonymous")):
-    return save_facade.get_filter_options(device_id=device_id)
+    return await asyncio.to_thread(save_service.get_filter_options, device_id=device_id)
 
 
 @router.get("/bonds/detail/{code}", response_model=BondDetailResponse)
 async def get_bond_detail(code: str):
-    return save_facade.get_bond_detail(code=code)
+    return await asyncio.to_thread(save_service.get_bond_detail, code)

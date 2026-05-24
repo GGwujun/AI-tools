@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 
 from app.db_models import FundCrowdingScore, FundDailySnapshot, OpportunitySnapshot
-
-
-def _clamp_100(value: float) -> float:
-    return max(0.0, min(100.0, value))
+from app.infrastructure.utils import clamp_100 as _clamp_100
 
 
 def _crowding_level(score: float) -> str:
@@ -89,7 +86,7 @@ def sync_crowding_score(
     record = FundCrowdingScore(
         fund_code=code,
         market_type=market_type,
-        snapshot_time=datetime.utcnow(),
+        snapshot_time=datetime.now(timezone.utc),
         share_score=round(share_score, 4),
         amount_score=round(amount_score, 4),
         premium_decay_score=round(premium_decay_score, 4),

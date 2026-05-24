@@ -11,17 +11,18 @@ body {
 }
 
 :root {
-  --lof-bg: linear-gradient(180deg, #fbfdff 0%, #f4f8fc 100%);
-  --lof-card: #ffffff;
-  --lof-primary: #149f87;
-  --lof-primary-deep: #0f8b76;
-  --lof-border: #e8eff5;
-  --lof-text: #152435;
-  --lof-muted: #7b8794;
-  --lof-danger: #ff5a5f;
-  --lof-warning: #f7a74b;
-  --lof-success: #27b07d;
-  --lof-shadow: 0 10px 28px rgba(28, 53, 74, 0.08);
+  --lof-bg: #1a1e2b;
+  --lof-card: #242b3d;
+  --lof-primary: #4a90e2;
+  --lof-primary-deep: #2d6bc4;
+  --lof-border: rgba(234, 236, 240, 0.08);
+  --lof-text: #eaecf0;
+  --lof-muted: #9ea7b8;
+  --lof-danger: #ff4d4f;
+  --lof-warning: #ff8c00;
+  --lof-success: #29b37e;
+  --lof-link: #4a90e2;
+  --lof-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 body {

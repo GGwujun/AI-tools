@@ -1,27 +1,11 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import Iterator
-
 from sqlalchemy import select
 
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import FundCrowdingScore, FundOpportunityScore
 from app.infrastructure.cache.cache_service import cache_service
 from app.models.system import OpportunityScoreResponse
-
-
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 def get_latest_opportunity_score(*, code: str, market_type: str) -> OpportunityScoreResponse:

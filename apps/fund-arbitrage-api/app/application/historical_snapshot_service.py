@@ -1,28 +1,13 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from datetime import datetime
-from typing import Iterator
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 
 from app.application.cache_invalidation_service import invalidate_all_for_fund
 from app.application.task_run_service import finish_task, start_task
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import FundDailySnapshot, FundNavHistory, FundSnapshot
-
-
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 def _derive_close_price(nav_price: float, historical_premium_rate: float | None, current_premium_rate: float | None, nav_change_pct: float | None) -> float:
@@ -95,7 +80,7 @@ def backfill_for_fund(*, code: str, market_type: str) -> dict:
             daily_snapshot.nav_premium_rate = daily_snapshot.close_premium_rate
             daily_snapshot.valuation_error_rate = valuation_error_rate
             daily_snapshot.subscribe_status = daily_snapshot.subscribe_status or ("SUBSCRIBABLE" if not snapshot.is_paused else "DISABLED")
-            daily_snapshot.updated_at = datetime.utcnow()
+            daily_snapshot.updated_at = datetime.now(timezone.utc)
 
         result = {"code": code, "market_type": market_type, "filled": filled, "updated": True}
     invalidate_all_for_fund(code=code, market_type=market_type)

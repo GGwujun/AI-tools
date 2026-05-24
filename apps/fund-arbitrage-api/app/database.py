@@ -51,16 +51,30 @@ def init_database() -> None:
         _apply_compat_migrations()
 
 
+# TODO: 这些兼容迁移最终应交给 alembic 管理，而非在此处手动执行。
+# 逐个迁移到 alembic 版本脚本后，应从下方 statements 列表中移除对应的 SQL。
 def _apply_compat_migrations() -> None:
     url = make_url(DATABASE_URL)
     if not url.drivername.startswith("postgresql"):
         return
 
     statements = [
-        """
-        ALTER TABLE fund_snapshots
-        ADD COLUMN IF NOT EXISTS market_change_pct DOUBLE PRECISION
-        """
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS market_change_pct NUMERIC(10,4)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS volume NUMERIC(16,2)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS amount NUMERIC(16,2)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS open_price NUMERIC(12,4)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS high_price NUMERIC(12,4)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS low_price NUMERIC(12,4)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS prev_close NUMERIC(12,4)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS total_market_cap NUMERIC(16,2)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS estimate_premium_rate NUMERIC(10,4)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS purchase_limit_amount NUMERIC(12,4)""",
+        """ALTER TABLE fund_snapshots ADD COLUMN IF NOT EXISTS purchase_limit_display VARCHAR(64) DEFAULT '--'""",
+        """ALTER TABLE opportunity_snapshots ADD COLUMN IF NOT EXISTS estimate_premium_rate NUMERIC(10,4)""",
+        """ALTER TABLE opportunity_snapshots ADD COLUMN IF NOT EXISTS z_score NUMERIC(10,4) DEFAULT 0""",
+        """ALTER TABLE opportunity_snapshots ADD COLUMN IF NOT EXISTS z_score_level VARCHAR(16) DEFAULT 'NORMAL'""",
+        """ALTER TABLE fund_opportunity_scores ADD COLUMN IF NOT EXISTS z_score NUMERIC(10,4) DEFAULT 0""",
+        """ALTER TABLE fund_opportunity_scores ADD COLUMN IF NOT EXISTS z_score_level VARCHAR(16) DEFAULT 'NORMAL'""",
     ]
 
     with engine.begin() as conn:

@@ -4,10 +4,8 @@ import { useAuthStore } from '@/stores/auth'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', redirect: '/save' },
-    { path: '/save', name: 'save', component: () => import('../views/SaveHubView.vue'), meta: { tab: 'opportunity' } },
+    { path: '/', name: 'save', component: () => import('../views/SaveView.vue'), meta: { tab: 'opportunity' } },
     { path: '/watchlist', name: 'watchlist', component: () => import('../views/WatchlistView.vue'), meta: { tab: 'watchlist', requiresAuth: true } },
-    { path: '/calendar', name: 'calendar', component: () => import('../views/ReminderCalendarView.vue'), meta: { tab: 'calendar', requiresAuth: true } },
     { path: '/mine', name: 'mine', component: () => import('../views/AboutView.vue'), meta: { tab: 'mine' } },
     { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { hideTabBar: true } },
     { path: '/about', redirect: '/mine' },
@@ -27,7 +25,7 @@ const router = createRouter({
     { path: '/tools/decision', name: 'decision', component: () => import('../views/DecisionView.vue') },
     { path: '/save/switch', name: 'switch', component: () => import('../views/SwitchView.vue'), meta: { tab: 'mine', requiresAuth: true } },
     { path: '/save/remind-settings', name: 'remind-settings', component: () => import('../views/RemindSettingsView.vue'), meta: { tab: 'mine', requiresAuth: true } },
-    { path: '/save/arbitrage', name: 'arbitrage', component: () => import('../views/SaveView.vue'), meta: { tab: 'opportunity' } },
+    { path: '/save/arbitrage', name: 'arbitrage', redirect: '/', meta: { tab: 'opportunity' } },
     { path: '/save/arbitrage-guide', name: 'arbitrage-guide', component: () => import('../views/ArbitrageView.vue'), meta: { tab: 'opportunity' } },
     { path: '/save/bond-subscribe', name: 'bond-subscribe', component: () => import('../views/BondSubscribeView.vue'), meta: { tab: 'calendar' } },
     { path: '/save/bond-lottery', name: 'bond-lottery', component: () => import('../views/BondLotteryView.vue'), meta: { tab: 'calendar' } },

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.domain.models import NavSnapshot
 
@@ -23,7 +23,7 @@ def assess_valuation_quality(
             flags.append("多源偏差过大")
 
     if estimate_nav and estimate_nav.nav_time:
-        delay_seconds = (datetime.utcnow() - estimate_nav.nav_time).total_seconds()
+        delay_seconds = (datetime.now(timezone.utc) - estimate_nav.nav_time).total_seconds()
         if delay_seconds > 120:
             flags.append("估值延迟过大")
 

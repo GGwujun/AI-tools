@@ -9,7 +9,7 @@ const title = computed(() => (route.query.title as string) || '功能建设中')
 const desc = computed(() => (route.query.desc as string) || '这个入口已经预留，后续会继续补完整功能。')
 
 function goBack() {
-  router.push('/save')
+  router.push('/')
 }
 
 function openReminderSettings() {

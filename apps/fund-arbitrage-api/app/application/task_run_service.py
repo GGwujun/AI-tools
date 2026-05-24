@@ -1,32 +1,17 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from datetime import datetime
-from typing import Iterator
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import TaskRun
 from app.models.system import TaskRunItem, TaskRunListResponse
 
 
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-
-
 def start_task(*, task_name: str, message: str = "") -> int:
     with session_scope() as session:
-        record = TaskRun(task_name=task_name, status="running", message=message, started_at=datetime.utcnow())
+        record = TaskRun(task_name=task_name, status="running", message=message, started_at=datetime.now(timezone.utc))
         session.add(record)
         session.flush()
         return record.id
@@ -41,7 +26,7 @@ def finish_task(*, task_id: int, status: str, processed_count: int = 0, failed_c
         record.processed_count = processed_count
         record.failed_count = failed_count
         record.message = message or record.message
-        record.finished_at = datetime.utcnow()
+        record.finished_at = datetime.now(timezone.utc)
 
 
 def list_task_runs(*, task_name: str | None = None, limit: int = 20) -> TaskRunListResponse:

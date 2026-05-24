@@ -34,9 +34,9 @@ const summaryItems = computed(() => {
   const sections = home.value?.sections ?? []
   const lookup = new Map(sections.map((section) => [section.key, section.items.length]))
   return [
-    { label: '股票型LOF', value: String(lookup.get('stock_lof') ?? 0) },
+    { label: '股债型LOF', value: String(lookup.get('stock_lof') ?? 0) },
     { label: '指数型LOF', value: String(lookup.get('index_lof') ?? 0) },
-    { label: 'ETF', value: String(lookup.get('etf') ?? 0) },
+    { label: '无时差ETF', value: String(lookup.get('etf') ?? 0) },
     { label: '可转债', value: String(lookup.get('bond') ?? 0) },
   ]
 })
@@ -76,7 +76,7 @@ onMounted(() => {
   <div class="page">
     <header class="hero">
       <div class="hero-copy">
-        <h1>套利控制台</h1>
+        <h1>套利监控</h1>
         <p>基金套利与可转债监测入口</p>
       </div>
     </header>

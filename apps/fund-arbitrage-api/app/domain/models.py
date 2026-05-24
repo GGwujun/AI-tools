@@ -94,3 +94,6 @@ class OpportunitySnapshotModel:
     expected_sell_date: date | None = None
     calculated_at: datetime | None = None
     algorithm_version: str = "v2"
+    z_score: float = 0.0
+    z_score_level: str = "NORMAL"
+    arbitrage_type: str = "premium"

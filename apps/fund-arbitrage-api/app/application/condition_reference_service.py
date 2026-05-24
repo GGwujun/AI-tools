@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from datetime import datetime
-from typing import Iterator
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import FundConditionReferenceSnapshot, FundSnapshot
 from app.infrastructure.cache.cache_service import cache_service
 from app.models.condition_reference import (
@@ -21,19 +19,6 @@ from app.models.condition_reference import (
 
 
 COMPLIANCE_TEXT = "以上内容基于历史数据、规则模型与公开信息整理，仅供参考，不构成投资建议。"
-
-
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 def _condition_items(opportunity, stat_payload: dict, quality_payload: dict) -> list[dict]:
@@ -154,7 +139,7 @@ def build_and_store_condition_reference(session, *, snapshot: FundSnapshot, oppo
 
     record = FundConditionReferenceSnapshot(
         fund_code=snapshot.code,
-        snapshot_time=datetime.utcnow(),
+        snapshot_time=datetime.now(timezone.utc),
         status_level=status_level,
         summary_text=summary_text,
         premium_rate=opportunity.gross_premium_rate,
@@ -165,7 +150,7 @@ def build_and_store_condition_reference(session, *, snapshot: FundSnapshot, oppo
         risk_result_json=risk_items,
         rhythm_reference_json=rhythm_reference,
         compliance_text=COMPLIANCE_TEXT,
-        updated_at=datetime.utcnow(),
+        updated_at=datetime.now(timezone.utc),
     )
     session.add(record)
     return record

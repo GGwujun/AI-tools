@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from math import prod
-from typing import Iterator
 
 from sqlalchemy import delete, select
 
 from app.application.cache_invalidation_service import invalidate_all_for_fund
 from app.application.task_run_service import finish_task, start_task
 from app.application.trading_calendar_service import trading_calendar_service
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import (
     FundArbitrageEvent,
     FundArbitrageStat,
@@ -22,28 +20,16 @@ from app.db_models import (
 
 THRESHOLD_TYPE = "premium_rate"
 DEFAULT_THRESHOLD = 0.5
-DEFAULT_SLIPPAGE_RATE = 0.0005
-
-
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+DEFAULT_SLIPPAGE_RATE = 0.05  # 0.05% in percent-point units
 
 
 def _fee_rate(profile: FundProfileRecord | None) -> float:
+    """Fee rate in percent-point units (e.g. 0.17 means 0.17%)."""
     if profile is None:
-        return 0.0017
-    fee = 0.0002 + 0.0015
+        return 0.17  # default: 0.02% base + 0.15% LOF
+    fee = 0.02 + 0.15  # base commission + LOF subscription
     if profile.is_qdii:
-        fee += 0.001
+        fee += 0.10
     return fee
 
 
@@ -120,8 +106,8 @@ def rebuild_for_fund(*, code: str, market_type: str, threshold: float = DEFAULT_
             status = "triggered"
 
             if sell_price is not None:
-                gross_return = (sell_price - row.official_nav) / row.official_nav
-                return_rate = round((gross_return - fee_rate - slippage_rate) * 100, 4)
+                gross_return_pct = (sell_price - row.official_nav) / row.official_nav * 100  # convert to percent-points
+                return_rate = round(gross_return_pct - fee_rate - slippage_rate, 4)
                 success = return_rate > 0
                 status = "settled"
 
@@ -144,7 +130,7 @@ def rebuild_for_fund(*, code: str, market_type: str, threshold: float = DEFAULT_
                     return_rate=return_rate,
                     success=success,
                     status=status,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(timezone.utc),
                 )
             )
 
@@ -187,7 +173,7 @@ def rebuild_for_fund(*, code: str, market_type: str, threshold: float = DEFAULT_
         stat.min_return_rate = min(returns) if returns else None
         stat.stat_start_date = daily_rows[0].trade_date
         stat.stat_end_date = daily_rows[-1].trade_date
-        stat.updated_at = datetime.utcnow()
+        stat.updated_at = datetime.now(timezone.utc)
 
         opportunity = session.get(OpportunitySnapshot, (code, market_type))
         if opportunity is not None:

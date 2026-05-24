@@ -23,9 +23,9 @@ import type {
 const mockBase = '/fund-api/api/save'
 
 const tabs = [
-  { key: 'stock_lof', name: '股债性LOF', description: '更适合看历史套利统计与样本表现', note: '历史样本更充分' },
+  { key: 'stock_lof', name: '股债型LOF', description: '更适合看历史套利统计与样本表现', note: '历史样本更充分' },
   { key: 'index_lof', name: '指数型LOF', description: '更适合看折溢价与估值误差', note: '更适合跟踪估值' },
-  { key: 'etf', name: '无套利ETF', description: '更适合看实时盘口与折溢价变化', note: '更适合盘中观察' },
+  { key: 'etf', name: '无时差ETF', description: '更适合看实时盘口与折溢价变化', note: '更适合盘中观察' },
   { key: 'favorites', name: '自选', description: '查看你重点关注的标的', note: '便于统一跟踪' },
   { key: 'opportunity', name: '今日机会', description: '系统筛出的可关注标的', note: '仅供参考' },
 ] as const
@@ -74,11 +74,11 @@ let advancedSettings: AdvancedSettings = {
 let favoriteCodes = new Set(['160629', '123456'])
 
 const allFunds: SaveFundItem[] = [
-  createFund('160629', '鹏华中证传媒LOF', 'stock_lof', 1.352, 1.309, 3.25, true, false, '可申购', '股债性LOF'),
+  createFund('160629', '鹏华中证传媒LOF', 'stock_lof', 1.352, 1.309, 3.25, true, false, '可申购', '股债型LOF'),
   createFund('160616', '华夏中证500LOF', 'index_lof', 1.287, 1.258, 2.18, true, false, '可申购', '指数型LOF'),
-  createFund('160618', '嘉实新兴产业LOF', 'stock_lof', 1.196, 1.174, 1.86, true, false, '限额开放', '股债性LOF'),
-  createFund('160625', '易方达消费行业LOF', 'stock_lof', 1.088, 1.070, 1.75, true, false, '可申购', '股债性LOF'),
-  createFund('510048', '汇添富中证主要消费ETF', 'etf', 1.063, 1.047, 1.63, true, false, '可T+0', '无套利ETF'),
+  createFund('160618', '嘉实新兴产业LOF', 'stock_lof', 1.196, 1.174, 1.86, true, false, '限额开放', '股债型LOF'),
+  createFund('160625', '易方达消费行业LOF', 'stock_lof', 1.088, 1.070, 1.75, true, false, '可申购', '股债型LOF'),
+  createFund('510048', '汇添富中证主要消费ETF', 'etf', 1.063, 1.047, 1.63, true, false, '可T+0', '无时差ETF'),
 ]
 
 const bondSubscribeItems: BondSubscribeItem[] = [
@@ -363,9 +363,9 @@ function buildHome(tab: string): SaveHomeResponse {
   ]
 
   const sections = [
-    { key: 'stock_lof', title: '股债性LOF 今日机会', items: stockLofItems },
+    { key: 'stock_lof', title: '股债型LOF 今日机会', items: stockLofItems },
     { key: 'index_lof', title: '指数型LOF 今日机会', items: indexItems },
-    { key: 'etf', title: '无套利ETF 今日机会', items: etfItems },
+    { key: 'etf', title: '无时差ETF 今日机会', items: etfItems },
     {
       key: 'bond',
       title: '可转债 今日机会',
@@ -388,7 +388,7 @@ function buildHome(tab: string): SaveHomeResponse {
       { label: '风险变化', value: '2', note: '较昨日 +1' },
     ],
     ai_summary:
-      '今天基金套利机会分布均衡，股债性LOF的历史样本优势更明显，可优先关注交易量匹配且估值回落的标的，仅供参考。',
+      '今天基金套利机会分布均衡，股债型LOF的历史样本优势更明显，可优先关注交易量匹配且估值回落的标的，仅供参考。',
     featured: [
       {
         ...allFunds[0],
@@ -657,7 +657,7 @@ function buildFilterOptions(): SaveFilterOptionsResponse {
     success: true,
     groups: [
       { title: '机会类型', options: ['全部', 'LOF', 'ETF', 'QDII', '可转债'], selected: ['全部'] },
-      { title: '一级分类', options: ['全部', '股债性LOF', '指数型LOF', '无套利ETF'], selected: ['股债性LOF'] },
+      { title: '一级分类', options: ['全部', '股债型LOF', '指数型LOF', '无时差ETF'], selected: ['股债型LOF'] },
       { title: '状态', options: ['全部', '可申购', '限额开放', '暂停申购', '可T+0'], selected: ['可申购'] },
       { title: '风险评级', options: ['全部', '低风险', '中风险', '高风险'], selected: ['低风险'] },
       { title: '到账周期', options: ['全部', 'T+1', 'T+2', 'T+3', '更长'], selected: ['全部'] },

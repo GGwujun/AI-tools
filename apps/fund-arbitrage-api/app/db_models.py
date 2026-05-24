@@ -1,11 +1,26 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
+from decimal import Decimal
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import TypeDecorator
 
 from app.database import Base
+
+
+class FloatNumeric(TypeDecorator):
+    """Numeric 列自动返回 float，避免 Decimal vs float 运算冲突。"""
+    impl = Numeric
+    cache_ok = True
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        if isinstance(value, Decimal):
+            return float(value)
+        return value
 
 
 class FundSnapshot(Base):
@@ -18,32 +33,32 @@ class FundSnapshot(Base):
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     market: Mapped[str] = mapped_column(String(8), nullable=False, default="")
     tab_tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    market_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    market_change_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
-    volume: Mapped[float | None] = mapped_column(Float, nullable=True)
-    amount: Mapped[float | None] = mapped_column(Float, nullable=True)
-    open_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    high_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    low_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    prev_close: Mapped[float | None] = mapped_column(Float, nullable=True)
-    total_market_cap: Mapped[float | None] = mapped_column(Float, nullable=True)
-    nav_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    estimate_premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    market_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    market_change_pct: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    volume: Mapped[float | None] = mapped_column(FloatNumeric(16,2), nullable=True)
+    amount: Mapped[float | None] = mapped_column(FloatNumeric(16,2), nullable=True)
+    open_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    high_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    low_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    prev_close: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    total_market_cap: Mapped[float | None] = mapped_column(FloatNumeric(16,2), nullable=True)
+    nav_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    estimate_premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
     market_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     nav_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     fund_state: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     fund_type: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     is_no_gap: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_paused: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    purchase_limit_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    purchase_limit_amount: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
     purchase_limit_display: Mapped[str] = mapped_column(String(64), nullable=False, default="--")
     down_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     max_down_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     scale: Mapped[str] = mapped_column(String(64), nullable=False, default="--")
     turnover: Mapped[str] = mapped_column(String(64), nullable=False, default="--")
     detail_payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     detail_updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
@@ -53,12 +68,12 @@ class FundNavHistory(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     fund_id: Mapped[int] = mapped_column(ForeignKey("fund_snapshots.id", ondelete="CASCADE"), nullable=False, index=True)
-    nav_date: Mapped[date] = mapped_column(Date, nullable=False)
-    nav_price: Mapped[float] = mapped_column(Float, nullable=False)
-    nav_change_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
-    premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    estimated_profit_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    nav_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    nav_price: Mapped[float] = mapped_column(FloatNumeric(12,4), nullable=False)
+    nav_change_pct: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    estimated_profit_pct: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class UserFavorite(Base):
@@ -71,7 +86,7 @@ class UserFavorite(Base):
     device_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
     market_type: Mapped[str] = mapped_column(String(8), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class UserSettings(Base):
@@ -80,7 +95,7 @@ class UserSettings(Base):
     device_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     basic_settings: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     advanced_settings: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class AuthUser(Base):
@@ -92,8 +107,8 @@ class AuthUser(Base):
     avatar: Mapped[str | None] = mapped_column(String(255), nullable=True)
     mobile_bound: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     level: Mapped[str] = mapped_column(String(32), nullable=False, default="已注册用户")
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class AuthVerificationCode(Base):
@@ -105,7 +120,7 @@ class AuthVerificationCode(Base):
     purpose: Mapped[str] = mapped_column(String(32), nullable=False, default="login")
     consumed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class AuthSession(Base):
@@ -115,7 +130,7 @@ class AuthSession(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False, index=True)
     token: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class SyncStatus(Base):
@@ -151,7 +166,7 @@ class FundProfileRecord(Base):
     is_cross_border: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     default_subscribe_t_plus: Mapped[int | None] = mapped_column(Integer, nullable=True)
     default_redeem_t_plus: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class OpportunitySnapshot(Base):
@@ -162,35 +177,37 @@ class OpportunitySnapshot(Base):
     market_type: Mapped[str] = mapped_column(String(8), primary_key=True)
     name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     benchmark_type: Mapped[str] = mapped_column(String(32), nullable=False, default="unknown")
-    benchmark_value: Mapped[float | None] = mapped_column(Float, nullable=True)
-    gross_premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    estimate_premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    valuation_error_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    fee_cost_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    slippage_cost_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    estimated_net_profit_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    liquidity_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    status_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    quality_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    risk_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    benchmark_value: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    gross_premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    estimate_premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    valuation_error_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    fee_cost_rate: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    slippage_cost_rate: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    estimated_net_profit_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    liquidity_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    status_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    quality_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    risk_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
     risk_level: Mapped[str] = mapped_column(String(16), nullable=False, default="MID")
     opportunity_level: Mapped[str] = mapped_column(String(32), nullable=False, default="none")
     risk_tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     displayable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     trigger_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    historical_success_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    occurrence_probability: Mapped[float | None] = mapped_column(Float, nullable=True)
+    historical_success_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    occurrence_probability: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
     data_quality_status: Mapped[str] = mapped_column(String(16), nullable=False, default="OK")
     quality_flags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    final_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    final_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
     score_level: Mapped[str] = mapped_column(String(16), nullable=False, default="WATCH")
-    crowding_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    crowding_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
     crowding_level: Mapped[str] = mapped_column(String(16), nullable=False, default="LOW")
     expected_confirm_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     expected_arrival_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     expected_sell_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     calculated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     algorithm_version: Mapped[str] = mapped_column(String(32), nullable=False, default="v2")
+    z_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    z_score_level: Mapped[str] = mapped_column(String(16), nullable=False, default="NORMAL")
 
 
 class FundDailySnapshot(Base):
@@ -199,24 +216,24 @@ class FundDailySnapshot(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     fund_code: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
-    trade_date: Mapped[date] = mapped_column(Date, nullable=False)
-    open_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    close_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    high_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    low_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    amount: Mapped[float | None] = mapped_column(Float, nullable=True)
-    official_nav: Mapped[float | None] = mapped_column(Float, nullable=True)
-    estimated_nav_close: Mapped[float | None] = mapped_column(Float, nullable=True)
-    nav_change_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    close_change_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    close_premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    nav_premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    valuation_error_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    trade_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    open_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    close_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    high_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    low_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    amount: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    official_nav: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    estimated_nav_close: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    nav_change_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    close_change_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    close_premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    nav_premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    valuation_error_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
     subscribe_status: Mapped[str] = mapped_column(String(32), nullable=False, default="")
-    subscribe_limit_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    subscribe_limit_amount: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
     data_source_quality: Mapped[str] = mapped_column(String(16), nullable=False, default="RAW")
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class FundArbitrageEvent(Base):
@@ -235,22 +252,22 @@ class FundArbitrageEvent(Base):
     fund_code: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     trigger_date: Mapped[date] = mapped_column(Date, nullable=False)
     threshold_type: Mapped[str] = mapped_column(String(32), nullable=False, default="premium_rate")
-    threshold_value: Mapped[float] = mapped_column(Float, nullable=False, default=0.5)
-    trigger_premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    trigger_nav: Mapped[float | None] = mapped_column(Float, nullable=True)
-    trigger_close_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    subscribe_nav: Mapped[float | None] = mapped_column(Float, nullable=True)
+    threshold_value: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.5)
+    trigger_premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    trigger_nav: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    trigger_close_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    subscribe_nav: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
     confirm_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     arrival_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     sell_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    sell_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    fee_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    slippage_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    return_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sell_price: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
+    fee_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    slippage_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    return_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
     success: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="triggered")
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class FundArbitrageStat(Base):
@@ -268,20 +285,20 @@ class FundArbitrageStat(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     fund_code: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     threshold_type: Mapped[str] = mapped_column(String(32), nullable=False, default="premium_rate")
-    threshold_value: Mapped[float] = mapped_column(Float, nullable=False, default=0.5)
+    threshold_value: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.5)
     stat_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     stat_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     total_trade_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     trigger_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     success_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    occurrence_probability: Mapped[float | None] = mapped_column(Float, nullable=True)
-    success_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    sum_return_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    compound_return_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    avg_return_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    max_return_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    min_return_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    occurrence_probability: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    success_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    sum_return_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    compound_return_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    avg_return_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    max_return_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    min_return_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class TaskRun(Base):
@@ -293,7 +310,7 @@ class TaskRun(Base):
     processed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     failed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     message: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
@@ -306,7 +323,7 @@ class TradingCalendarDay(Base):
     trade_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     is_open: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     note: Mapped[str] = mapped_column(String(128), nullable=False, default="")
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class RawDataEvent(Base):
@@ -317,7 +334,7 @@ class RawDataEvent(Base):
     data_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     biz_key: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     raw_payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    collected_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    collected_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class FundStandardValuationSnapshot(Base):
@@ -327,7 +344,7 @@ class FundStandardValuationSnapshot(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     fund_code: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     snapshot_time: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
-    standard_estimated_nav: Mapped[float | None] = mapped_column(Float, nullable=True)
+    standard_estimated_nav: Mapped[float | None] = mapped_column(FloatNumeric(12,4), nullable=True)
     confidence_level: Mapped[str] = mapped_column(String(16), nullable=False, default="LOW")
     valuation_source_code: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     valuation_quality_status: Mapped[str] = mapped_column(String(16), nullable=False, default="OK")
@@ -342,14 +359,16 @@ class FundOpportunityScore(Base):
     fund_code: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     market_type: Mapped[str] = mapped_column(String(8), nullable=False, default="")
     snapshot_time: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
-    final_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    final_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
     level: Mapped[str] = mapped_column(String(16), nullable=False, default="WATCH")
-    profit_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    reliability_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    execution_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    liquidity_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    risk_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    crowding_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    profit_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    reliability_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    execution_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    liquidity_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    risk_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    crowding_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    z_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    z_score_level: Mapped[str] = mapped_column(String(16), nullable=False, default="NORMAL")
 
 
 class FundCrowdingScore(Base):
@@ -360,12 +379,12 @@ class FundCrowdingScore(Base):
     fund_code: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     market_type: Mapped[str] = mapped_column(String(8), nullable=False, default="")
     snapshot_time: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
-    share_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    amount_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    premium_decay_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    orderbook_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    streak_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    crowding_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    share_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    amount_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    premium_decay_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    orderbook_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    streak_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
+    crowding_score: Mapped[float] = mapped_column(FloatNumeric(10,4), nullable=False, default=0.0)
     level: Mapped[str] = mapped_column(String(16), nullable=False, default="LOW")
 
 
@@ -378,13 +397,13 @@ class FundConditionReferenceSnapshot(Base):
     snapshot_time: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
     status_level: Mapped[str] = mapped_column(String(32), nullable=False, default="NEUTRAL")
     summary_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    premium_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    historical_success_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    valuation_error_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    crowding_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    premium_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    historical_success_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    valuation_error_rate: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
+    crowding_score: Mapped[float | None] = mapped_column(FloatNumeric(10,4), nullable=True)
     condition_result_json: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
     risk_result_json: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
     rhythm_reference_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     compliance_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))

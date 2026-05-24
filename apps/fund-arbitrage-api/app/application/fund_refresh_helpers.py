@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
+import math
+from datetime import datetime, timezone
 
 from app.db_models import FundDailySnapshot, FundNavHistory, FundProfileRecord, OpportunitySnapshot, FundStandardValuationSnapshot, RawDataEvent
+from app.infrastructure.utils import sanitize_json_value
 
 
 def record_raw_events(session, *, snapshot_code: str, market_type: str, quote_result, official_nav_result, estimate_nav_result, iopv_result, status_result) -> None:
@@ -43,8 +45,8 @@ def record_raw_events(session, *, snapshot_code: str, market_type: str, quote_re
                 source_code=source_code,
                 data_type=data_type,
                 biz_key=biz_key,
-                raw_payload=payload,
-                collected_at=datetime.utcnow(),
+                raw_payload=sanitize_json_value(payload),
+                collected_at=datetime.now(timezone.utc),
             )
         )
 
@@ -62,7 +64,7 @@ def write_standard_valuation_snapshot(
     session.add(
         FundStandardValuationSnapshot(
             fund_code=fund_code,
-            snapshot_time=datetime.utcnow(),
+            snapshot_time=datetime.now(timezone.utc),
             standard_estimated_nav=standard_estimated_nav,
             confidence_level=confidence_level,
             valuation_source_code=valuation_source_code,
@@ -149,23 +151,38 @@ def build_detail_payload(
 
 
 def sync_nav_history(session, *, fund_id: int, history_rows: list[dict]) -> None:
-    session.query(FundNavHistory).filter(FundNavHistory.fund_id == fund_id).delete()
+    """Upsert NAV history records — incremental instead of delete+re-insert."""
+    from sqlalchemy import select as sa_select
     for row in history_rows:
         date_text = row.get("date")
         try:
             nav_date_value = datetime.strptime(date_text, "%Y-%m-%d").date()
         except (TypeError, ValueError):
             continue
-        session.add(
-            FundNavHistory(
-                fund_id=fund_id,
-                nav_date=nav_date_value,
-                nav_price=row["nav"],
-                nav_change_pct=row.get("nav_change_pct"),
-                premium_rate=row.get("premium_rate"),
-                estimated_profit_pct=row.get("estimated_profit_pct"),
+
+        existing = session.execute(
+            sa_select(FundNavHistory).where(
+                FundNavHistory.fund_id == fund_id,
+                FundNavHistory.nav_date == nav_date_value,
             )
-        )
+        ).scalar_one_or_none()
+
+        if existing is not None:
+            existing.nav_price = row["nav"]
+            existing.nav_change_pct = row.get("nav_change_pct")
+            existing.premium_rate = row.get("premium_rate")
+            existing.estimated_profit_pct = row.get("estimated_profit_pct")
+        else:
+            session.add(
+                FundNavHistory(
+                    fund_id=fund_id,
+                    nav_date=nav_date_value,
+                    nav_price=row["nav"],
+                    nav_change_pct=row.get("nav_change_pct"),
+                    premium_rate=row.get("premium_rate"),
+                    estimated_profit_pct=row.get("estimated_profit_pct"),
+                )
+            )
 
 
 def sync_profile_record(
@@ -194,7 +211,7 @@ def sync_profile_record(
     profile_record.is_cross_border = profile.is_cross_border
     profile_record.default_subscribe_t_plus = profile.default_subscribe_t_plus
     profile_record.default_redeem_t_plus = profile.default_redeem_t_plus
-    profile_record.updated_at = datetime.utcnow()
+    profile_record.updated_at = datetime.now(timezone.utc)
     return profile_record
 
 
@@ -231,7 +248,7 @@ def sync_daily_snapshot(
     daily_snapshot.valuation_error_rate = opportunity.valuation_error_rate
     daily_snapshot.subscribe_status = "SUBSCRIBABLE" if status.can_subscribe else "DISABLED"
     daily_snapshot.subscribe_limit_amount = purchase_limit_amount
-    daily_snapshot.updated_at = datetime.utcnow()
+    daily_snapshot.updated_at = datetime.now(timezone.utc)
     return daily_snapshot
 
 
@@ -273,6 +290,6 @@ def sync_opportunity_record(
     opportunity_record.expected_confirm_date = opportunity.expected_confirm_date
     opportunity_record.expected_arrival_date = opportunity.expected_arrival_date
     opportunity_record.expected_sell_date = opportunity.expected_sell_date
-    opportunity_record.calculated_at = opportunity.calculated_at or datetime.utcnow()
+    opportunity_record.calculated_at = opportunity.calculated_at or datetime.now(timezone.utc)
     opportunity_record.algorithm_version = opportunity.algorithm_version
     return opportunity_record

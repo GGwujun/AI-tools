@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from math import log10
 
 from sqlalchemy import select
 
 from app.db_models import FundArbitrageStat, FundOpportunityScore, OpportunitySnapshot
-
-
-def _clamp_100(value: float) -> float:
-    return max(0.0, min(100.0, value))
+from app.infrastructure.utils import clamp_100 as _clamp_100
 
 
 def _score_level(final_score: float) -> str:
@@ -46,7 +43,9 @@ def _reliability_score(opportunity, stat: FundArbitrageStat | None) -> float:
     if stat and stat.max_return_rate is not None and stat.min_return_rate is not None:
         spread = abs(stat.max_return_rate - stat.min_return_rate)
         stability = _clamp_100(100 - spread * 5)
-    return _clamp_100(0.5 * success_rate + 0.25 * sample + 0.25 * stability)
+    # Z-score contribution: anomaly gets 100, notable gets 70, normal gets 40
+    z_score_normalized = 100.0 if opportunity.z_score_level == "ANOMALY" else 70.0 if opportunity.z_score_level == "NOTABLE" else 40.0
+    return _clamp_100(0.35 * success_rate + 0.20 * sample + 0.15 * stability + 0.30 * z_score_normalized)
 
 
 def _execution_score(opportunity, profile) -> float:
@@ -93,7 +92,7 @@ def sync_opportunity_score(session, *, code: str, market_type: str, profile, opp
     score = FundOpportunityScore(
         fund_code=code,
         market_type=market_type,
-        snapshot_time=datetime.utcnow(),
+        snapshot_time=datetime.now(timezone.utc),
         final_score=round(final_score, 4),
         level=level,
         profit_score=round(profit_score, 4),
@@ -101,6 +100,8 @@ def sync_opportunity_score(session, *, code: str, market_type: str, profile, opp
         execution_score=round(execution_score, 4),
         liquidity_score=round(liquidity_score, 4),
         risk_score=round(risk_score, 4),
+        z_score=round(opportunity.z_score or 0.0, 4),
+        z_score_level=opportunity.z_score_level or "NORMAL",
     )
     session.add(score)
 

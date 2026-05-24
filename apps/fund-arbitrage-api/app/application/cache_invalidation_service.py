@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 from app.infrastructure.cache.cache_service import cache_service
+from app.services.fund_service import (
+    get_lof_fund_list_bulk,
+    get_etf_fund_list_bulk,
+    get_purchase_limit_data,
+)
 
 
 def invalidate_fund_related_cache(*, code: str, market_type: str) -> None:
@@ -25,6 +30,10 @@ def invalidate_opportunity_list_cache() -> None:
             cache_service.delete(f"opportunities:list:{market_type}:{level}")
     for limit in (3, 5, 10):
         cache_service.delete(f"opportunities:highlights:{limit}")
+    # Clear ttl_lru_cache for bulk market data so next request fetches fresh data
+    get_lof_fund_list_bulk.cache_clear()
+    get_etf_fund_list_bulk.cache_clear()
+    get_purchase_limit_data.cache_clear()
 
 
 def invalidate_all_for_fund(*, code: str, market_type: str, device_id: str | None = None) -> None:

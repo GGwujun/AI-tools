@@ -5,8 +5,9 @@ from contextlib import asynccontextmanager
 from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import (
     API_HOST,
@@ -23,7 +24,7 @@ from app.config import (
 from app.database import engine, init_database
 from app.models.fund import HealthResponse
 from app.application.trading_calendar_service import trading_calendar_service
-from app.routers import arbitrage, auth, bond, etf, lof, opportunities, save, system
+from app.routers import arbitrage, auth, bond, etf, lof, notification, opportunities, save, system
 from app.services import save_service
 
 
@@ -57,7 +58,7 @@ def _is_cn_market_open(now: datetime | None = None) -> bool:
 def _current_sync_interval_seconds() -> int:
     current = datetime.now(CN_TZ)
     if not _is_cn_market_open(current):
-      return CLOSED_MARKET_SYNC_INTERVAL_SECONDS
+        return CLOSED_MARKET_SYNC_INTERVAL_SECONDS
 
     current_time = current.time()
     if AM_BURST_SESSION[0] <= current_time <= AM_BURST_SESSION[1]:
@@ -67,16 +68,21 @@ def _current_sync_interval_seconds() -> int:
     return OPEN_MARKET_SYNC_INTERVAL_SECONDS
 
 
+import threading
+
+_stop_sync_event = threading.Event()
+
+
 async def _background_sync_loop(stop_event: asyncio.Event) -> None:
     if SYNC_ON_STARTUP:
-        await asyncio.to_thread(save_service.refresh_all_data)
+        await asyncio.to_thread(save_service.refresh_all_data, _stop_sync_event)
 
     while not stop_event.is_set():
         try:
             await asyncio.wait_for(stop_event.wait(), timeout=_current_sync_interval_seconds())
             break
         except asyncio.TimeoutError:
-            await asyncio.to_thread(save_service.refresh_all_data)
+            await asyncio.to_thread(save_service.refresh_all_data, _stop_sync_event)
 
 
 @asynccontextmanager
@@ -87,6 +93,7 @@ async def lifespan(_: FastAPI):
     try:
         yield
     finally:
+        _stop_sync_event.set()
         stop_event.set()
         if sync_task is not None:
             sync_task.cancel()
@@ -104,6 +111,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+@app.exception_handler(Exception)
+async def _global_exception_handler(_: Request, exc: Exception) -> JSONResponse:
+    import logging
+    logging.getLogger(__name__).error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS or ["*"],
@@ -119,6 +133,7 @@ app.include_router(auth.router)
 app.include_router(save.router)
 app.include_router(bond.router)
 app.include_router(opportunities.router)
+app.include_router(notification.router)
 app.include_router(system.router)
 
 
@@ -143,6 +158,10 @@ async def health_check():
 
 
 if __name__ == "__main__":
+    import signal
     import uvicorn
+
+    # Ctrl+C 立即退出，不等待后台线程
+    signal.signal(signal.SIGINT, lambda *_: __import__("os")._exit(0))
 
     uvicorn.run("main:app", host=API_HOST, port=API_PORT, reload=DEBUG)

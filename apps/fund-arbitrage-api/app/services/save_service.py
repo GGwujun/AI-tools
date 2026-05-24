@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from datetime import date, datetime, timedelta
-from typing import Iterator
+import threading
+from datetime import date, datetime, timedelta, timezone
 
 import logging
 import time
-
-from sqlalchemy import select
 
 from app.application.fund_refresh_service import refresh_snapshot_detail
 from app.application import arbitrage_backfill_service
 from app.application.cache_invalidation_service import invalidate_all_for_fund, invalidate_opportunity_list_cache, invalidate_save_detail_cache
 from app.application.task_run_service import finish_task, start_task
-from app.config import DETAIL_STALE_SECONDS
-from app.database import SessionLocal
+from app.config import DETAIL_STALE_SECONDS, DETAIL_BUDGET_SECONDS
 from app.config import DETAIL_CACHE_TTL_SECONDS
+from app.infrastructure.db.session import session_scope
+from sqlalchemy import select
+from app.infrastructure.utils import safe_float as _safe_float
+from app.infrastructure.providers.akshare_cleaner import clear_akshare_session
 from app.db_models import FundNavHistory, FundSnapshot, SyncStatus, UserFavorite, UserSettings
 from app.infrastructure.cache.cache_service import cache_service
 from app.models.save import (
@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 TAB_META = {
     "stock_lof": SaveTabItem(
         key="stock_lof",
-        name="股票型LOF",
+        name="股债型LOF",
         description="主动权益类和普通 LOF，适合观察折溢价与申购状态。",
         note="灰底表示当日可能暂停申购，请以基金公告为准。",
     ),
@@ -126,19 +126,6 @@ def _normalize_tab(tab: str) -> str:
     return tab if tab in TAB_META else "stock_lof"
 
 
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-
-
 def _format_datetime(value: datetime | None) -> str | None:
     return value.strftime("%Y-%m-%d %H:%M:%S") if value else None
 
@@ -165,13 +152,15 @@ def _format_change(value: float | None) -> str:
     return f"{sign}{value:.2f}%"
 
 
-def _safe_float(value: object) -> float | None:
-    try:
-        if value is None:
-            return None
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+def _format_amount(value: float | None) -> str:
+    if value is None:
+        return "--"
+    amount = float(value)
+    if amount >= 100_000_000:
+        return f"{amount / 100_000_000:.1f}亿"
+    if amount >= 10_000:
+        return f"{amount / 10_000:.1f}万"
+    return f"{amount:.0f}"
 
 
 def _get_or_create_sync_status(session) -> SyncStatus:
@@ -203,7 +192,7 @@ def _get_or_create_user_settings(session, device_id: str) -> UserSettings:
             device_id=device_id,
             basic_settings=DEFAULT_BASIC_SETTINGS.copy(),
             advanced_settings=DEFAULT_ADVANCED_SETTINGS.copy(),
-            updated_at=datetime.utcnow(),
+            updated_at=datetime.now(timezone.utc),
         )
         session.add(record)
         session.flush()
@@ -226,14 +215,9 @@ def _build_market_lookup(records: list[dict]) -> dict[str, dict]:
 
 
 def _collect_market_records() -> dict[str, dict[str, dict]]:
-    # 清除缓存，确保获取最新数据
-    fund_service.get_lof_fund_list_bulk.cache_clear()
-    fund_service.get_etf_fund_list_bulk.cache_clear()
-    fund_service.get_purchase_limit_data.cache_clear()
-    # 清除其他缓存帧（与现有 _estimated_nav_frame 等保持一致）
-    fund_service._estimated_nav_frame.cache_clear()
-    fund_service._etf_spot_frame.cache_clear()
-    fund_service._fund_fee_frame.cache_clear()
+    """Fetch all market data from bulk APIs (TTLCache auto-expires stale data)."""
+    # Clear stale AkShare connection pools before data fetch
+    clear_akshare_session()
 
     lof_df = fund_service.get_lof_fund_list_bulk()
     etf_df = fund_service.get_etf_fund_list_bulk()
@@ -289,6 +273,7 @@ def _snapshot_to_item(snapshot: FundSnapshot, favorite_pairs: set[tuple[str, str
         market_price_display=_format_price(snapshot.market_price),
         market_change_pct=snapshot.market_change_pct,
         market_change_display=_format_change(snapshot.market_change_pct),
+        amount_display=_format_amount(snapshot.amount),
         nav_price=snapshot.nav_price,
         nav_price_display=_format_price(snapshot.nav_price),
         premium_rate=snapshot.premium_rate,
@@ -332,7 +317,7 @@ def _bond_to_fund_item(code: str, name: str, price: float | None, premium_rate: 
         fund_state="可继续观察",
         fund_type="可转债",
         is_no_gap=False,
-        market_time=_format_datetime(datetime.utcnow()),
+        market_time=_format_datetime(datetime.now(timezone.utc)),
         nav_date=None,
     )
 
@@ -345,7 +330,7 @@ def _bond_watchlist_item(code: str, name: str, price: float | None, premium_rate
         market_type="bond",
         change=_format_premium(premium_rate),
         subtitle="可继续跟踪",
-        time=_format_datetime(datetime.utcnow()) or "--",
+        time=_format_datetime(datetime.now(timezone.utc)) or "--",
         badge="重点观察",
         chart=[14, 17, 19, 18, 21, 23, 25, 27],
         chart_color="#20a066",
@@ -371,7 +356,24 @@ def _bond_list_items(limit: int = 8, favorite_codes: set[str] | None = None) -> 
 
 
 def _special_notes_for_funds(funds: list[FundSnapshot]) -> list[str]:
-    return [f"{fund.name}({fund.code}) {fund.fund_state}" for fund in funds if fund.is_paused and fund.fund_state]
+    notes: list[str] = []
+    for fund in funds:
+        if not fund.is_paused or not fund.fund_state:
+            continue
+
+        state = fund.fund_state
+        if "暂停申购" in state and "暂停赎回" in state:
+            compact_state = "暂停申赎"
+        elif "暂停申购" in state:
+            compact_state = "暂停申购"
+        elif "暂停赎回" in state:
+            compact_state = "暂停赎回"
+        else:
+            compact_state = "状态变化"
+
+        notes.append(f"{fund.name} {compact_state}")
+
+    return notes
 
 
 def _sort_snapshots(funds: list[FundSnapshot]) -> list[FundSnapshot]:
@@ -390,7 +392,7 @@ def _update_summary_fields(snapshot: FundSnapshot, market_record: dict, market_t
     snapshot.market = market_record.get("market", "")
     snapshot.market_price = _safe_float(market_record.get("market_price"))
     snapshot.market_change_pct = _safe_float(market_record.get("market_change_pct"))
-    snapshot.market_time = datetime.utcnow()
+    snapshot.market_time = datetime.now(timezone.utc)
     snapshot.is_no_gap = bool(market_record.get("is_no_gap"))
     # 批量行情扩展字段
     snapshot.volume = _safe_float(market_record.get("volume"))
@@ -411,7 +413,7 @@ def _update_summary_fields(snapshot: FundSnapshot, market_record: dict, market_t
     if not snapshot.fund_type:
         snapshot.fund_type = market_type
     snapshot.tab_tags = _infer_tab_tags(snapshot.name, market_type, snapshot.is_no_gap, snapshot.fund_type)
-    snapshot.updated_at = datetime.utcnow()
+    snapshot.updated_at = datetime.now(timezone.utc)
 
 
 def _upsert_summary_snapshot(session, market_type: str, code: str, market_record: dict) -> FundSnapshot:
@@ -463,43 +465,67 @@ def _select_warm_targets(session) -> list[FundSnapshot]:
     return selected
 
 
-def refresh_all_data() -> SaveSyncStatus:
+def refresh_all_data(stop_event: threading.Event | None = None) -> SaveSyncStatus:
     task_id = start_task(task_name="refresh_all_data", message="syncing fund data")
     with session_scope() as session:
         sync_status = _get_or_create_sync_status(session)
         sync_status.status = "running"
         sync_status.message = "正在同步基金数据"
-        sync_status.last_started_at = datetime.utcnow()
+        sync_status.last_started_at = datetime.now(timezone.utc)
 
     synced_count = 0
     try:
         market_records = _collect_market_records()
+        if stop_event and stop_event.is_set():
+            logger.info("refresh_all_data 收到停止信号，提前退出")
+            finish_task(task_id=task_id, status="cancelled", processed_count=synced_count, failed_count=0, message="stopped by shutdown")
+            return _sync_status_model(sync_status)
         with session_scope() as session:
             for market_type, records in market_records.items():
                 for code, record in records.items():
+                    if stop_event and stop_event.is_set():
+                        logger.info("refresh_all_data 收到停止信号，提前退出")
+                        break
                     _upsert_summary_snapshot(session, market_type, code, record)
                     synced_count += 1
 
+            if stop_event and stop_event.is_set():
+                sync_status = _get_or_create_sync_status(session)
+                sync_status.status = "cancelled"
+                sync_status.message = "服务停止，同步中断"
+                sync_status.last_finished_at = datetime.now(timezone.utc)
+                result = _sync_status_model(sync_status)
+                finish_task(task_id=task_id, status="cancelled", processed_count=synced_count, failed_count=0, message="stopped by shutdown")
+                return result
+
             warm_targets = _select_warm_targets(session)
-            detail_budget = 300  # 5 分钟总时间预算
+            detail_budget = DETAIL_BUDGET_SECONDS  # configurable via env DETAIL_BUDGET_SECONDS
             detail_start = time.monotonic()
             for i, snapshot in enumerate(warm_targets):
+                if stop_event and stop_event.is_set():
+                    logger.info("refresh_all_data 收到停止信号，提前退出")
+                    break
                 elapsed = time.monotonic() - detail_start
                 if elapsed > detail_budget:
                     logger.warning(f"Detail refresh 时间预算耗尽 ({elapsed:.1f}s), 跳过剩余 {len(warm_targets) - i} 只基金")
                     break
                 record = market_records.get(snapshot.market_type, {}).get(snapshot.code)
                 _apply_detail_fields(session, snapshot, record)
+                if i < len(warm_targets) - 1:
+                    time.sleep(0.3)
 
             sync_status = _get_or_create_sync_status(session)
             sync_status.status = "success"
             sync_status.message = "基金数据同步完成"
-            sync_status.last_success_at = datetime.utcnow()
-            sync_status.last_finished_at = datetime.utcnow()
+            sync_status.last_success_at = datetime.now(timezone.utc)
+            sync_status.last_finished_at = datetime.now(timezone.utc)
             sync_status.last_synced_count = synced_count
             result = _sync_status_model(sync_status)
         invalidate_opportunity_list_cache()
         arbitrage_backfill_service.rebuild_all()
+        # Send notifications after sync completes
+        from app.infrastructure.notification.notification_service import check_and_notify
+        check_and_notify()
         finish_task(task_id=task_id, status="success", processed_count=synced_count, failed_count=0, message="fund data sync finished")
         return result
     except Exception as exc:
@@ -508,7 +534,7 @@ def refresh_all_data() -> SaveSyncStatus:
             sync_status = _get_or_create_sync_status(session)
             sync_status.status = "failed"
             sync_status.message = f"同步失败: {exc}"
-            sync_status.last_finished_at = datetime.utcnow()
+            sync_status.last_finished_at = datetime.now(timezone.utc)
             sync_status.last_synced_count = synced_count
             return _sync_status_model(sync_status)
 
@@ -521,7 +547,10 @@ def get_sync_status() -> SaveSyncStatus:
 def _detail_is_stale(snapshot: FundSnapshot) -> bool:
     if snapshot.detail_updated_at is None:
         return True
-    return snapshot.detail_updated_at < datetime.utcnow() - timedelta(seconds=DETAIL_STALE_SECONDS)
+    updated_at = snapshot.detail_updated_at
+    if updated_at.tzinfo is None:
+        updated_at = updated_at.replace(tzinfo=timezone.utc)
+    return updated_at < datetime.now(timezone.utc) - timedelta(seconds=DETAIL_STALE_SECONDS)
 
 
 def refresh_single_fund(code: str, market_type: str) -> None:
@@ -549,7 +578,9 @@ def get_fund_list(tab: str, device_id: str, page: int = 1, page_size: int = 20) 
     tab = _normalize_tab(tab)
 
     with session_scope() as session:
-        snapshots = session.execute(select(FundSnapshot)).scalars().all()
+        # tab_tags is a JSON array column, so SQL-level filtering is impractical;
+        # load with a reasonable upper bound to prevent unbounded growth.
+        snapshots = session.execute(select(FundSnapshot).limit(2000)).scalars().all()
         favorite_pairs = _favorite_pairs(session, device_id)
         favorite_codes = {code for code, _market_type in favorite_pairs}
 
@@ -565,7 +596,7 @@ def get_fund_list(tab: str, device_id: str, page: int = 1, page_size: int = 20) 
                 tabs=list(TAB_META.values()),
                 funds=paged_bonds,
                 special_notes=["可转债机会仅供参考，请结合公告、流动性与条款变化综合观察。"],
-                update_time=_format_datetime(datetime.utcnow()),
+                update_time=_format_datetime(datetime.now(timezone.utc)),
                 page=page,
                 page_size=page_size,
                 total=total,
@@ -637,8 +668,11 @@ def get_fund_detail(code: str, market_type: str, device_id: str) -> SaveFundDeta
         if snapshot is None:
             return None
 
-    if _detail_is_stale(snapshot):
-        refresh_single_fund(code, market_type)
+    need_refresh = _detail_is_stale(snapshot)
+    if need_refresh:
+        # 异步刷新：先返回现有数据，后台更新后下次请求即可拿到新数据
+        import threading
+        threading.Thread(target=refresh_single_fund, args=(code, market_type), daemon=True).start()
 
     with session_scope() as session:
         snapshot = session.execute(
@@ -749,7 +783,7 @@ def get_settings(device_id: str) -> SettingsResponse:
         record = _get_or_create_user_settings(session, device_id)
         return SettingsResponse(
             success=True,
-            update_time=_format_datetime(record.updated_at) or datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            update_time=_format_datetime(record.updated_at) or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             basic_settings=BasicSettings(**(record.basic_settings or DEFAULT_BASIC_SETTINGS)),
             advanced_settings=AdvancedSettings(**(record.advanced_settings or DEFAULT_ADVANCED_SETTINGS)),
         )
@@ -759,7 +793,7 @@ def update_basic_settings(device_id: str, payload: BasicSettings) -> SettingsRes
     with session_scope() as session:
         record = _get_or_create_user_settings(session, device_id)
         record.basic_settings = payload.model_dump()
-        record.updated_at = datetime.utcnow()
+        record.updated_at = datetime.now(timezone.utc)
     return get_settings(device_id)
 
 
@@ -767,7 +801,7 @@ def update_advanced_settings(device_id: str, payload: AdvancedSettings) -> Setti
     with session_scope() as session:
         record = _get_or_create_user_settings(session, device_id)
         record.advanced_settings = payload.model_dump()
-        record.updated_at = datetime.utcnow()
+        record.updated_at = datetime.now(timezone.utc)
     return get_settings(device_id)
 
 
@@ -805,7 +839,8 @@ def update_favorite(device_id: str, code: str, market_type: str, starred: bool) 
 def get_home(tab: str, device_id: str) -> SaveHomeResponse:
     current_tab = _normalize_tab(tab or "stock_lof")
     with session_scope() as session:
-        all_snapshots = session.execute(select(FundSnapshot)).scalars().all()
+        # tab_tags is a JSON array column; load with a reasonable upper bound.
+        all_snapshots = session.execute(select(FundSnapshot).limit(2000)).scalars().all()
         favorite_pairs = _favorite_pairs(session, device_id)
         favorite_codes = {code for code, _market_type in favorite_pairs}
         sync_status = _sync_status_model(session.get(SyncStatus, SYNC_JOB_NAME))
@@ -818,7 +853,7 @@ def get_home(tab: str, device_id: str) -> SaveHomeResponse:
         featured_funds = (_sort_snapshots([item for item in all_snapshots if item.premium_rate is not None and item.premium_rate > 0])[:3]) or stock_lof[:2]
         featured = [*_snapshot_to_item_list(featured_funds, favorite_pairs), *bond_items][:4]
         sections = [
-            SaveSection(key="stock_lof", title="股票型LOF 今日机会", items=[_snapshot_to_item(item, favorite_pairs) for item in stock_lof]),
+            SaveSection(key="stock_lof", title="股债型LOF 今日机会", items=[_snapshot_to_item(item, favorite_pairs) for item in stock_lof]),
             SaveSection(key="index_lof", title="指数型LOF 今日机会", items=[_snapshot_to_item(item, favorite_pairs) for item in index_lof]),
             SaveSection(key="etf", title="无时差ETF 今日机会", items=[_snapshot_to_item(item, favorite_pairs) for item in etf_items]),
             SaveSection(key="bond", title="可转债 今日机会", items=bond_items),
@@ -826,7 +861,7 @@ def get_home(tab: str, device_id: str) -> SaveHomeResponse:
 
         return SaveHomeResponse(
             success=True,
-            update_time=sync_status.last_success_at or datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            update_time=sync_status.last_success_at or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             risk_notice="以下内容基于公开数据与规则模型整理，仅供参考。",
             current_tab=current_tab,
             tabs=list(TAB_META.values()),
@@ -848,7 +883,8 @@ def _snapshot_to_item_list(items: list[FundSnapshot], favorite_pairs: set[tuple[
 
 def get_watchlist(device_id: str) -> SaveWatchlistResponse:
     with session_scope() as session:
-        snapshots = session.execute(select(FundSnapshot)).scalars().all()
+        # tab_tags is a JSON array column; load with a reasonable upper bound.
+        snapshots = session.execute(select(FundSnapshot).limit(2000)).scalars().all()
         favorite_pairs = _favorite_pairs(session, device_id)
         watched = [item for item in snapshots if (item.code, item.market_type) in favorite_pairs]
         watched = _sort_snapshots(watched)
@@ -884,7 +920,7 @@ def get_watchlist(device_id: str) -> SaveWatchlistResponse:
                     )
         return SaveWatchlistResponse(
             success=True,
-            update_time=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            update_time=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             summary={
                 "funds": len(watched),
                 "bonds": len([item for item in items if item.type == "bond"]),
@@ -896,10 +932,10 @@ def get_watchlist(device_id: str) -> SaveWatchlistResponse:
 
 
 def get_calendar(filter_key: str, device_id: str) -> SaveCalendarResponse:
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     return SaveCalendarResponse(
         success=True,
-        update_time=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        update_time=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         month=today.strftime("%Y年%m月"),
         filters=[
             SaveCalendarFilter(key="all", label="全部"),
@@ -989,7 +1025,7 @@ def get_analysis(tab: str, device_id: str) -> SaveAiAnalysisResponse:
         current_tab=current_tab,
         title=title,
         content=content,
-        source=SaveAiSource(author="系统规则引擎", time=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), likes=0, dislikes=0),
+        source=SaveAiSource(author="系统规则引擎", time=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), likes=0, dislikes=0),
         keywords=keywords,
     )
 
@@ -999,7 +1035,7 @@ def get_filter_options(device_id: str) -> SaveFilterOptionsResponse:
         success=True,
         groups=[
             SaveFilterOptionGroup(title="机会类型", options=["全部", "LOF", "ETF", "QDII", "可转债"], selected=["全部"]),
-            SaveFilterOptionGroup(title="一级分类", options=["全部", "股票型LOF", "指数型LOF", "无时差ETF"], selected=["股票型LOF"]),
+            SaveFilterOptionGroup(title="一级分类", options=["全部", "股债型LOF", "指数型LOF", "无时差ETF"], selected=["股债型LOF"]),
             SaveFilterOptionGroup(title="状态", options=["全部", "可申购", "限额开放", "暂停申购", "可T+0"], selected=["可申购"]),
             SaveFilterOptionGroup(title="风险评级", options=["全部", "低风险", "中风险", "高风险"], selected=["中风险"]),
             SaveFilterOptionGroup(title="到账周期", options=["全部", "T+1", "T+2", "T+3", "更长"], selected=["全部"]),
@@ -1015,7 +1051,7 @@ def get_bond_detail(code: str) -> BondDetailResponse:
     if item is None:
         return BondDetailResponse(
             success=True,
-            update_time=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            update_time=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             bond=BondDetailBond(
                 code=code,
                 name="--",
@@ -1043,7 +1079,7 @@ def get_bond_detail(code: str) -> BondDetailResponse:
     price_text = f"{item.reference_price:.2f}" if item.reference_price is not None else "--"
     return BondDetailResponse(
         success=True,
-        update_time=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        update_time=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         bond=BondDetailBond(
             code=item.code,
             name=item.name,

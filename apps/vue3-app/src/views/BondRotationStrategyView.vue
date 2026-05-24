@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getDeviceId } from '@/lib/device'
 import { fetchBondDetail, updateFavorite, type BondDetailResponse } from '@/lib/save-api'
@@ -17,14 +17,38 @@ const error = ref('')
 const detail = ref<BondDetailResponse | null>(null)
 const currentTab = ref<BondTabKey>('core')
 
-const tabs: Array<{ key: BondTabKey; label: string }> = [
-  { key: 'core', label: '核心机会' },
-  { key: 'risk', label: '强赎风险' },
+const tabs: Array<{ key: BondTabKey; label: string; routeName?: string }> = [
+  { key: 'core', label: '当前结论', routeName: 'bond-detail-core' },
+  { key: 'risk', label: '强赎风险', routeName: 'bond-detail-risk' },
   { key: 'strategy', label: '策略参考' },
   { key: 'stock', label: '正股联动' },
 ]
 
-function initCurrentTab() {
+const favoriteActive = computed(() => !!detail.value && lofStore.favoriteSet.has(detail.value.bond.code))
+const riskTitle = computed(() => {
+  if (!detail.value) return '当前未见强赎压力'
+  const redeemStatus = detail.value.bond.redeem_status || ''
+  if (redeemStatus.includes('预警')) return '当前接近强赎预警'
+  if (redeemStatus.includes('公告')) return '当前已公告强赎，请重点关注时间节点'
+  return '当前未见强赎压力'
+})
+
+const metricRows = computed(() => {
+  if (!detail.value) return []
+  return [
+    ['转债价格', detail.value.bond.price],
+    ['转股价值', detail.value.bond.convert_value],
+    ['转股溢价率', detail.value.bond.premium_rate],
+    ['双低值', detail.value.bond.dual_low],
+    ['纯债价值', detail.value.bond.pure_bond_value],
+    ['到期收益', detail.value.bond.maturity_yield],
+    ['剩余规模', detail.value.bond.scale],
+    ['剩余年限', detail.value.bond.remain_years],
+    ['强赎状态', detail.value.bond.redeem_status],
+  ]
+})
+
+function initTab() {
   currentTab.value = route.name === 'bond-detail-risk' ? 'risk' : 'core'
 }
 
@@ -40,22 +64,34 @@ async function loadDetail() {
   }
 }
 
+function switchTab(tab: { key: BondTabKey; routeName?: string }) {
+  currentTab.value = tab.key
+  if (tab.routeName) {
+    router.replace({ name: tab.routeName, query: route.query })
+  }
+}
+
 async function toggleFavorite() {
   if (!detail.value) return
-
-  const code = detail.value.bond.code
-  const starred = !lofStore.favoriteSet.has(code)
-
+  const starred = !favoriteActive.value
   try {
-    await updateFavorite(code, 'bond', deviceId, starred)
-    lofStore.toggleFavorite(code)
+    await updateFavorite(detail.value.bond.code, 'bond', deviceId, starred)
+    lofStore.toggleFavorite(detail.value.bond.code)
   } catch (requestError) {
     error.value = requestError instanceof Error ? requestError.message : '更新自选失败'
   }
 }
 
+function toggleReminder(type: 'redeem' | 'abnormal') {
+  if (!detail.value) return
+  lofStore.toggleReminder(`${detail.value.bond.code}:${type}`)
+}
+
+watch(() => route.query.code, () => void loadDetail())
+watch(() => route.name, initTab)
+
 onMounted(() => {
-  initCurrentTab()
+  initTab()
   void loadDetail()
 })
 </script>
@@ -63,169 +99,436 @@ onMounted(() => {
 <template>
   <div class="page">
     <header class="topbar">
-      <button class="back" @click="router.back()"></button>
-      <div class="meta">
-        <h1>{{ detail?.bond.name || '可转债详情' }}</h1>
-        <p>{{ detail?.bond.code || '--' }} ｜ {{ detail?.bond.tags.join(' ｜ ') || '--' }}</p>
+      <button class="nav-btn" aria-label="返回" @click="router.back()">‹</button>
+      <div class="title-block">
+        <h1>转债详情</h1>
+        <p>本页内容仅供参考，不构成投资建议</p>
       </div>
-      <div class="icons">
-        <button class="star" :class="{ active: detail && lofStore.favoriteSet.has(detail.bond.code) }" @click="toggleFavorite"></button>
-        <button class="share"></button>
-      </div>
+      <button class="ghost-btn" @click="toggleFavorite">{{ favoriteActive ? '已自选' : '自选' }}</button>
     </header>
 
-    <nav class="tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        :class="{ active: currentTab === tab.key }"
-        @click="currentTab = tab.key"
-      >
-        {{ tab.label }}
-      </button>
-    </nav>
+    <section v-if="error" class="state-card">{{ error }}</section>
+    <section v-else-if="loading" class="state-card">正在加载转债详情...</section>
 
-    <template v-if="currentTab === 'core'">
-      <section v-if="error" class="notice-card"><p>{{ error }}</p></section>
-      <section v-else-if="loading" class="notice-card"><p>正在加载转债详情...</p></section>
-      <section v-else class="notice-card">
-        <div class="tag">当前处于可关注双低区间，仅供参考</div>
-        <p>{{ detail?.conclusion.summary }}</p>
-        <p>{{ detail?.conclusion.risk }}</p>
-      </section>
-      <section class="grid-card">
-        <div
-          v-for="item in [
-            ['转债价格', detail?.bond.price],
-            ['转股价值', detail?.bond.convert_value],
-            ['转股溢价率', detail?.bond.premium_rate],
-            ['双低值', detail?.bond.dual_low],
-            ['纯债价值', detail?.bond.pure_bond_value],
-            ['到期收益率', detail?.bond.maturity_yield],
-            ['剩余规模', detail?.bond.scale],
-            ['剩余年限', detail?.bond.remain_years],
-            ['强赎状态', detail?.bond.redeem_status],
-          ]"
-          :key="item[0]"
-          class="cell"
-        >
-          <span>{{ item[0] }}</span>
-          <strong>{{ item[1] }}</strong>
-        </div>
-      </section>
-    </template>
-
-    <template v-else-if="currentTab === 'risk'">
-      <section class="risk-panel">
-        <div class="risk-banner">
+    <template v-else-if="detail">
+      <section class="hero-card">
+        <div class="hero-head">
           <div>
-            <span>强赎风险等级</span>
-            <strong>低风险</strong>
+            <h2>{{ detail.bond.name }}</h2>
+            <p>{{ detail.bond.code }} · 正股 {{ detail.bond.stock_name }}</p>
           </div>
-          <div class="shield"></div>
-        </div>
-        <div class="checklist">
-          <div v-for="item in detail?.risk_items || []" :key="item.label" class="row">
-            <span>{{ item.label }}</span>
-            <strong>{{ item.value }}</strong>
+          <div class="hero-price">
+            <span>双低值</span>
+            <strong>{{ detail.bond.dual_low }}</strong>
           </div>
         </div>
-        <div class="dates">
-          <div><span>最近观察日</span><strong>{{ detail?.bond.last_trade_date }}（15天后）</strong></div>
-          <div><span>最近转股日</span><strong>{{ detail?.bond.last_convert_date }}（16天后）</strong></div>
+        <div class="tag-row">
+          <span v-for="tag in detail.bond.tags" :key="tag" class="tag">{{ tag }}</span>
+        </div>
+        <div class="hero-actions">
+          <button class="primary-btn" @click="toggleFavorite">{{ favoriteActive ? '已加入自选' : '加入自选' }}</button>
+          <button class="secondary-btn" @click="toggleReminder('redeem')">开启强赎提醒</button>
         </div>
       </section>
+
+      <nav class="tabs">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          :class="['tab-btn', { active: currentTab === tab.key }]"
+          @click="switchTab(tab)"
+        >
+          {{ tab.label }}
+        </button>
+      </nav>
+
+      <template v-if="currentTab === 'core'">
+        <section class="panel">
+          <div class="panel-head">
+            <h3>当前结论</h3>
+            <span class="panel-note">条件化参考</span>
+          </div>
+          <div class="conclusion-card">
+            <strong>{{ detail.conclusion.title }}</strong>
+            <p>{{ detail.conclusion.summary }}</p>
+            <p>{{ detail.conclusion.risk }}</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h3>实时数据</h3>
+          </div>
+          <div class="data-grid">
+            <div v-for="row in metricRows" :key="row[0]" class="data-card">
+              <span>{{ row[0] }}</span>
+              <strong>{{ row[1] }}</strong>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <template v-else-if="currentTab === 'risk'">
+        <section class="panel risk-panel">
+          <div class="panel-head">
+            <h3>强赎风险</h3>
+          </div>
+          <div class="conclusion-card risk-banner">
+            <strong>{{ riskTitle }}</strong>
+            <p>最后交易日：{{ detail.bond.last_trade_date }}</p>
+            <p>最后转股日：{{ detail.bond.last_convert_date }}</p>
+          </div>
+          <div class="info-list">
+            <div v-for="item in detail.risk_items" :key="item.label" class="info-row">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <template v-else-if="currentTab === 'strategy'">
+        <section class="strategy-stack">
+          <article v-for="item in detail.strategy_cards" :key="item.title" class="strategy-card">
+            <div class="strategy-head">
+              <h3>{{ item.title }}</h3>
+              <span class="strategy-tag">仅供参考</span>
+            </div>
+            <p>{{ item.summary }}</p>
+            <div class="strategy-grid">
+              <div>
+                <span>仓位参考</span>
+                <strong>{{ item.position }}</strong>
+              </div>
+              <div>
+                <span>退出参考</span>
+                <strong>{{ item.exit }}</strong>
+              </div>
+              <div class="span-2">
+                <span>风险提示</span>
+                <strong>{{ item.risk }}</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+      </template>
+
+      <template v-else>
+        <section class="panel">
+          <div class="panel-head">
+            <h3>正股联动</h3>
+            <span class="panel-note">结合正股波动一起观察</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-card">
+              <span>正股名称</span>
+              <strong>{{ detail.bond.stock_name }}</strong>
+            </div>
+            <div class="data-card">
+              <span>波动标签</span>
+              <strong>高弹性</strong>
+            </div>
+            <div class="data-card">
+              <span>观察重点</span>
+              <strong>双低与强赎时间节点</strong>
+            </div>
+            <div class="data-card span-2">
+              <span>AI 解读</span>
+              <strong class="regular">正股波动较强时，转债弹性和强赎节奏都需要同步跟踪，仅供参考。</strong>
+            </div>
+          </div>
+        </section>
+      </template>
     </template>
 
-    <template v-else-if="currentTab === 'strategy'">
-      <section class="strategy-box">
-        <article v-for="item in detail?.strategy_cards || []" :key="item.title" class="strategy-card">
-          <div class="head-row">
-            <h2>{{ item.title }}</h2>
-            <span>仅供参考</span>
-          </div>
-          <p>{{ item.summary }}</p>
-          <div class="meta-list">
-            <div><span>仓位参考</span><strong>{{ item.position }}</strong></div>
-            <div><span>退出参考</span><strong>{{ item.exit }}</strong></div>
-            <div><span>风险提示</span><strong>{{ item.risk }}</strong></div>
-          </div>
-        </article>
-      </section>
-    </template>
-
-    <template v-else>
-      <section class="notice-card">
-        <div class="tag">正股联动</div>
-        <p>正股名称：{{ detail?.bond.stock_name || '--' }}</p>
-        <p>当前更适合结合正股波动与强赎时间节点一起观察，仅供参考。</p>
-      </section>
-      <section class="grid-card stock-grid">
-        <div class="cell">
-          <span>正股涨跌幅</span>
-          <strong class="up">+2.18%</strong>
-        </div>
-        <div class="cell">
-          <span>所属行业</span>
-          <strong>电子制造</strong>
-        </div>
-        <div class="cell">
-          <span>波动标签</span>
-          <strong>高弹性</strong>
-        </div>
-      </section>
-    </template>
-
-    <footer class="footer">
-      <button>加入自选</button>
-      <button>开启提醒</button>
-      <button class="primary">{{ currentTab === 'risk' ? '查看策略参考' : '查看风险参考' }}</button>
+    <footer class="bottom-bar">
+      <button class="secondary-btn" @click="toggleFavorite">{{ favoriteActive ? '已加入自选' : '加入自选' }}</button>
+      <button class="secondary-btn" @click="toggleReminder('abnormal')">开启异动提醒</button>
+      <button class="primary-btn" @click="switchTab(tabs.find((item) => item.key === 'risk') || tabs[0])">查看强赎风险</button>
     </footer>
   </div>
 </template>
 
 <style scoped>
-.page { min-height:100vh; padding: calc(14px + env(safe-area-inset-top)) 16px 92px; background: var(--lof-bg); }
-.topbar { display:grid; grid-template-columns:18px 1fr auto; gap:12px; align-items:start; }
-.back, .star, .share { border:0; background:none; position:relative; width:18px; height:18px; }
-.back::before { content:''; position:absolute; left:2px; top:7px; width:10px; height:10px; border-left:2px solid #1f3348; border-bottom:2px solid #1f3348; transform:rotate(45deg); }
-.meta h1 { font-size:24px; font-weight:700; }
-.meta p { margin-top:6px; font-size:11px; color:var(--lof-muted); }
-.icons { display:flex; gap:12px; }
-.star { clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 92%, 50% 72%, 21% 92%, 32% 57%, 2% 35%, 39% 35%); background:#fff; border:1px solid #c8d7e4; }
-.star.active { background:#f6d76d; border-color:#f6d76d; }
-.share::before { content:''; position:absolute; inset:2px; border:2px solid #1f3348; border-radius:4px; }
-.share::after { content:''; position:absolute; right:2px; top:0; width:8px; height:8px; border-top:2px solid #1f3348; border-right:2px solid #1f3348; }
-.tabs { display:flex; gap:18px; margin-top:16px; padding-bottom:10px; overflow:auto; }
-.tabs button { position:relative; border:0; background:none; font-size:13px; color:var(--lof-muted); white-space:nowrap; }
-.tabs button.active { color:var(--lof-primary-deep); font-weight:700; }
-.tabs button.active::after { content:''; position:absolute; left:0; right:0; bottom:-8px; height:3px; border-radius:999px; background:var(--lof-primary); }
-.notice-card, .risk-panel, .strategy-card { margin-top:14px; background:#fff; border-radius:22px; padding:16px; box-shadow:var(--lof-shadow); }
-.tag { display:inline-block; padding:4px 8px; border-radius:999px; background:#edf8f5; color:var(--lof-primary-deep); font-size:10px; font-weight:700; }
-.notice-card p { margin-top:10px; font-size:13px; line-height:1.7; color:#55697f; }
-.grid-card { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px; }
-.stock-grid { grid-template-columns:repeat(3,1fr); }
-.cell { padding:12px; border-radius:16px; background:#fff; box-shadow:var(--lof-shadow); }
-.cell span { display:block; font-size:11px; color:var(--lof-muted); }
-.cell strong { display:block; margin-top:6px; font-size:20px; }
-.up { color:var(--lof-danger); }
-.risk-banner { display:flex; align-items:center; justify-content:space-between; padding:14px; border-radius:18px; background:linear-gradient(135deg, #f6fbff 0%, #edf8f5 100%); }
-.risk-banner span { display:block; font-size:12px; color:var(--lof-muted); }
-.risk-banner strong { display:block; margin-top:6px; font-size:30px; color:var(--lof-primary-deep); }
-.shield { width:56px; height:64px; background:linear-gradient(180deg, #dff9f2 0%, #7fd8c6 100%); clip-path:polygon(50% 0, 88% 14%, 88% 54%, 50% 100%, 12% 54%, 12% 14%); }
-.checklist { margin-top:14px; }
-.row, .dates div, .meta-list div { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--lof-border); font-size:13px; gap:12px; }
-.row strong { color:var(--lof-primary-deep); }
-.dates { margin-top:6px; }
-.dates span, .meta-list span { color:var(--lof-muted); }
-.dates strong, .meta-list strong { font-size:13px; text-align:right; }
-.strategy-box { display:flex; flex-direction:column; gap:14px; margin-top:14px; }
-.head-row { display:flex; justify-content:space-between; align-items:center; }
-.head-row h2 { font-size:18px; }
-.head-row span { font-size:11px; color:#ee8f43; }
-.strategy-card p { margin-top:12px; font-size:13px; line-height:1.8; color:#55697f; }
-.meta-list { margin-top:10px; }
-.footer { position:fixed; left:0; right:0; bottom:0; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:14px 16px calc(14px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.95); border-top:1px solid var(--lof-border); }
-.footer button { height:46px; border-radius:14px; border:1px solid var(--lof-border); background:#fff; }
-.footer .primary { background:linear-gradient(180deg, #16ac93 0%, #10947d 100%); color:#fff; border:0; font-weight:700; }
+.page {
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) 16px calc(92px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(240, 138, 36, 0.1), transparent 28%),
+    #f5f7fb;
+}
+.topbar,
+.hero-head,
+.hero-actions,
+.panel-head,
+.strategy-head,
+.bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.topbar {
+  align-items: flex-start;
+}
+.nav-btn,
+.ghost-btn,
+.tab-btn,
+.primary-btn,
+.secondary-btn {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.nav-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #d9e0e8;
+  color: #1f2937;
+  font-size: 24px;
+}
+.ghost-btn {
+  min-width: 64px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: #fff4e6;
+  color: #c97a10;
+  font-size: 12px;
+  font-weight: 700;
+}
+.title-block {
+  flex: 1;
+}
+.title-block h1 {
+  color: #1f2937;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 700;
+}
+.title-block p,
+.panel-note,
+.conclusion-card p,
+.strategy-card p,
+.info-row span {
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 18px;
+}
+.hero-card,
+.panel,
+.state-card,
+.strategy-card {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #e8edf3;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+.state-card {
+  text-align: center;
+}
+.hero-card h2,
+.panel h3,
+.strategy-card h3 {
+  color: #1f2937;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 700;
+}
+.hero-price {
+  text-align: right;
+}
+.hero-price span,
+.tag,
+.data-card span,
+.strategy-grid span {
+  display: block;
+  font-size: 11px;
+  line-height: 16px;
+}
+.hero-price strong {
+  display: block;
+  margin-top: 4px;
+  color: #c97a10;
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 700;
+}
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #fff4e6;
+  color: #c97a10;
+  font-weight: 600;
+}
+.hero-actions {
+  margin-top: 14px;
+}
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.tab-btn {
+  min-height: 40px;
+  padding: 0 8px;
+  border-radius: 12px;
+  border: 1px solid #d9e0e8;
+  background: rgba(255, 255, 255, 0.84);
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tab-btn.active {
+  border-color: #f0d7b5;
+  background: #fff4e6;
+  color: #c97a10;
+}
+.conclusion-card {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fafd;
+}
+.conclusion-card strong {
+  display: block;
+  color: #1f2937;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+}
+.conclusion-card p + p {
+  margin-top: 6px;
+}
+.risk-banner {
+  background: #fff6f7;
+}
+.data-grid,
+.strategy-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.data-card {
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fafd;
+}
+.data-card strong,
+.strategy-grid strong,
+.info-row strong {
+  display: block;
+  margin-top: 4px;
+  color: #1f2937;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+}
+.regular {
+  font-size: 14px !important;
+  line-height: 22px !important;
+  font-weight: 600 !important;
+}
+.info-list {
+  margin-top: 12px;
+}
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf1f5;
+}
+.info-row:last-child {
+  border-bottom: 0;
+}
+.strategy-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.strategy-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #fff4e6;
+  color: #c97a10;
+  font-size: 11px;
+  font-weight: 700;
+}
+.strategy-card p {
+  margin-top: 10px;
+}
+.span-2 {
+  grid-column: span 2;
+}
+.primary-btn,
+.secondary-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.primary-btn {
+  background: #127c74;
+  color: #fff;
+}
+.secondary-btn {
+  background: #fff;
+  border: 1px solid #d9e0e8;
+  color: #1f2937;
+}
+.bottom-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(430px, calc(100vw - 20px));
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(245, 247, 251, 0.94);
+  backdrop-filter: blur(12px);
+}
+@media (max-width: 380px) {
+  .tabs,
+  .data-grid,
+  .strategy-grid,
+  .bottom-bar {
+    grid-template-columns: 1fr;
+  }
+  .topbar,
+  .hero-head,
+  .hero-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .span-2 {
+    grid-column: span 1;
+  }
+  .bottom-bar {
+    display: grid;
+    width: min(430px, calc(100vw - 24px));
+  }
+}
 </style>

@@ -1,89 +1,102 @@
-# -*- coding: utf-8 -*-
-"""
-ETF基金路由
-"""
-from fastapi import APIRouter, HTTPException
-from datetime import datetime
-from typing import List
+"""ETF基金路由 — 从 FundSnapshot DB 读取数据（由 sync cycle 维护）。"""
 
-from app.models.fund import ETFFundListResponse, FundInfo
-from app.services import fund_service
+from __future__ import annotations
+
+import asyncio
+import logging
+from datetime import datetime
+
+from fastapi import APIRouter, HTTPException
+from sqlalchemy import select
+
+from app.infrastructure.db.session import session_scope
+from app.db_models import FundSnapshot
+from app.models.fund import FundInfo, ETFFundListResponse
+
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/etf", tags=["ETF基金"])
 
 
 @router.get("/list", response_model=ETFFundListResponse)
 async def get_etf_list():
-    """
-    获取ETF基金列表及实时数据
-
-    Returns:
-        ETFFundListResponse: ETF基金列表响应
-    """
+    """获取ETF基金列表及实时数据（从DB读取，由sync cycle维护）。"""
     try:
-        data = fund_service.get_all_etf_data()
-
-        fund_list = [
-            FundInfo(
-                code=item['code'],
-                name=item['name'],
-                market=item['market'],
-                market_price=item['market_price'],
-                market_time=item['market_time'],
-                nav_price=item['nav_price'],
-                nav_date=item['nav_date'],
-                fund_state=item['fund_state'],
-                fund_type=item['fund_type'],
-                is_no_gap=item['is_no_gap'],
-                premium_rate=item['premium_rate']
-            )
-            for item in data
-        ]
-
-        return ETFFundListResponse(
-            success=True,
-            data=fund_list,
-            update_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            total=len(fund_list)
-        )
-
+        return await asyncio.to_thread(_get_etf_list_sync)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"获取ETF基金列表失败: {str(e)}")
+        logger.error(f"原始异常: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="内部服务错误")
+
+
+def _get_etf_list_sync() -> ETFFundListResponse:
+    """同步获取ETF基金列表（在子线程中执行）。"""
+    with session_scope() as session:
+        rows = session.execute(
+            select(FundSnapshot).where(FundSnapshot.market_type == "ETF")
+        ).scalars().all()
+
+    fund_list = [
+        FundInfo(
+            code=r.code,
+            name=r.name or "",
+            market=r.tab_tags[0] if r.tab_tags else "",
+            market_price=r.market_price,
+            market_time=r.detail_payload.get("market_time") if r.detail_payload else None,
+            nav_price=r.nav_price,
+            nav_date=r.detail_payload.get("nav_date") if r.detail_payload else None,
+            premium_rate=r.premium_rate,
+            fund_state=r.fund_state or "",
+            fund_type=r.detail_payload.get("fund_type", "") if r.detail_payload else "",
+            is_no_gap=r.detail_payload.get("is_no_gap", False) if r.detail_payload else False,
+        )
+        for r in rows
+        if r.code and r.name
+    ]
+
+    return ETFFundListResponse(
+        success=True,
+        data=fund_list,
+        update_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        total=len(fund_list),
+    )
 
 
 @router.get("/detail/{code}", response_model=FundInfo)
 async def get_etf_detail(code: str):
-    """
-    获取单个ETF基金详情
-
-    Args:
-        code: 基金代码
-
-    Returns:
-        FundInfo: 基金详细信息
-    """
+    """获取单个ETF基金详情。"""
     try:
-        data = fund_service.get_all_etf_data()
-        fund_data = next((item for item in data if item['code'] == code), None)
-
-        if not fund_data:
-            raise HTTPException(status_code=404, detail=f"未找到基金: {code}")
-
-        return FundInfo(
-            code=fund_data['code'],
-            name=fund_data['name'],
-            market=fund_data['market'],
-            market_price=fund_data['market_price'],
-            market_time=fund_data['market_time'],
-            nav_price=fund_data['nav_price'],
-            nav_date=fund_data['nav_date'],
-            fund_state=fund_data['fund_state'],
-            fund_type=fund_data['fund_type'],
-            is_no_gap=fund_data['is_no_gap'],
-            premium_rate=fund_data['premium_rate']
-        )
-
+        return await asyncio.to_thread(_get_etf_detail_sync, code)
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"获取基金详情失败: {str(e)}")
+        logger.error(f"原始异常: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="内部服务错误")
+
+
+def _get_etf_detail_sync(code: str) -> FundInfo:
+    """同步获取单个ETF基金详情（在子线程中执行）。"""
+    with session_scope() as session:
+        row = session.execute(
+            select(FundSnapshot).where(
+                FundSnapshot.market_type == "ETF",
+                FundSnapshot.code == code,
+            )
+        ).scalar_one_or_none()
+
+    if not row:
+        raise HTTPException(status_code=404, detail=f"未找到基金: {code}")
+
+    return FundInfo(
+        code=row.code,
+        name=row.name or "",
+        market=row.tab_tags[0] if row.tab_tags else "",
+        market_price=row.market_price,
+        market_time=row.detail_payload.get("market_time") if row.detail_payload else None,
+        nav_price=row.nav_price,
+        nav_date=row.detail_payload.get("nav_date") if row.detail_payload else None,
+        premium_rate=row.premium_rate,
+        fund_state=row.fund_state or "",
+        fund_type=row.detail_payload.get("fund_type", "") if row.detail_payload else "",
+        is_no_gap=row.detail_payload.get("is_no_gap", False) if row.detail_payload else False,
+    )

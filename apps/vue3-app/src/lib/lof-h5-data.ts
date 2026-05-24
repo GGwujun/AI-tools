@@ -122,7 +122,7 @@ export const reminderItems = [
 
 export const filterGroups = [
   { title: '机会类型', options: ['全部', 'LOF', 'ETF', 'QDII', '可转债'] },
-  { title: '一级分类', options: ['全部', '股债性LOF', '指数型LOF', '无套利ETF'] },
+  { title: '一级分类', options: ['全部', '股债型LOF', '指数型LOF', '无时差ETF'] },
   { title: '状态', options: ['全部', '可申购', '限额开放', '暂停申购', '可T+0'] },
   { title: '风险评级', options: ['全部', '低风险', '中风险', '高风险'] },
   { title: '到账周期', options: ['全部', 'T+1', 'T+2', 'T+3', '更长'] },
@@ -131,7 +131,7 @@ export const filterGroups = [
 export const mineServices = [
   { title: '风险偏好设置', note: '稳健型' },
   { title: '策略偏好设置', note: '到期赎回' },
-  { title: '消息通知设置', note: '已开启' },
+  { title: '消息通知设置', note: '按配置触达' },
   { title: '新手教学', note: '查看说明' },
   { title: '帮助与反馈', note: '常见问题' },
   { title: '关于我们', note: '版本信息' },

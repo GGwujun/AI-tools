@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Any
 
 import akshare as ak
 import pandas as pd
 
+from app.infrastructure.utils import safe_float as _safe_float
+from app.infrastructure.cache.cache_service import cache_service
 from app.models.bond import (
     BondLotteryGroup,
     BondLotteryItem,
@@ -18,22 +20,6 @@ from app.models.bond import (
 
 
 CACHE_TTL_SECONDS = 600
-_CACHE: dict[str, tuple[datetime, Any]] = {}
-
-
-def _cache_get(key: str):
-    item = _CACHE.get(key)
-    if not item:
-        return None
-    cached_at, value = item
-    if cached_at < datetime.utcnow() - timedelta(seconds=CACHE_TTL_SECONDS):
-        return None
-    return value
-
-
-def _cache_set(key: str, value: Any):
-    _CACHE[key] = (datetime.utcnow(), value)
-    return value
 
 
 def _format_date(value: Any) -> str | None:
@@ -51,75 +37,87 @@ def _format_date(value: Any) -> str | None:
     return text or None
 
 
-def _safe_float(value: Any) -> float | None:
-    try:
-        if value is None or pd.isna(value):
-            return None
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
 def _today_str() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def _load_ths_bonds() -> pd.DataFrame:
-    cached = _cache_get("ths_bonds")
-    if cached is not None:
-        return cached
+import logging
 
-    df = ak.bond_zh_cov_info_ths()
-    return _cache_set("ths_bonds", df)
+logger = logging.getLogger(__name__)
+
+
+def _load_ths_bonds() -> pd.DataFrame:
+    cached = cache_service.get_json("bond:ths_bonds")
+    if cached is not None:
+        return pd.DataFrame(cached)
+
+    try:
+        df = ak.bond_zh_cov_info_ths()
+        cache_service.set_json("bond:ths_bonds", df.to_dict("records"), CACHE_TTL_SECONDS)
+        return df
+    except Exception as e:
+        logger.warning(f"获取同花顺可转债数据失败: {e}")
+        return pd.DataFrame()
 
 
 def _load_cninfo_issues() -> pd.DataFrame:
-    cached = _cache_get("cninfo_bonds")
+    cached = cache_service.get_json("bond:cninfo_bonds")
     if cached is not None:
-        return cached
+        return pd.DataFrame(cached)
 
-    df = ak.bond_cov_issue_cninfo(
-        start_date=(datetime.now() - timedelta(days=180)).strftime("%Y%m%d"),
-        end_date=(datetime.now() + timedelta(days=30)).strftime("%Y%m%d"),
-    )
-    return _cache_set("cninfo_bonds", df)
+    try:
+        df = ak.bond_cov_issue_cninfo(
+            start_date=(datetime.now() - timedelta(days=180)).strftime("%Y%m%d"),
+            end_date=(datetime.now() + timedelta(days=30)).strftime("%Y%m%d"),
+        )
+        cache_service.set_json("bond:cninfo_bonds", df.to_dict("records"), CACHE_TTL_SECONDS)
+        return df
+    except Exception as e:
+        logger.warning(f"获取巨潮可转债发行数据失败: {e}")
+        return pd.DataFrame()
 
 
 def _load_cov_comparison() -> pd.DataFrame:
-    cached = _cache_get("cov_comparison")
+    cached = cache_service.get_json("bond:cov_comparison")
     if cached is not None:
-        return cached
+        return pd.DataFrame(cached)
 
     try:
         df = ak.bond_cov_comparison()
     except Exception:
         df = pd.DataFrame()
-    return _cache_set("cov_comparison", df)
+    if not df.empty:
+        cache_service.set_json("bond:cov_comparison", df.to_dict("records"), CACHE_TTL_SECONDS)
+    return df
 
 
 def _load_cov_spot() -> pd.DataFrame:
-    cached = _cache_get("cov_spot")
+    cached = cache_service.get_json("bond:cov_spot")
     if cached is not None:
-        return cached
+        return pd.DataFrame(cached)
 
     try:
         df = ak.bond_zh_hs_cov_spot()
     except Exception:
         df = pd.DataFrame()
-    return _cache_set("cov_spot", df)
+    if not df.empty:
+        cache_service.set_json("bond:cov_spot", df.to_dict("records"), CACHE_TTL_SECONDS)
+    return df
 
 
 def _load_value_analysis(symbol: str) -> pd.DataFrame:
-    cache_key = f"value:{symbol}"
-    cached = _cache_get(cache_key)
+    cache_key = f"bond:value:{symbol}"
+    cached = cache_service.get_json(cache_key)
     if cached is not None:
-        return cached
+        return pd.DataFrame(cached)
 
     try:
         df = ak.bond_zh_cov_value_analysis(symbol=symbol)
     except Exception:
         df = pd.DataFrame()
-    return _cache_set(cache_key, df)
+    if not df.empty:
+        cache_service.set_json(cache_key, df.to_dict("records"), CACHE_TTL_SECONDS)
+    return df
 
 
 def _recent_issue_rows() -> pd.DataFrame:

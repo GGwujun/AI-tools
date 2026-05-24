@@ -11,30 +11,24 @@ const deviceId = getDeviceId()
 const loading = ref(false)
 const error = ref('')
 const response = ref<SaveProfileResponse | null>(null)
+
 const mobileStatus = computed(() => {
   if (!authStore.isLoggedIn) return '未登录'
   return authStore.user?.mobile_bound ? `已绑定 ${authStore.user.mobile}` : '未绑定手机号'
 })
 
 const preferenceItems = [
-  { key: 'risk', title: '风格偏好', note: '稳健 / 均衡 / 积极', path: '/save/switch' },
-  { key: 'fund', title: '基金节奏偏好', note: '到账即卖 / 分批卖 / 续持观察', path: '/save/remind-settings' },
+  { key: 'risk', title: '风格偏好', note: '稳健 / 平衡 / 进取', path: '/save/switch' },
+  { key: 'fund', title: '基金节奏偏好', note: '到账即看 / 分批处理 / 继续观察', path: '/save/remind-settings' },
   { key: 'bond', title: '转债偏好', note: '双低 / 低溢价 / 强赎规避', path: '/save/remind-settings' },
-  { key: 'alert', title: '提醒偏好', note: '买点 / 卖点 / 风险', path: '/save/remind-settings' },
+  { key: 'alert', title: '提醒偏好', note: '机会变化 / 卖点变化 / 风险变化', path: '/save/remind-settings' },
 ] as const
 
 const shortcutItems = [
   { key: 'watchlist', title: '我的自选', note: '统一查看基金和转债关注项', path: '/watchlist' },
-  { key: 'reminders', title: '我的提醒', note: '查看提醒设置与触发偏好', path: '/save/remind-settings' },
-  { key: 'records', title: '我的参与记录', note: '通过日历查看申购、到账与卖点节奏', path: '/calendar' },
-  { key: 'guide', title: '新手教学', note: '查看套利课堂与入门说明', path: '/save/arbitrage-guide' },
+  { key: 'switch', title: '提醒总开关', note: '管理核心提醒能力', path: '/save/switch' },
+  { key: 'notice', title: '风险说明', note: '查看使用边界与估值说明', path: '/save/warm-notice' },
 ] as const
-
-const serviceItems = computed(() => [
-  { key: 'switch', title: '提醒总开关', note: '统一管理基础提醒开关', path: '/save/switch' },
-  { key: 'advanced', title: '高级提醒设置', note: '配置基金与转债的高级提醒类型', path: '/save/remind-settings' },
-  { key: 'notice', title: '风险说明', note: '查看产品使用边界与风险提示', path: '/save/warm-notice' },
-])
 
 async function loadProfile() {
   loading.value = true
@@ -59,101 +53,57 @@ onMounted(() => {
 
 <template>
   <div class="page">
-    <header class="profile">
+    <section class="profile-card">
       <div class="avatar"></div>
-      <div class="info" v-if="authStore.isLoggedIn">
-        <h1>{{ authStore.user?.nickname }}</h1>
-        <p>{{ authStore.user?.level || response?.profile.level || '普通用户' }}</p>
+      <div class="profile-copy">
+        <h1>{{ authStore.isLoggedIn ? authStore.user?.nickname : '普通用户' }}</h1>
+        <p>{{ authStore.isLoggedIn ? (authStore.user?.level || response?.profile.level || '已登录') : '登录后可同步自选、提醒与偏好设置' }}</p>
       </div>
-      <div class="info" v-else>
-        <h1>未登录</h1>
-        <p>登录后可同步自选、提醒与偏好设置</p>
-      </div>
-      <button v-if="authStore.isLoggedIn" class="member" @click="authStore.logout()">退出登录</button>
-      <button v-else class="member" @click="router.push('/login')">去登录</button>
-    </header>
-
-    <section v-if="authStore.isLoggedIn" class="panel">
-      <div class="section-head">
-        <h2>账号状态</h2>
-        <span>高级提醒依赖手机号身份</span>
-      </div>
-      <button class="service-item" @click="router.push('/login')">
-        <div>
-          <strong>手机号绑定状态</strong>
-          <p>{{ mobileStatus }}</p>
-        </div>
-        <span class="arrow"></span>
+      <button class="ghost-btn" @click="authStore.isLoggedIn ? authStore.logout() : router.push('/login')">
+        {{ authStore.isLoggedIn ? '退出' : '登录' }}
       </button>
     </section>
 
     <section class="panel">
-      <div class="section-head">
+      <div class="panel-head">
+        <h2>账号状态</h2>
+        <span>高级提醒依赖手机号身份</span>
+      </div>
+      <button class="row-btn" @click="router.push('/login')">
+        <div>
+          <strong>手机号绑定状态</strong>
+          <p>{{ mobileStatus }}</p>
+        </div>
+        <span class="arrow">›</span>
+      </button>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
         <h2>偏好设置</h2>
         <span>按你的风格调整提醒与策略表达</span>
       </div>
-      <div class="preference-list">
-        <button
-          v-for="item in preferenceItems"
-          :key="item.key"
-          class="preference-item"
-          @click="open(item.path)"
-        >
+      <button v-for="item in preferenceItems" :key="item.key" class="row-btn" @click="open(item.path)">
+        <div>
           <strong>{{ item.title }}</strong>
           <p>{{ item.note }}</p>
-          <span class="arrow"></span>
-        </button>
-      </div>
+        </div>
+        <span class="arrow">›</span>
+      </button>
     </section>
 
     <section class="panel">
-      <div class="section-head">
+      <div class="panel-head">
         <h2>我的工具</h2>
-        <span>常用入口统一放在这里</span>
       </div>
-      <div class="shortcut-list">
-        <button
-          v-for="item in shortcutItems"
-          :key="item.key"
-          class="shortcut-item"
-          @click="open(item.path)"
-        >
-          <div>
-            <strong>{{ item.title }}</strong>
-            <p>{{ item.note }}</p>
-          </div>
-          <span class="arrow"></span>
-        </button>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="section-head">
-        <h2>设置与说明</h2>
-        <span>保留当前有页面承接的功能</span>
-      </div>
-      <article v-if="error" class="service-item error-item">
-        <div>
-          <strong>{{ error }}</strong>
-        </div>
-      </article>
-      <article v-else-if="loading" class="service-item">
-        <div>
-          <strong>正在加载我的页面...</strong>
-        </div>
-      </article>
-      <button
-        v-for="item in serviceItems"
-        v-else
-        :key="item.key"
-        class="service-item"
-        @click="open(item.path)"
-      >
+      <div v-if="error" class="state-line">{{ error }}</div>
+      <div v-else-if="loading" class="state-line">正在加载我的页面...</div>
+      <button v-for="item in shortcutItems" :key="item.key" class="row-btn" @click="open(item.path)">
         <div>
           <strong>{{ item.title }}</strong>
           <p>{{ item.note }}</p>
         </div>
-        <span class="arrow"></span>
+        <span class="arrow">›</span>
       </button>
     </section>
   </div>
@@ -162,108 +112,76 @@ onMounted(() => {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: calc(14px + env(safe-area-inset-top)) 16px 24px;
-  background: var(--lof-bg);
+  max-width: 430px;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) 16px calc(92px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top, rgba(74, 144, 226, 0.14), transparent 32%),
+    #1a1e2b;
 }
-
-.profile,
+.profile-card,
 .panel {
-  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(234, 236, 240, 0.08);
+  background: rgba(36, 43, 61, 0.94);
   box-shadow: var(--lof-shadow);
-  border-radius: 22px;
 }
-
-.profile {
+.profile-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 16px;
+  padding: 16px;
 }
-
 .avatar {
   width: 54px;
   height: 54px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #f1f4f8 0%, #dfe8f0 100%);
-  position: relative;
+  background: linear-gradient(180deg, rgba(74, 144, 226, 0.85) 0%, rgba(45, 107, 196, 0.92) 100%);
+  box-shadow: 0 8px 24px rgba(74, 144, 226, 0.24);
 }
-
-.avatar::before {
-  content: '';
-  position: absolute;
-  left: 15px;
-  top: 10px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #aab6c3;
-}
-
-.avatar::after {
-  content: '';
-  position: absolute;
-  left: 11px;
-  bottom: 8px;
-  width: 32px;
-  height: 16px;
-  border-radius: 999px 999px 8px 8px;
-  background: #aab6c3;
-}
-
-.info {
+.profile-copy {
   flex: 1;
 }
-
-.info h1 {
+.profile-copy h1,
+.panel h2,
+.row-btn strong {
+  color: var(--lof-text);
+  font-weight: 700;
+}
+.profile-copy h1 {
   font-size: 20px;
+  line-height: 28px;
 }
-
-.info p {
-  margin-top: 4px;
-  font-size: 12px;
+.profile-copy p,
+.panel-head span,
+.row-btn p,
+.state-line {
   color: var(--lof-muted);
+  font-size: 12px;
+  line-height: 18px;
 }
-
-.member {
-  height: 32px;
-  padding: 0 14px;
+.ghost-btn {
+  min-height: 36px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 999px;
-  background: #e8faf4;
-  color: var(--lof-primary-deep);
+  border-radius: 12px;
+  background: rgba(74, 144, 226, 0.16);
+  color: var(--lof-link);
   font-size: 12px;
   font-weight: 700;
 }
-
 .panel {
-  margin-top: 14px;
+  margin-top: 12px;
   padding: 16px;
 }
-
-.section-head {
-  margin-bottom: 12px;
+.panel-head {
+  margin-bottom: 8px;
 }
-
-.section-head h2 {
+.panel h2 {
   font-size: 16px;
+  line-height: 24px;
 }
-
-.section-head span {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--lof-muted);
-}
-
-.preference-list,
-.shortcut-list {
-  display: grid;
-  gap: 10px;
-}
-
-.preference-item,
-.shortcut-item,
-.service-item {
+.row-btn {
   width: 100%;
   display: flex;
   align-items: center;
@@ -271,50 +189,19 @@ onMounted(() => {
   gap: 12px;
   padding: 14px 0;
   border: 0;
-  border-bottom: 1px solid var(--lof-border);
+  border-bottom: 1px solid rgba(234, 236, 240, 0.08);
   background: transparent;
   text-align: left;
 }
-
-.preference-item:first-child,
-.shortcut-item:first-child,
-.service-item:first-child {
-  padding-top: 0;
-}
-
-.preference-item:last-child,
-.shortcut-item:last-child,
-.service-item:last-child {
+.row-btn:last-child {
   border-bottom: 0;
   padding-bottom: 0;
 }
-
-.preference-item strong,
-.shortcut-item strong,
-.service-item strong {
-  font-size: 14px;
-  color: #1d3042;
-}
-
-.preference-item p,
-.shortcut-item p,
-.service-item p {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--lof-muted);
-  line-height: 1.5;
-}
-
-.error-item strong {
-  color: #c2410c;
-}
-
 .arrow {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-  border-top: 2px solid #91a0af;
-  border-right: 2px solid #91a0af;
-  transform: rotate(45deg);
+  color: #8d97aa;
+  font-size: 18px;
+}
+.state-line {
+  padding: 10px 0;
 }
 </style>

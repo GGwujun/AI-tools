@@ -69,6 +69,7 @@ AUTO_CREATE_SCHEMA = _get_bool("AUTO_CREATE_SCHEMA", True)
 
 REDIS_URL = os.getenv("REDIS_URL", "").strip()
 CACHE_ENABLED = _get_bool("CACHE_ENABLED", True)
+CACHE_MAX_SIZE = _get_int("CACHE_MAX_SIZE", 500)
 OPPORTUNITY_CACHE_TTL_SECONDS = _get_int("OPPORTUNITY_CACHE_TTL_SECONDS", 30)
 DETAIL_CACHE_TTL_SECONDS = _get_int("DETAIL_CACHE_TTL_SECONDS", 30)
 VALUATION_CACHE_TTL_SECONDS = _get_int("VALUATION_CACHE_TTL_SECONDS", 30)
@@ -80,6 +81,7 @@ MARKET_OPEN_BURST_SYNC_INTERVAL_SECONDS = _get_int("MARKET_OPEN_BURST_SYNC_INTER
 MARKET_CLOSE_BURST_SYNC_INTERVAL_SECONDS = _get_int("MARKET_CLOSE_BURST_SYNC_INTERVAL_SECONDS", 120)
 DETAIL_HISTORY_DAYS = _get_int("DETAIL_HISTORY_DAYS", 20)
 DETAIL_STALE_SECONDS = _get_int("DETAIL_STALE_SECONDS", 900)
+DETAIL_BUDGET_SECONDS = _get_int("DETAIL_BUDGET_SECONDS", 300)
 SYNC_ON_STARTUP = _get_bool("SYNC_ON_STARTUP", True)
 EMBEDDED_SYNC_ENABLED = _get_bool("EMBEDDED_SYNC_ENABLED", False)
 
@@ -99,3 +101,20 @@ NO_GAP_KEYWORDS = [
     "美国",
     "道琼斯",
 ]
+
+# ── 通知推送配置 ──
+
+NOTIFICATION_ENABLED = _get_bool("NOTIFICATION_ENABLED", False)
+NOTIFICATION_COOLDOWN_MINUTES = _get_int("NOTIFICATION_COOLDOWN_MINUTES", 30)
+
+# Webhook URLs per platform (JSON dict in env var or empty dict)
+import json as _json
+_webhook_raw = os.getenv("WEBHOOK_URLS", "").strip()
+WEBHOOK_URLS: dict[str, str] = {}
+if _webhook_raw:
+    try:
+        WEBHOOK_URLS = _json.loads(_webhook_raw)
+    except Exception:
+        WEBHOOK_URLS = {}
+
+AUTH_DEV_MODE = _get_bool("AUTH_DEV_MODE", False)

@@ -87,7 +87,7 @@ async function submitLogin() {
 }
 
 function continueAsGuest() {
-  router.replace('/save')
+  router.replace('/')
 }
 </script>
 
@@ -135,20 +135,22 @@ function continueAsGuest() {
   justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(circle at top, rgba(226, 247, 248, 0.95) 0, rgba(255, 255, 255, 0) 36%),
-    linear-gradient(180deg, #fbfdfd 0%, #f4f8fb 100%);
+    radial-gradient(circle at top, rgba(74, 144, 226, 0.16), transparent 34%),
+    radial-gradient(circle at left top, rgba(41, 179, 126, 0.12), transparent 28%),
+    #1a1e2b;
 }
 
 .panel {
   width: min(100%, 360px);
   padding: 24px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 14px 34px rgba(27, 53, 74, 0.1);
+  border-radius: 22px;
+  background: rgba(36, 43, 61, 0.96);
+  border: 1px solid rgba(234, 236, 240, 0.08);
+  box-shadow: var(--lof-shadow);
 }
 
 .panel h1 {
-  color: #15273a;
+  color: var(--lof-text);
   font-size: 28px;
   line-height: 36px;
   font-weight: 800;
@@ -156,7 +158,7 @@ function continueAsGuest() {
 
 .panel p {
   margin-top: 8px;
-  color: #7d8d9d;
+  color: var(--lof-muted);
   font-size: 13px;
   line-height: 20px;
 }
@@ -169,7 +171,7 @@ function continueAsGuest() {
 .field span {
   display: block;
   margin-bottom: 8px;
-  color: #506476;
+  color: #c6cfdd;
   font-size: 13px;
 }
 
@@ -177,11 +179,15 @@ function continueAsGuest() {
   width: 100%;
   height: 46px;
   padding: 0 14px;
-  border: 1px solid #dfe7ee;
+  border: 1px solid rgba(234, 236, 240, 0.12);
   border-radius: 14px;
-  background: #fff;
-  color: #203447;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--lof-text);
   font-size: 14px;
+}
+
+.field input::placeholder {
+  color: #748199;
 }
 
 .code-row {
@@ -191,16 +197,16 @@ function continueAsGuest() {
 }
 
 .code-btn {
-  border: 1px solid #dfe7ee;
+  border: 1px solid rgba(234, 236, 240, 0.12);
   border-radius: 14px;
-  background: #fff;
-  color: #1d3042;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--lof-text);
   font-size: 13px;
   font-weight: 700;
 }
 
 .code-btn:disabled {
-  color: #9aa7b8;
+  color: #79849b;
 }
 
 .primary,
@@ -215,14 +221,14 @@ function continueAsGuest() {
 
 .primary {
   border: 0;
-  background: linear-gradient(90deg, #149b88 0%, #1f9f8a 100%);
+  background: linear-gradient(90deg, #2d6bc4 0%, #4a90e2 100%);
   color: #fff;
 }
 
 .ghost {
-  border: 1px solid #dfe7ee;
-  background: #fff;
-  color: #1d3042;
+  border: 1px solid rgba(234, 236, 240, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--lof-text);
 }
 
 .text-btn {
@@ -230,7 +236,7 @@ function continueAsGuest() {
   margin-top: 10px;
   border: 0;
   background: transparent;
-  color: #7d8d9d;
+  color: var(--lof-muted);
   font-size: 13px;
 }
 
@@ -241,25 +247,25 @@ function continueAsGuest() {
 
 .hint-text {
   margin-top: 12px;
-  color: #10947d !important;
+  color: var(--lof-success) !important;
 }
 
 .tips {
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid #eef2f6;
+  border-top: 1px solid rgba(234, 236, 240, 0.08);
 }
 
 .tips strong {
   display: block;
-  color: #203447;
+  color: var(--lof-text);
   font-size: 12px;
 }
 
 .tips span {
   display: block;
   margin-top: 6px;
-  color: #7d8d9d;
+  color: var(--lof-muted);
   font-size: 12px;
   line-height: 18px;
 }

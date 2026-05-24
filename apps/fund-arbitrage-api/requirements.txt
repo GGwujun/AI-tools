@@ -9,3 +9,5 @@ python-multipart==0.0.9
 SQLAlchemy==2.0.38
 psycopg[binary]==3.2.6
 alembic==1.14.1
+cachetools==5.5.0
+pytest==8.3.5

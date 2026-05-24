@@ -70,6 +70,7 @@ export interface SaveFundItem {
   market_price_display: string
   market_change_pct: number | null
   market_change_display: string
+  amount_display?: string
   nav_price: number | null
   nav_price_display: string
   premium_rate: number | null

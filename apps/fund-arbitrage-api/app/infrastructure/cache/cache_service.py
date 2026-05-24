@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import json
 import time
+from datetime import date, datetime
 from typing import Any
 
-from app.config import CACHE_ENABLED, REDIS_URL
+from cachetools import LRUCache
+
+from app.config import CACHE_ENABLED, CACHE_MAX_SIZE, REDIS_URL
 
 try:
     import redis  # type: ignore
@@ -13,8 +16,8 @@ except Exception:  # pragma: no cover
 
 
 class CacheService:
-    def __init__(self) -> None:
-        self._memory: dict[str, tuple[float, str]] = {}
+    def __init__(self, maxsize: int = 500) -> None:
+        self._memory: LRUCache = LRUCache(maxsize=maxsize)
         self._client = None
         if CACHE_ENABLED and REDIS_URL and redis is not None:
             try:
@@ -33,7 +36,7 @@ class CacheService:
             return None
 
     def set_json(self, key: str, value: dict[str, Any], ttl_seconds: int) -> None:
-        self._set(key, json.dumps(value, ensure_ascii=False), ttl_seconds)
+        self._set(key, json.dumps(value, ensure_ascii=False, default=_json_default), ttl_seconds)
 
     def delete(self, key: str) -> None:
         if self._client is not None:
@@ -74,4 +77,10 @@ class CacheService:
         self._memory[key] = (time.time() + ttl_seconds, value)
 
 
-cache_service = CacheService()
+cache_service = CacheService(maxsize=CACHE_MAX_SIZE)
+
+
+def _json_default(obj: Any) -> Any:
+    if isinstance(obj, (date, datetime)):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")

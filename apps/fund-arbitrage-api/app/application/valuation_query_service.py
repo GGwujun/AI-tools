@@ -1,28 +1,12 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import Iterator
-
 from sqlalchemy import select
 
 from app.config import VALUATION_CACHE_TTL_SECONDS
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import FundStandardValuationSnapshot
 from app.infrastructure.cache.cache_service import cache_service
 from app.models.system import StandardValuationHistoryItem, StandardValuationHistoryResponse, StandardValuationResponse
-
-
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 def get_latest_standard_valuation(*, code: str) -> StandardValuationResponse:

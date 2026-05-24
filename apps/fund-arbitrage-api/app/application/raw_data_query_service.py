@@ -1,26 +1,10 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import Iterator
-
 from sqlalchemy import select
 
-from app.database import SessionLocal
+from app.infrastructure.db.session import session_scope
 from app.db_models import RawDataEvent
 from app.models.system import RawDataEventItem, RawDataEventListResponse
-
-
-@contextmanager
-def session_scope() -> Iterator:
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 def list_raw_events(*, code: str, data_type: str | None = None, limit: int = 20) -> RawDataEventListResponse:

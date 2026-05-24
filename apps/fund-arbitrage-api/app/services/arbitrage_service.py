@@ -4,26 +4,10 @@ from datetime import datetime, timedelta
 
 import akshare as ak
 import pandas as pd
-import requests
 from bs4 import BeautifulSoup
 
-
-DATE_FORMAT_CANDIDATES = (
-    "%Y-%m-%d",
-    "%Y/%m/%d",
-    "%Y%m%d",
-    "%m-%d",
-    "%m/%d",
-)
-
-
-def _safe_float(value: object) -> float | None:
-    try:
-        if value is None:
-            return None
-        return float(str(value).replace(",", "").replace("%", "").strip())
-    except (TypeError, ValueError):
-        return None
+from app.infrastructure.utils import safe_float as _safe_float, DATE_FORMAT_CANDIDATES
+from app.services.fund_service import _http_session
 
 
 def _format_pct(value: float | None) -> str:
@@ -235,7 +219,7 @@ def get_nav_history(code: str, market_type: str, days: int = 20) -> list[dict]:
 def get_fund_scale_turnover(code: str) -> tuple[str, str]:
     url = f"https://fund.eastmoney.com/{code}.html"
     try:
-        response = requests.get(url, timeout=5)
+        response = _http_session.get(url, timeout=5)
         response.encoding = response.apparent_encoding
         if response.status_code != 200:
             return "--", "--"
