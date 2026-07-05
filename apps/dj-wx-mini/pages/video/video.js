@@ -1,5 +1,6 @@
 ﻿const storage = require('../../utils/safe-storage');
 const { inferPlatformLabelFromUrl } = require('../../utils/parse-link');
+const { parseVideo, inferFailureReason } = require('../../utils/parse-runner');
 
 function formatDateTime(dateString) {
   if (!dateString) return '刚刚';
@@ -64,9 +65,19 @@ function buildProxyImageUrl(url) {
   return `https://dsx-family.site/api/download/image/?url=${encodeURIComponent(url)}`;
 }
 
+function getPreferredVideoDownloadUrl(resultData) {
+  const durlList = resultData?.extra?.playurl?.durl || [];
+  const directUrl = durlList[0]?.url;
+  return directUrl || resultData?.downurl || '';
+}
+
 Page({
   data: {
     resultData: null,
+    parseState: 'idle',
+    parseMessage: '',
+    failureReason: '',
+    pendingInput: '',
     hasWatchedAd: false,
     adWatchedTimestamp: null,
     currentAction: null,
@@ -257,58 +268,86 @@ Page({
   onLoad: function (options) {
     const hasWatchedAd = storage.get('hasWatchedAd');
     const adWatchedTimestamp = storage.get('adWatchedTimestamp');
-    let resultData = null;
-
-    if (options.data) {
-      try {
-        resultData = JSON.parse(decodeURIComponent(options.data));
-      } catch (error) {
-        console.error('解析结果数据失败:', error);
-      }
-    }
 
     this.setData({
       hasWatchedAd: !!hasWatchedAd,
       adWatchedTimestamp: adWatchedTimestamp || null,
-      resultData: resultData,
       currentPicIndex: 0
     });
 
-    if (resultData) {
-      this.prepareResultState(resultData);
-      this.saveToHistory(resultData);
-      this.checkFavoriteStatus(resultData);
-    }
-
-    // 请求后台获取配置
+    // 拉取广告配置
     wx.request({
       url: 'https://dsx-family.site/ymq/',
       method: 'GET',
       success: (res) => {
-        const config = res.data.data;
-        this.setData({
-          adUnitId: config.adUnitId, // 存储广告单元 ID
-        });
-
-        if (options.data && !this.data.resultData) {
-          const resultData = JSON.parse(decodeURIComponent(options.data));
-          this.setData({
-            resultData: resultData
-          });
-          this.prepareResultState(resultData);
-          // 保存到历史记录
-          this.saveToHistory(resultData);
-          // 检查是否已收藏
-          this.checkFavoriteStatus(resultData);
+        const config = res.data?.data;
+        if (config?.adUnitId) {
+          this.setData({ adUnitId: config.adUnitId });
         }
       },
-      fail: () => {
-        wx.showToast({
-          title: '获取配置失败',
-          icon: 'none'
-        });
-      }
+      fail: () => {}
     });
+
+    if (options.data) {
+      // 直接传入结果数据（历史/收藏回看）
+      try {
+        const resultData = JSON.parse(decodeURIComponent(options.data));
+        this.applyResultData(resultData);
+      } catch (error) {
+        console.error('解析结果数据失败:', error);
+      }
+      return;
+    }
+
+    if (options.input) {
+      // 从首页带来输入，进页面后自动解析
+      let input = '';
+      try {
+        input = decodeURIComponent(options.input);
+      } catch (error) {
+        console.error('读取输入失败:', error);
+      }
+      if (input) {
+        this.runParse(input);
+      }
+    }
+  },
+
+  runParse(input) {
+    this.setData({
+      parseState: 'loading',
+      parseMessage: '正在解析...',
+      failureReason: '',
+      resultData: null,
+      pendingInput: input
+    });
+
+    parseVideo(input)
+      .then((resultData) => {
+        this.applyResultData(resultData);
+        this.setData({ parseState: 'success', parseMessage: '解析完成' });
+      })
+      .catch((error) => {
+        const failureReason = inferFailureReason(error);
+        this.setData({
+          parseState: 'failed',
+          parseMessage: '解析未完成',
+          failureReason
+        });
+      });
+  },
+
+  retryParse() {
+    if (this.data.pendingInput) {
+      this.runParse(this.data.pendingInput);
+    }
+  },
+
+  applyResultData(resultData) {
+    this.setData({ resultData, currentPicIndex: 0 });
+    this.prepareResultState(resultData);
+    this.saveToHistory(resultData);
+    this.checkFavoriteStatus(resultData);
   },
 
   confirmAdWatch: function (e) {
@@ -577,12 +616,6 @@ Page({
     });
   },
 
-  goToMemberCenter() {
-    wx.navigateTo({
-      url: '/pages/member/member'
-    });
-  },
-
   onPreviewCover() {
     const coverUrl = this.data.resultData?.photo || '';
     if (!coverUrl) return;
@@ -647,7 +680,7 @@ Page({
 
   onDownloadVideo: function () {
     let url = this.data.resultData.videourl;
-    let downurl = this.data.resultData.downurl
+    let downurl = getPreferredVideoDownloadUrl(this.data.resultData);
     const isInDownloadList = this.isUrlInDownloadList(downurl);
     const isDirectMedia = this.isDirectMediaUrl(downurl);
     if (isInDownloadList || isDirectMedia) {
@@ -683,7 +716,7 @@ Page({
               data: downurl || url,
               success: () => {
                 wx.showToast({
-                  title: '????100MB?????????',
+                  title: '视频超过100MB，请使用浏览器下载',
                   icon: 'none'
                 });
               }

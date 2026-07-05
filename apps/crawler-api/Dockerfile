@@ -1,26 +1,26 @@
-# 使用官方 Python 3.11 的轻量版镜像
 FROM python:3.11-slim
 
-LABEL maintainer="Evil0ctal"
+LABEL maintainer="GGwujun"
 
-# 设置非交互模式，避免 Docker 构建时的交互问题
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制应用代码到容器
-COPY . /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ \
+    -r requirements.txt
 
-# 使用 Aliyun 镜像源加速 pip
-RUN pip install -i https://mirrors.aliyun.com/pypi/simple/ -U pip \
-    && pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+COPY app/ ./app/
+COPY crawlers/ ./crawlers/
+COPY start.py .
+COPY config.yaml .
+RUN mkdir -p /app/download
 
-# 安装依赖
-RUN pip install --no-cache-dir -r requirements.txt
+EXPOSE 8091
 
-# 确保启动脚本可执行
-RUN chmod +x start.sh
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8091/health')" || exit 1
 
-# 设置容器启动命令
-CMD ["./start.sh"]
+CMD ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8091", "--log-level", "info"]

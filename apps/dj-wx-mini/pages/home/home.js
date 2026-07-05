@@ -1,8 +1,5 @@
 const {
-  extractSupportedLinks,
-  inferPlatformLabelFromUrl,
-  detectPlatform,
-  getPlatformLabel
+  inferPlatformLabelFromUrl
 } = require('../../utils/parse-link');
 const { getParseTasks, getParseTaskResult } = require('../../utils/task-store');
 const storage = require('../../utils/safe-storage');
@@ -24,30 +21,6 @@ function formatRecentTime(dateString) {
   if (hours < 24) return `${hours} 小时前`;
   if (days < 7) return `${days} 天前`;
   return dateString.slice(5, 10).replace('-', '/');
-}
-
-function buildClipboardPreview(text) {
-  return String(text || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 80);
-}
-
-function buildClipboardMeta(supportedLinks) {
-  if (!supportedLinks.length) {
-    return {
-      title: '检测到一条分享内容',
-      subtitle: '可直接粘贴到输入框，或手动整理后再解析',
-      platformText: '未识别平台'
-    };
-  }
-
-  const platform = detectPlatform(supportedLinks[0]);
-  return {
-    title: '检测到一条分享内容',
-    subtitle: '可直接粘贴后解析，省去手动输入',
-    platformText: platform ? getPlatformLabel(platform) : '已识别链接'
-  };
 }
 
 function buildResultDataFromItem(item, fallbackCover) {
@@ -91,12 +64,6 @@ Page({
     fallbackCover: '/images/gfgzh.jpeg',
     dateText: '',
     draftInput: '',
-    clipboardReady: false,
-    clipboardPreview: '',
-    clipboardValue: '',
-    clipboardTitle: '',
-    clipboardSubtitle: '',
-    clipboardPlatformText: '',
     platforms: [
       { name: '抖音', icon: '/images/icons_svg/platform-douyin.svg' },
       { name: '小红书', icon: '/images/icons_svg/platform-xiaohongshu.svg' },
@@ -122,35 +89,7 @@ Page({
 
   refreshPage() {
     this.setData({ dateText: formatDateText() });
-    this.loadClipboard();
     this.loadRecentItems();
-  },
-
-  loadClipboard() {
-    wx.getClipboardData({
-      success: (res) => {
-        const text = String(res.data || '').trim();
-        if (!text) {
-          this.dismissClipboard();
-          return;
-        }
-
-        const supportedLinks = extractSupportedLinks(text);
-        const meta = buildClipboardMeta(supportedLinks);
-
-        this.setData({
-          clipboardReady: true,
-          clipboardPreview: buildClipboardPreview(text),
-          clipboardValue: text,
-          clipboardTitle: meta.title,
-          clipboardSubtitle: meta.subtitle,
-          clipboardPlatformText: meta.platformText
-        });
-      },
-      fail: () => {
-        this.dismissClipboard();
-      }
-    });
   },
 
   loadRecentItems() {
@@ -181,33 +120,18 @@ Page({
     this.setData({ draftInput: e.detail.value || '' });
   },
 
-  pasteClipboardToInput() {
-    if (!this.data.clipboardValue) return;
-    this.setData({
-      draftInput: this.data.clipboardValue
-    });
-  },
-
   clearInput() {
     this.setData({ draftInput: '' });
   },
 
   goToParse() {
     const input = (this.data.draftInput || '').trim();
-    const url = input
-      ? `/pages/ai/video-parse/video-parse?input=${encodeURIComponent(input)}&autoParse=1`
-      : '/pages/ai/video-parse/video-parse';
-    wx.navigateTo({ url });
-  },
-
-  dismissClipboard() {
-    this.setData({
-      clipboardReady: false,
-      clipboardPreview: '',
-      clipboardValue: '',
-      clipboardTitle: '',
-      clipboardSubtitle: '',
-      clipboardPlatformText: ''
+    if (!input) {
+      wx.showToast({ title: '请先粘贴分享链接', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({
+      url: `/pages/video/video?input=${encodeURIComponent(input)}`
     });
   },
 
@@ -238,7 +162,7 @@ Page({
     }
 
     wx.navigateTo({
-      url: `/pages/ai/video-parse/video-parse?input=${encodeURIComponent(task.rawInput || task.url || '')}`
+      url: `/pages/video/video?input=${encodeURIComponent(task.rawInput || task.url || '')}`
     });
   },
 

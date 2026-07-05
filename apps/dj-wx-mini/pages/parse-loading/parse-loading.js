@@ -9,7 +9,7 @@ Page({
 
     setTimeout(() => {
       wx.redirectTo({
-        url: `/pages/ai/video-parse/video-parse?input=${encodeURIComponent(input)}&autoParse=1`
+        url: `/pages/video/video?input=${encodeURIComponent(input)}`
       });
     }, 450);
   }

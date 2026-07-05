@@ -36,4 +36,3 @@ class PlayUrl(BaseRequestsModel):
     bvid: str
     cid: str
     
-

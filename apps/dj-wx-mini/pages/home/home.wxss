@@ -15,7 +15,6 @@
 .section-card,
 .footer-shortcut,
 .input-card,
-.clipboard-card,
 .history-item,
 .empty-box {
   border-radius: 30rpx;
@@ -29,7 +28,6 @@
 }
 
 .hero-top,
-.clipboard-head,
 .input-bar,
 .section-head,
 .footer-nav-row {
@@ -75,64 +73,6 @@
   font-weight: 600;
 }
 
-.clipboard-card {
-  margin-top: 18rpx;
-  padding: 22rpx;
-  background: linear-gradient(180deg, #f5fff7 0%, #fbfffc 100%);
-  border: 2rpx solid #d9f2de;
-  box-shadow: none;
-}
-
-.clipboard-title {
-  display: block;
-  color: #101828;
-  font-size: 26rpx;
-  font-weight: 700;
-}
-
-.clipboard-subtitle {
-  display: block;
-  margin-top: 8rpx;
-  color: #667085;
-  font-size: 22rpx;
-  line-height: 1.6;
-}
-
-.clipboard-close {
-  color: #98a2b3;
-  font-size: 32rpx;
-  line-height: 1;
-}
-
-.clipboard-tag-row {
-  margin-top: 14rpx;
-}
-
-.clipboard-tag {
-  display: inline-flex;
-  padding: 8rpx 16rpx;
-  border-radius: 999rpx;
-  background: #edf4ff;
-  color: #1565ff;
-  font-size: 18rpx;
-  font-weight: 600;
-}
-
-.clipboard-text {
-  display: block;
-  margin-top: 14rpx;
-  color: #475467;
-  font-size: 22rpx;
-  line-height: 1.7;
-  word-break: break-all;
-}
-
-.clipboard-actions {
-  margin-top: 18rpx;
-  display: flex;
-  gap: 12rpx;
-}
-
 .input-card {
   margin-top: 20rpx;
   padding: 22rpx;
@@ -169,12 +109,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.small-btn {
-  height: 72rpx;
-  flex: 1;
-  font-size: 24rpx;
 }
 
 .primary-btn {

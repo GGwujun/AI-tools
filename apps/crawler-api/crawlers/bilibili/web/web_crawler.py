@@ -130,23 +130,30 @@ class BilibiliWebCrawler:
         if not cid:
             raise ValueError("BilibiliWebCrawler: Cannot extract cid from video detail.")
 
-        playurl_response = await self.fetch_video_playurl(bv_id, str(cid))
+        playurl_response = await self.fetch_video_playurl(bv_id, str(cid), qn="64", fnval="0")
         playurl_data = playurl_response.get("data") or {}
 
         video_url = None
-        dash = playurl_data.get("dash") or {}
-        dash_videos = dash.get("video") or []
         durl = playurl_data.get("durl") or []
 
         if durl:
             video_url = durl[0].get("url")
-        elif dash_videos:
-            video_url = (
-                dash_videos[0].get("baseUrl")
-                or dash_videos[0].get("base_url")
-                or (dash_videos[0].get("backupUrl") or [None])[0]
-                or (dash_videos[0].get("backup_url") or [None])[0]
-            )
+        else:
+            playurl_response = await self.fetch_video_playurl(bv_id, str(cid), qn="64", fnval="4048")
+            playurl_data = playurl_response.get("data") or {}
+            durl = playurl_data.get("durl") or []
+            dash = playurl_data.get("dash") or {}
+            dash_videos = dash.get("video") or []
+
+            if durl:
+                video_url = durl[0].get("url")
+            elif dash_videos:
+                video_url = (
+                    dash_videos[0].get("baseUrl")
+                    or dash_videos[0].get("base_url")
+                    or (dash_videos[0].get("backupUrl") or [None])[0]
+                    or (dash_videos[0].get("backup_url") or [None])[0]
+                )
 
         return {
             "platform": "bilibili",
@@ -198,14 +205,14 @@ class BilibiliWebCrawler:
         return response
 
     # 获取视频流地址
-    async def fetch_video_playurl(self, bv_id: str, cid: str, qn: str = "64") -> dict:
+    async def fetch_video_playurl(self, bv_id: str, cid: str, qn: str = "64", fnval: str = "4048") -> dict:
         # 获取请求头信息
         kwargs = await self.get_bilibili_headers()
         # 创建基础爬虫对象
         base_crawler = BaseCrawler(proxies=kwargs["proxies"], crawler_headers=kwargs["headers"])
         async with base_crawler as crawler:
             # 通过模型生成基本请求参数
-            params = PlayUrl(bvid=bv_id, cid=cid, qn=qn)
+            params = PlayUrl(bvid=bv_id, cid=cid, qn=qn, fnval=fnval)
             # 创建请求endpoint
             generator = EndpointGenerator(params.dict())
             endpoint = await generator.video_playurl_endpoint()

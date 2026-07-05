@@ -11,24 +11,6 @@
         </view>
       </view>
 
-      <view wx:if="{{clipboardReady}}" class="clipboard-card">
-        <view class="clipboard-head">
-          <view>
-            <text class="clipboard-title">{{clipboardTitle}}</text>
-            <text class="clipboard-subtitle">{{clipboardSubtitle}}</text>
-          </view>
-          <text class="clipboard-close" bindtap="dismissClipboard">×</text>
-        </view>
-        <view class="clipboard-tag-row">
-          <text class="clipboard-tag">{{clipboardPlatformText}}</text>
-        </view>
-        <text class="clipboard-text">{{clipboardPreview}}</text>
-        <view class="clipboard-actions">
-          <button class="primary-btn small-btn" bindtap="pasteClipboardToInput">一键粘贴</button>
-          <button class="ghost-btn small-btn" bindtap="dismissClipboard">暂不处理</button>
-        </view>
-      </view>
-
       <view class="input-card">
         <view class="input-bar">
           <text class="input-placeholder-title">请输入或粘贴视频 / 图集分享链接</text>
@@ -104,7 +86,7 @@
     <view class="footer-nav-row">
       <view class="footer-shortcut" bindtap="goToTools">
         <text class="footer-shortcut-title">工具箱</text>
-        <text class="footer-shortcut-desc">封面提取、文案生成、配音</text>
+        <text class="footer-shortcut-desc">文案提取、图片去水印、文案生成</text>
       </view>
       <view class="footer-shortcut" bindtap="goToProfile">
         <text class="footer-shortcut-title">我的</text>

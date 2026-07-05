@@ -94,9 +94,22 @@
 
     <view class="bottom-actions">
       <button class="ghost-btn" bindtap="goHome">再解析一条</button>
-      <button class="member-btn" bindtap="goToMemberCenter">开通会员，解锁更多效率功能</button>
+      <button class="member-btn" bindtap="goToHistory">查看素材库</button>
     </view>
   </scroll-view>
+
+  <view wx:elif="{{parseState === 'loading'}}" class="state-wrap">
+    <view class="loading-spinner"></view>
+    <text class="state-text">{{parseMessage || '正在解析...'}}</text>
+    <text class="state-sub">正在识别链接并请求素材</text>
+  </view>
+
+  <view wx:elif="{{parseState === 'failed'}}" class="state-wrap">
+    <text class="state-text failed">解析未完成</text>
+    <text wx:if="{{failureReason}}" class="state-sub">{{failureReason}}</text>
+    <button class="retry-btn" bindtap="retryParse">重试</button>
+    <button class="ghost-btn" bindtap="goHome">返回首页</button>
+  </view>
 
   <view wx:else class="empty-wrap">
     <text class="empty-text">暂无可展示的解析结果</text>

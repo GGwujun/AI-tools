@@ -1,26 +1,3 @@
-# Web
-Web:
-  # APP Switch
-  PyWebIO_Enable: false    # Deprecated: frontend UI is disabled, service runs in API-only mode | 已废弃：前端UI已禁用，当前服务仅提供API
-
-  # APP Information
-  Domain: https://douyin.wtf    # Web domain | Web域名
-
-  # APP Configuration
-  PyWebIO_Theme: minty    # PyWebIO theme | PyWebIO主题
-  Max_Take_URLs: 30    # Maximum number of URLs that can be taken at a time | 一次最多可以取得的URL数量
-
-
-  # Web Information
-  Tab_Title: Douyin_TikTok_Download_API    # Web title | Web标题
-  Description: Douyin_TikTok_Download_API is a free open-source API service for Douyin/TikTok. It provides a simple, fast, and stable API for developers to develop applications based on Douyin/TikTok.    # Web description | Web描述
-  Favicon: https://raw.githubusercontent.com/Evil0ctal/Douyin_TikTok_Download_API/main/logo/logo192.png    # Web favicon | Web图标
-
-  # Fun Configuration
-  Easter_Egg: true    # Enable Easter Egg | 启用彩蛋
-  Live2D_Enable: true
-  Live2D_JS: https://fastly.jsdelivr.net/gh/TikHubIO/TikHub_live2d@latest/autoload.js
-
 # API
 API:
   # Network Configuration
@@ -49,4 +26,4 @@ iOS_Shortcut:
   iOS_Shortcut_Link: https://www.icloud.com/shortcuts/06f891a026df40cfa967a907feaea632
   iOS_Shortcut_Link_EN: https://www.icloud.com/shortcuts/06f891a026df40cfa967a907feaea632
   iOS_Shortcut_Update_Note: 重构了快捷指令以兼容TikHub API。
-  iOS_Shortcut_Update_Note_EN: Refactored the shortcut to be compatible with the TikHub API.
+  iOS_Shortcut_Update_Note_EN: Refactored the shortcut to be compatible with TikHub API.

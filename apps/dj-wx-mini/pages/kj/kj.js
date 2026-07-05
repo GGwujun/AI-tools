@@ -182,7 +182,7 @@ Page({
     }
 
     wx.navigateTo({
-      url: `/pages/ai/video-parse/video-parse?input=${encodeURIComponent(task.raw.rawInput || task.raw.url || '')}`
+      url: `/pages/video/video?input=${encodeURIComponent(task.raw.rawInput || task.raw.url || '')}`
     });
   },
 

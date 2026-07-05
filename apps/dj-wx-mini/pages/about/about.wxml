@@ -7,7 +7,7 @@
 
         <view class="profile-main">
           <text class="profile-name">{{user ? user.nickname : '未登录'}}</text>
-          <text class="profile-id">{{user ? ('ID：' + (user.openid || user.id || '')) : '登录后可同步个人身份信息'}}</text>
+          <text class="profile-id">{{user ? ('ID：' + (user.openid || user.id || '')) : '登录后可同步当前设备上的基础使用状态'}}</text>
         </view>
 
         <button wx:if="{{!user}}" class="login-btn" loading="{{isLoggingIn}}" bindtap="login">微信登录</button>
@@ -16,14 +16,13 @@
 
       <view class="member-card">
         <view class="member-copy">
-          <text class="member-badge">{{user ? '已登录用户' : '普通用户'}}</text>
+          <text class="member-badge">{{user ? '已登录用户' : '未登录'}}</text>
           <text class="member-title">今日可解析次数</text>
-          <text class="member-desc">{{user ? '当前登录态已生效，可继续接入会员和订单能力' : '登录后可展示更完整的个人资料与后续权益信息'}}</text>
+          <text class="member-desc">{{user ? '当前登录态已生效，可继续查看记录、反馈和本地素材信息' : '登录后可同步当前设备上的基础使用状态'}}</text>
         </view>
         <view class="member-side">
           <text class="member-count">{{usage.todayUsed}} / {{usage.todayTotal}}</text>
-          <button wx:if="{{user}}" class="member-btn" bindtap="openMemberCenter">立即开通会员</button>
-          <button wx:else class="member-btn" bindtap="login" loading="{{isLoggingIn}}">先完成登录</button>
+          <button wx:if="{{!user}}" class="member-btn" bindtap="login" loading="{{isLoggingIn}}">微信登录</button>
         </view>
       </view>
 
@@ -49,6 +48,14 @@
       <text class="storage-value">{{usage.storageText}}</text>
       <text class="storage-desc">解析记录和收藏素材会持续累积，建议定期整理。</text>
       <button class="storage-btn" bindtap="clearStorage">立即清理</button>
+    </view>
+
+    <view class="legal-row">
+      <text class="legal-link" bindtap="openLegal" data-key="agreement">用户协议</text>
+      <text class="legal-divider">·</text>
+      <text class="legal-link" bindtap="openLegal" data-key="privacy">隐私政策</text>
+      <text class="legal-divider">·</text>
+      <text class="legal-link" bindtap="openLegal" data-key="complaint">侵权投诉</text>
     </view>
   </scroll-view>
 </view>

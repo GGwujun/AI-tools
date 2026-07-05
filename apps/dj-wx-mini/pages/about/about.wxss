@@ -266,3 +266,18 @@
 .storage-btn {
   margin-top: 20rpx;
 }
+
+.legal-row {
+  margin-top: 18rpx;
+  padding-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+}
+
+.legal-link,
+.legal-divider {
+  color: #98a2b3;
+  font-size: 20rpx;
+}

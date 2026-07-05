@@ -85,10 +85,11 @@ WSGI_APPLICATION = 'dj_wx.wsgi.application'
 USE_SQLITE = os.getenv('CONFIG_BACKEND_USE_SQLITE', '').lower() in ('1', 'true', 'yes')
 
 if USE_SQLITE:
+    _db_path = os.getenv('CONFIG_BACKEND_SQLITE_PATH', str(BASE_DIR / 'db.sqlite3'))
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': _db_path,
         }
     }
 else:

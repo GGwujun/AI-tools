@@ -21,4 +21,29 @@ node_modules
 .sixth
 .deps
 .deps312
-__pycache__
+
+# Python 字节码 / 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+venv/
+.venv/
+env/
+ENV/
+
+# 运行产物 / 下载 / 日志 / 数据库
+download/
+logs/
+*.log
+*.sqlite3
+*.db
+*.pid
+
+# 临时 / 备份
+*.tar.gz
+*.bak
+*.swp
+.bak_*

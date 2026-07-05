@@ -17,13 +17,9 @@ Page({
     user: null,
     isLoggingIn: false,
     menus: [
-      { key: 'orders', name: '我的订单', icon: '/images/icons_svg/package.svg', color: 'amber' },
       { key: 'history', name: '使用记录', icon: '/images/icons_svg/refresh.svg', color: 'blue' },
       { key: 'clear', name: '清理历史', icon: '/images/icons_svg/delete.svg', color: 'blue' },
-      { key: 'feedback', name: '意见反馈', icon: '/images/icons_svg/message.svg', color: 'green' },
-      { key: 'agreement', name: '用户协议', icon: '/images/icons_svg/member-benefit.svg', color: 'purple' },
-      { key: 'privacy', name: '隐私政策', icon: '/images/icons_svg/settings.svg', color: 'blue' },
-      { key: 'complaint', name: '侵权投诉', icon: '/images/icons_svg/service.svg', color: 'purple' }
+      { key: 'feedback', name: '意见反馈', icon: '/images/icons_svg/message.svg', color: 'green' }
     ]
   },
 
@@ -93,12 +89,6 @@ Page({
     });
   },
 
-  openMemberCenter() {
-    wx.navigateTo({
-      url: '/pages/member/member'
-    });
-  },
-
   handleMenu(e) {
     const { key } = e.currentTarget.dataset;
 
@@ -111,6 +101,15 @@ Page({
       this.clearStorage();
       return;
     }
+
+    wx.navigateTo({
+      url: `/pages/about/detail/detail?key=${encodeURIComponent(key)}`
+    });
+  },
+
+  openLegal(e) {
+    const { key } = e.currentTarget.dataset;
+    if (!key) return;
 
     if (key === 'complaint') {
       wx.navigateTo({

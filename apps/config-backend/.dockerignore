@@ -1,0 +1,14 @@
+.venv/
+.deps/
+.deps312/
+__pycache__/
+*.pyc
+db.sqlite3
+staticfiles/
+.idea/
+.well-known/
+.git/
+.gitignore
+*.sql
+uwsgi.pid
+*.md
