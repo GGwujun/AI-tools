@@ -1,0 +1,36 @@
+{
+  "apis": [
+    {
+      "name": "parseVideo",
+      "description": "解析社媒分享链接，提取无水印视频或图片（业务对象：解析结果卡片）。\n用户粘贴了分享链接、分享文案、或表达了「帮我解析/下载这个视频」意图时调用本接口。\n【url 必填】url 为来自用户原话的完整文本（含链接的分享文案也算，内部会自动提取链接）。\n【支持平台】抖音、TikTok、B站、快手、小红书、微博、视频号。\n【严禁场景】① 禁止编造用户没说过的链接；② 用户没给链接时不要调用本接口，应先追问用户索要。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "用户提供的分享链接或包含链接的分享文案。取值必须来自用户原话，禁止编造。用户没给链接时不要调用本接口。"
+          }
+        },
+        "required": ["url"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "description": "内容类型：video（视频）或 image（图集）" },
+          "title": { "type": "string", "description": "视频标题或图集描述" },
+          "platform": { "type": "string", "description": "平台标识：douyin/bilibili/kuaishou/xiaohongshu/weibo/tiktok/wechatChannel" },
+          "platformLabel": { "type": "string", "description": "平台中文名" },
+          "cover": { "type": "string", "description": "封面图 URL" },
+          "imageCount": { "type": "number", "description": "图集图片数量（视频时为 0）" },
+          "sourceUrl": { "type": "string", "description": "原始链接" }
+        }
+      },
+      "_meta": {
+        "ui": {
+          "pagePath": "/pages/video/video"
+        }
+      }
+    }
+  ],
+  "components": []
+}

@@ -276,6 +276,32 @@ Page({
       currentPicIndex: 0
     });
 
+    // ===== AI Handoff 处理：小微接力数据优先 =====
+    const app = getApp();
+    let handoffData = null;
+    if (options.pageId && app.takeAgentHandoff) {
+      handoffData = app.takeAgentHandoff(options.pageId);
+    }
+    if (handoffData && handoffData.payload && handoffData.payload.preParsed) {
+      // 从 AI 接力进来，已有预解析数据，直接渲染
+      const preParsed = handoffData.payload.preParsed;
+      this.parseConfig = null;
+      fetchConfig()
+        .then((config) => {
+          this.parseConfig = config;
+          if (config?.adUnitId) {
+            this.setData({ adUnitId: config.adUnitId });
+          }
+        })
+        .catch(() => {})
+        .then(() => {
+          // 把 preParsed 转成 video 页认识的 resultData 格式
+          this.applyPreParsedResult(preParsed);
+        });
+      return;
+    }
+    // ===== 原有逻辑 =====
+
     // 读取输入，决定进页面后做什么
     let inputFromOptions = '';
     if (options.input) {
@@ -344,6 +370,39 @@ Page({
     this.prepareResultState(resultData);
     this.saveToHistory(resultData);
     this.checkFavoriteStatus(resultData);
+  },
+
+  /**
+   * 处理 AI Handoff 预解析数据（skill 返回格式 → video 页格式）
+   */
+  applyPreParsedResult(preParsed) {
+    // skill 格式: { type, title, cover, videoUrl, images, imageCount, sourceUrl, platform, platformLabel }
+    // video 页格式: { title, photo, videourl, downurl, pics, meta, extra }
+    const now = new Date();
+    const resultData = {
+      title: preParsed.title || '未命名',
+      photo: preParsed.cover || '',
+      videourl: preParsed.sourceUrl || '',
+      downurl: preParsed.videoUrl || '',
+      pics: preParsed.images || [],
+      meta: {
+        parsedAt: now.toISOString(),
+        cacheUntil: new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+        platform: preParsed.platform || '',
+        platformLabel: preParsed.platformLabel || '',
+        routeLabel: 'AI 解析',
+        typeLabel: preParsed.type === 'video' ? '无水印视频' : '无损图集',
+        complianceNote: '仅用于个人学习与备份，禁止商用侵权',
+        sourceUrl: preParsed.sourceUrl || ''
+      },
+      extra: {}
+    };
+
+    this.setData({
+      parseState: 'success',
+      parseMessage: 'AI 解析完成'
+    });
+    this.applyResultData(resultData);
   },
 
   confirmAdWatch: function (e) {
