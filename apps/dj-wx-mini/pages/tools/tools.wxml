@@ -1,10 +1,5 @@
 <view class="page">
   <scroll-view scroll-y class="scroll safe-bottom">
-    <view class="header">
-      <text class="header-title">工具箱</text>
-      <text class="header-subtitle">把常用的内容处理能力集中放在一个更干净的入口里</text>
-    </view>
-
     <view class="grid">
       <view wx:for="{{toolCards}}" wx:key="key" class="tool-card" bindtap="onToolTap" data-tool="{{item.key}}">
         <view class="tool-icon {{item.color}}">

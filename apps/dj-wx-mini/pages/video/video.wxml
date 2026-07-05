@@ -18,6 +18,15 @@
             <image class="preview-cover" src="{{item}}" mode="aspectFill" bindtap="onPreviewCurrentPic"></image>
           </swiper-item>
         </swiper>
+        <video
+          wx:elif="{{resultData.downurl}}"
+          class="preview-video"
+          src="{{resultData.downurl}}"
+          poster="{{resultData.photo}}"
+          controls
+          show-fullscreen-btn
+          object-fit="contain"
+        ></video>
         <image
           wx:elif="{{resultData.photo}}"
           class="preview-cover"
@@ -25,7 +34,6 @@
           mode="aspectFill"
           bindtap="{{resultData.pics && resultData.pics.length ? 'onPreviewCurrentPic' : 'onPreviewCover'}}"
         ></image>
-        <view wx:if="{{resultData.downurl}}" class="play-mask">▶</view>
         <view wx:if="{{resultData.pics && resultData.pics.length}}" class="gallery-badge">{{currentPicIndex + 1}} / {{resultData.pics.length}}</view>
       </view>
 
@@ -72,18 +80,6 @@
           <image class="action-icon-image" src="/images/icons_svg/favorite.svg" mode="aspectFit"></image>
         </view>
         <text class="action-text">{{resultData.pics && resultData.pics.length ? '保存当前图' : '加入素材库'}}</text>
-      </view>
-    </view>
-
-    <view class="info-card">
-      <text class="info-title">素材信息</text>
-      <view class="info-line">
-        <text class="info-label">原始链接</text>
-        <text class="info-value">{{resultMeta.sourceUrl}}</text>
-      </view>
-      <view class="info-line">
-        <text class="info-label">标签</text>
-        <text class="info-value">{{resultMeta.platformLabel}} · {{resultMeta.typeLabel}} · {{resultMeta.routeLabel}}</text>
       </view>
     </view>
 

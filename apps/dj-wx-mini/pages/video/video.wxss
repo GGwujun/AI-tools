@@ -59,6 +59,13 @@
   background: #eef2f6;
 }
 
+.preview-video {
+  width: 100%;
+  height: 440rpx;
+  display: block;
+  background: #000;
+}
+
 .play-mask {
   position: absolute;
   left: 50%;
