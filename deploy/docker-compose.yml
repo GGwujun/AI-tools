@@ -1,0 +1,62 @@
+# jiu9-toolbox 后端容器编排
+# crawler-api (FastAPI, 8091) + config-backend (Django, 8081)
+#
+# 部署位置: 服务器 /opt/jiu9/deploy/docker-compose.yml
+# Cookie 配置从线上原目录 volume 挂载（只读），镜像不含敏感信息。
+# config-backend 通过 host.docker.internal 连接本机宝塔 MySQL(3306)。
+
+services:
+  crawler-api:
+    build:
+      context: ../apps/crawler-api
+      dockerfile: Dockerfile
+    image: jiu9-crawler-api:latest
+    container_name: jiu9-crawler-api
+    restart: always
+    ports:
+      - "8091:8091"
+    volumes:
+      # Cookie / 配置：从线上原目录挂载（只读），镜像不含真实 Cookie
+      # 这些路径在服务器迁移时确认存在；Cookie 过期只改宿主文件后 restart 即可
+      - /www/wwwroot/douyin/config.yaml:/app/config.yaml:ro
+      - /www/wwwroot/douyin/crawlers/douyin/web/config.yaml:/app/crawlers/douyin/web/config.yaml:ro
+      - /www/wwwroot/douyin/crawlers/tiktok/web/config.yaml:/app/crawlers/tiktok/web/config.yaml:ro
+      - /www/wwwroot/douyin/crawlers/tiktok/app/config.yaml:/app/crawlers/tiktok/app/config.yaml:ro
+      # 下载文件持久化
+      - crawler-download:/app/download
+    environment:
+      TZ: Asia/Shanghai
+    networks:
+      - jiu9-net
+
+  config-backend:
+    build:
+      context: ../apps/config-backend
+      dockerfile: Dockerfile
+    image: jiu9-config-backend:latest
+    container_name: jiu9-config-backend
+    restart: always
+    ports:
+      - "8081:8081"
+    # host-gateway: 让容器以 127.0.0.1 身份访问宿主机，匹配 MySQL 的 abcd2@localhost 白名单
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      TZ: Asia/Shanghai
+      DJANGO_SETTINGS_MODULE: dj_wx.settings
+      # config-backend 默认连本机 MySQL(库/用户/密码均 abcd2)，线上沿用此默认值
+      CONFIG_BACKEND_DB_HOST: host.docker.internal
+      CONFIG_BACKEND_DB_PORT: "3306"
+      CONFIG_BACKEND_DB_NAME: abcd2
+      CONFIG_BACKEND_DB_USER: abcd2
+      CONFIG_BACKEND_DB_PASSWORD: abcd2
+    networks:
+      - jiu9-net
+
+volumes:
+  crawler-download:
+
+networks:
+  jiu9-net:
+    name: jiu9-net
+    driver: bridge

@@ -1,0 +1,10 @@
+# 容器化部署用的精简依赖（从 requ.txt 派生）
+# 容器用 gunicorn 跑 wsgi，不需要 uWSGI / uvicorn（那俩在 slim 镜像上 uWSGI 编译易失败）
+asgiref==3.7.2
+Django==3.2.23
+djangorestframework==3.14.0
+gunicorn==23.0.0
+PyMySQL==1.1.1
+pytz==2024.2
+requests==2.31.0
+sqlparse==0.4.4

@@ -8,9 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requ.txt .
+COPY requirements-docker.txt .
 RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ \
-    -r requ.txt
+    -r requirements-docker.txt
 
 COPY . .
 
