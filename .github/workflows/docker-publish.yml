@@ -100,6 +100,8 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: linux/amd64
           push: true
+          provenance: false
+          sbom: false
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha,scope=${{ matrix.app }}-aliyun
           cache-to: type=gha,scope=${{ matrix.app }}-aliyun,mode=max
