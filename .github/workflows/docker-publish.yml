@@ -57,6 +57,7 @@ jobs:
             tags="latest,sha-${GITHUB_SHA::7}"
           fi
           echo "tags=$tags" >> $GITHUB_OUTPUT
+          echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       # ============ ghcr.io (多架构, 用 buildx) ============
       - name: Set up QEMU
@@ -80,7 +81,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ env.GHCR_REGISTRY }}/${{ github.repository_owner }}/${{ matrix.app }}:${{ github.ref_name == 'master' && 'latest' || github.ref_name }}
+            ${{ env.GHCR_REGISTRY }}/${{ steps.tags.outputs.owner }}/${{ matrix.app }}:${{ github.ref_name == 'master' && 'latest' || github.ref_name }}
           cache-from: type=gha,scope=${{ matrix.app }}-ghcr
           cache-to: type=gha,scope=${{ matrix.app }}-ghcr,mode=max
 
