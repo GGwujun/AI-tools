@@ -3,8 +3,9 @@
 #
 # 部署位置: 服务器 /opt/jiu9/deploy/docker-compose.yml
 # 模式: 从阿里云 ACR 拉取 CI 构建好的镜像(不现场 build)。
+# 网络: host 模式(容器直接用宿主网络),与原宝塔部署网络模型一致,
+#       config-backend 以 127.0.0.1 连本机宝塔 MySQL,匹配 abcd2@localhost 白名单。
 # Cookie 配置从线上原目录 volume 挂载(只读),镜像不含敏感信息。
-# config-backend 通过 host.docker.internal 连接本机宝塔 MySQL(3306)。
 #
 # 首次需 docker login 阿里云 ACR(私有镜像):
 #   docker login crpi-i6pwsm2rbcu2h5uv.cn-shenzhen.personal.cr.aliyuncs.com
@@ -14,47 +15,33 @@ services:
     image: crpi-i6pwsm2rbcu2h5uv.cn-shenzhen.personal.cr.aliyuncs.com/ggwujun/crawler-api:latest
     container_name: jiu9-crawler-api
     restart: always
-    ports:
-      - "8091:8091"
+    network_mode: host
     volumes:
-      # Cookie / 配置: 从线上原目录挂载(只读),镜像不含真实 Cookie
+      # Cookie / 配置: 从 /opt/jiu9/config 挂载(只读),镜像不含真实 Cookie
       # Cookie 过期只改宿主文件后 docker compose restart crawler-api 即可
-      - /www/wwwroot/douyin/config.yaml:/app/config.yaml:ro
-      - /www/wwwroot/douyin/crawlers/douyin/web/config.yaml:/app/crawlers/douyin/web/config.yaml:ro
-      - /www/wwwroot/douyin/crawlers/tiktok/web/config.yaml:/app/crawlers/tiktok/web/config.yaml:ro
-      - /www/wwwroot/douyin/crawlers/tiktok/app/config.yaml:/app/crawlers/tiktok/app/config.yaml:ro
+      - /opt/jiu9/config/config.yaml:/app/config.yaml:ro
+      - /opt/jiu9/config/crawlers/douyin/web/config.yaml:/app/crawlers/douyin/web/config.yaml:ro
+      - /opt/jiu9/config/crawlers/tiktok/web/config.yaml:/app/crawlers/tiktok/web/config.yaml:ro
+      - /opt/jiu9/config/crawlers/tiktok/app/config.yaml:/app/crawlers/tiktok/app/config.yaml:ro
       # 下载文件持久化
       - crawler-download:/app/download
     environment:
       TZ: Asia/Shanghai
-    networks:
-      - jiu9-net
 
   config-backend:
     image: crpi-i6pwsm2rbcu2h5uv.cn-shenzhen.personal.cr.aliyuncs.com/ggwujun/config-backend:latest
     container_name: jiu9-config-backend
     restart: always
-    ports:
-      - "8081:8081"
-    # host-gateway: 让容器以 127.0.0.1 身份访问宿主机,匹配 MySQL 的 abcd2@localhost 白名单
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: host
     environment:
       TZ: Asia/Shanghai
       DJANGO_SETTINGS_MODULE: dj_wx.settings
-      # config-backend 默认连本机 MySQL(库/用户/密码均 abcd2),线上沿用此默认值
-      CONFIG_BACKEND_DB_HOST: host.docker.internal
+      # host 网络模式下,容器连 127.0.0.1 即本机 MySQL(宝塔 MySQL, 库/用户/密码 abcd2)
+      CONFIG_BACKEND_DB_HOST: 127.0.0.1
       CONFIG_BACKEND_DB_PORT: "3306"
       CONFIG_BACKEND_DB_NAME: abcd2
       CONFIG_BACKEND_DB_USER: abcd2
       CONFIG_BACKEND_DB_PASSWORD: abcd2
-    networks:
-      - jiu9-net
 
 volumes:
   crawler-download:
-
-networks:
-  jiu9-net:
-    name: jiu9-net
-    driver: bridge

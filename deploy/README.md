@@ -14,7 +14,7 @@ CI: 构建镜像 → 推阿里云 ACR + ghcr.io
 宝塔 nginx :80/:443 (反代, 不动)
         │
         ├── crawler-api 容器  :8091  FastAPI 爬虫 API(抖音/TikTok/B站…)
-        │     └── Cookie 从 /www/wwwroot/douyin/crawlers/* 挂载(只读)
+        │     └── Cookie 从 /opt/jiu9/config/crawlers/* 挂载(只读)
         │
         └── config-backend 容器 :8081  Django 配置后台
               └── 通过 host.docker.internal 连本机宝塔 MySQL(3306, 库 abcd2)
@@ -70,10 +70,10 @@ bash deploy.sh config        # 只更新 config-backend
 
 ## 更新爬虫 Cookie
 
-Cookie 不打进镜像，从宿主机 `/www/wwwroot/douyin/crawlers/*/config.yaml` 挂载。Cookie 过期换新值：
+Cookie 不打进镜像，从宿主机 `/opt/jiu9/config/crawlers/*/config.yaml` 挂载。Cookie 过期换新值：
 
 ```bash
-vim /www/wwwroot/douyin/crawlers/douyin/web/config.yaml   # 替换 Cookie 字段
+vim /opt/jiu9/config/crawlers/douyin/web/config.yaml      # 替换 Cookie 字段
 cd /opt/jiu9/deploy && docker compose restart crawler-api # 重启生效(不用拉镜像)
 ```
 

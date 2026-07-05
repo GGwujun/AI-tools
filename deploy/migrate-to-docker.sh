@@ -45,14 +45,13 @@ log "备份 config → $BAK_ROOT/python_qsy"
 cp -a "$CONFIG_DIR" "$BAK_ROOT/python_qsy" 2>/dev/null || log "(warn) config 备份不完整"
 log "备份完成: $BAK_ROOT"
 
-# ---- 3. MySQL 连通性自检(容器→宿主 MySQL) ----
-log "MySQL 连通性自检(容器内连 host.docker.internal:3306)"
-if ! docker run --rm \
-    --add-host=host.docker.internal:host-gateway \
-    python:3.11-slim sh -c "pip install --quiet pymysql -i https://mirrors.aliyun.com/pypi/simple/ 2>/dev/null && \
-        python -c \"import pymysql; pymysql.connect(host='host.docker.internal', port=3306, user='abcd2', password='abcd2', database='abcd2'); print('mysql-ok')\"" \
+# ---- 3. MySQL 连通性自检(容器 host 网络 → 宿主 MySQL) ----
+log "MySQL 连通性自检(host 网络, 连 127.0.0.1:3306)"
+if ! docker run --rm --network host \
+    crpi-i6pwsm2rbcu2h5uv.cn-shenzhen.personal.cr.aliyuncs.com/ggwujun/config-backend:latest \
+    python -c "import pymysql; pymysql.connect(host='127.0.0.1', port=3306, user='abcd2', password='abcd2', database='abcd2'); print('mysql-ok')" \
     2>/dev/null | grep -q "mysql-ok"; then
-  die "容器无法连接本机 MySQL(abcd2@host.docker.internal)。请检查: 1) MySQL 用户 abcd2 是否允许容器网段连接(可能需改 abcd2@%) 2) 密码是否确为 abcd2。已备份,未做任何变更。"
+  die "容器无法连接本机 MySQL(abcd2@127.0.0.1)。请检查: 1) MySQL 服务是否在跑 2) abcd2 用户/密码是否正确。已备份,未做任何变更。"
 fi
 log "MySQL 连通性 OK"
 
