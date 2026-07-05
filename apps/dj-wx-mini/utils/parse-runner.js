@@ -6,10 +6,11 @@ const {
   findUrls
 } = require('./parse-link');
 const { rankRouteOptions, recordRouteResult } = require('./route-ranker');
+const api = require('../config/api');
 
 const FALLBACK_PARSE_CONFIG = {
-  slave_addr: 'http://127.0.0.1:8091/api/hybrid/video_data?url=',
-  slave_addr2: 'https://dsx-family.site/api/hybrid/video_data?url=',
+  slave_addr: api.parseSlaveAddr,
+  slave_addr2: api.parseSlaveAddr2,
   backup_addr: '',
   data_field: 'data',
   code_field: 'code',
@@ -185,7 +186,7 @@ function buildRouteOptions(config) {
 
 async function fetchConfig() {
   try {
-    const res = await request({ url: 'https://dsx-family.site/ymq/', method: 'GET' });
+    const res = await request({ url: api.ymq, method: 'GET' });
     return { ...FALLBACK_PARSE_CONFIG, ...(res.data?.data || {}) };
   } catch (error) {
     return { ...FALLBACK_PARSE_CONFIG };
@@ -270,9 +271,10 @@ async function requestAcrossRoutes(url, routeSequence, config) {
 /**
  * 解析输入（分享文案/短链/混合文本），返回结果数据。
  * @param {string} input 用户输入
+ * @param {object} [preloadedConfig] 可选，已拉取的 /ymq/ 配置；传入则不再单独请求 /ymq/
  * @returns {Promise<object>} resultData，结构与原 video-parse buildResultData 一致
  */
-async function parseVideo(input) {
+async function parseVideo(input, preloadedConfig) {
   const analysis = analyzeInput(input);
 
   if (!analysis.rawText) throw new Error('unsupported: empty input');
@@ -282,7 +284,7 @@ async function parseVideo(input) {
   const platform = analysis.platform;
   if (!targetUrl || !platform) throw new Error('unsupported platform');
 
-  const config = await fetchConfig();
+  const config = preloadedConfig ? { ...FALLBACK_PARSE_CONFIG, ...preloadedConfig } : await fetchConfig();
   const routeSequence = buildRouteOptions(config);
   if (!routeSequence.length) throw new Error('config missing');
 
@@ -295,6 +297,7 @@ async function parseVideo(input) {
 
 module.exports = {
   parseVideo,
+  fetchConfig,
   analyzeInput,
   inferFailureReason,
   FALLBACK_PARSE_CONFIG

@@ -1,6 +1,7 @@
 ﻿const storage = require('../../utils/safe-storage');
 const { inferPlatformLabelFromUrl } = require('../../utils/parse-link');
-const { parseVideo, inferFailureReason } = require('../../utils/parse-runner');
+const { parseVideo, fetchConfig, inferFailureReason } = require('../../utils/parse-runner');
+const api = require('../../config/api');
 
 function formatDateTime(dateString) {
   if (!dateString) return '刚刚';
@@ -62,7 +63,7 @@ function buildResourceNotes(resultData, meta) {
 }
 
 function buildProxyImageUrl(url) {
-  return `https://dsx-family.site/api/download/image/?url=${encodeURIComponent(url)}`;
+  return `${api.downloadImage}?url=${encodeURIComponent(url)}`;
 }
 
 function getPreferredVideoDownloadUrl(resultData) {
@@ -275,42 +276,36 @@ Page({
       currentPicIndex: 0
     });
 
-    // 拉取广告配置
-    wx.request({
-      url: 'https://dsx-family.site/ymq/',
-      method: 'GET',
-      success: (res) => {
-        const config = res.data?.data;
+    // 读取输入，决定进页面后做什么
+    let inputFromOptions = '';
+    if (options.input) {
+      try { inputFromOptions = decodeURIComponent(options.input); } catch (e) { console.error('读取输入失败:', e); }
+    }
+    const hasResultData = !!options.data;
+
+    // 只拉一次 /ymq/ 配置（含广告 ID + 解析线路），存起来供广告和解析复用
+    this.parseConfig = null;
+    fetchConfig()
+      .then((config) => {
+        this.parseConfig = config;
         if (config?.adUnitId) {
           this.setData({ adUnitId: config.adUnitId });
         }
-      },
-      fail: () => {}
-    });
-
-    if (options.data) {
-      // 直接传入结果数据（历史/收藏回看）
-      try {
-        const resultData = JSON.parse(decodeURIComponent(options.data));
-        this.applyResultData(resultData);
-      } catch (error) {
-        console.error('解析结果数据失败:', error);
-      }
-      return;
-    }
-
-    if (options.input) {
-      // 从首页带来输入，进页面后自动解析
-      let input = '';
-      try {
-        input = decodeURIComponent(options.input);
-      } catch (error) {
-        console.error('读取输入失败:', error);
-      }
-      if (input) {
-        this.runParse(input);
-      }
-    }
+      })
+      .catch(() => {})
+      .then(() => {
+        // 配置拉完（成功或失败都继续），再触发解析或回看
+        if (hasResultData) {
+          try {
+            const resultData = JSON.parse(decodeURIComponent(options.data));
+            this.applyResultData(resultData);
+          } catch (error) {
+            console.error('解析结果数据失败:', error);
+          }
+        } else if (inputFromOptions) {
+          this.runParse(inputFromOptions);
+        }
+      });
   },
 
   runParse(input) {
@@ -322,7 +317,8 @@ Page({
       pendingInput: input
     });
 
-    parseVideo(input)
+    // 复用 onLoad 已拉的配置，parseVideo 不再单独请求 /ymq/
+    parseVideo(input, this.parseConfig)
       .then((resultData) => {
         this.applyResultData(resultData);
         this.setData({ parseState: 'success', parseMessage: '解析完成' });
@@ -604,15 +600,11 @@ Page({
 
   openDocExtract() {
     const title = this.data.resultData?.title || '';
-    const body = this.data.resultMeta?.sourceUrl || this.data.resultData?.videourl || '';
-    const tags = [
-      this.data.resultMeta?.platformLabel,
-      this.data.resultMeta?.typeLabel,
-      this.data.resultMeta?.routeLabel
-    ].filter(Boolean).map((item) => `#${item}`).join(' ');
-
-    wx.navigateTo({
-      url: `/pages/doc-extract/doc-extract?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&tags=${encodeURIComponent(tags)}`
+    wx.setClipboardData({
+      data: title,
+      success: () => {
+        wx.showToast({ title: '文案已复制', icon: 'success' });
+      }
     });
   },
 
@@ -692,7 +684,7 @@ Page({
         title: '计算视频大小...',
       });
       console.log("正在获取视频大小");
-      const apiUrl = `https://dsx-family.site/api/get_video_size/?url=${encodeURIComponent(downurl)}`;
+      const apiUrl = `${api.getVideoSize}?url=${encodeURIComponent(downurl)}`;
       wx.request({
         url: apiUrl,
         method: 'GET', // 使用 GET 请求获取文件大小
@@ -725,7 +717,7 @@ Page({
             const downloadTarget = downurl || url;
             const downloadUrl = this.isDirectMediaUrl(downloadTarget)
               ? downloadTarget
-              : `http://127.0.0.1:8091/api/download?url=${encodeURIComponent(downloadTarget)}&prefix=true&with_watermark=false`;
+              : `${api.downloadApi}?url=${encodeURIComponent(downloadTarget)}&prefix=true&with_watermark=false`;
             this.startVideoDownload(downloadUrl);
           }
         },
@@ -920,7 +912,7 @@ Page({
         return;
       }
 
-      const url = `https://dsx-family.site/api/download/image/?url=${encodeURIComponent(pics[index])}`;
+      const url = `${api.downloadImage}?url=${encodeURIComponent(pics[index])}`;
       wx.downloadFile({
         url: url,
         success: (res) => {
