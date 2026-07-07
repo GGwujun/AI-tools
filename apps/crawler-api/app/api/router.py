@@ -7,7 +7,7 @@ from app.api.endpoints import (
     kuaishou_web,
     xiaohongshu_web,
     weibo_web,
-    hybrid_parsing, ios_shortcut, download,
+    hybrid_parsing, ios_shortcut, download, proxy,
 )
 
 router = APIRouter()
@@ -39,3 +39,6 @@ router.include_router(ios_shortcut.router, prefix="/ios", tags=["iOS-Shortcut"])
 
 # Download routers
 router.include_router(download.router, tags=["Download"])
+
+# Video routers (代理: 视频大小/图片下载)
+router.include_router(proxy.router, prefix="/video", tags=["Video-Proxy"])

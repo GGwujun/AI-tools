@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# crawler-api + config-backend Docker 一键安装/升级脚本
+# crawler-api Docker 一键安装/升级脚本
 # Usage: curl -sSL https://raw.githubusercontent.com/GGwujun/jiu9-toolbox/main/apps/crawler-api/deploy/install.sh | sudo bash
 #
 set -e
@@ -10,7 +10,6 @@ set -e
 # ============================================================
 GITHUB_RAW="https://raw.githubusercontent.com/GGwujun/jiu9-toolbox/main/apps/crawler-api"
 CRAWLER_API_IMAGE="ggwujun/crawler-api"
-CONFIG_BACKEND_IMAGE="ggwujun/config-backend"
 INSTALL_DIR="/opt/crawler-api"
 COMPOSE_CMD=""
 
@@ -340,28 +339,13 @@ health_check() {
     while [ $count -lt $retries ]; do
         if curl -sf "http://localhost:${crawler_port}/health" > /dev/null 2>&1; then
             info "crawler-api 运行正常 (port ${crawler_port})"
-            break
-        fi
-        count=$((count + 1))
-        sleep 2
-    done
-    if [ $count -ge $retries ]; then
-        warn "crawler-api 未在预期时间内响应"
-    fi
-
-    # 检查 config-backend
-    local config_port="${CONFIG_BACKEND_PORT:-8081}"
-    count=0
-    while [ $count -lt $retries ]; do
-        if curl -sf "http://localhost:${config_port}/ymq/" > /dev/null 2>&1; then
-            info "config-backend 运行正常 (port ${config_port})"
             return 0
         fi
         count=$((count + 1))
         sleep 2
     done
 
-    warn "config-backend 未在预期时间内响应，请检查日志: cd ${INSTALL_DIR} && ${COMPOSE_CMD} logs"
+    warn "crawler-api 未在预期时间内响应，请检查日志: cd ${INSTALL_DIR} && ${COMPOSE_CMD} logs"
     return 1
 }
 
@@ -383,7 +367,7 @@ download_compose() {
 do_install() {
     echo ""
     echo -e "${CYAN}=============================================="
-    echo "  crawler-api + config-backend 安装脚本"
+    echo "  crawler-api 安装脚本"
     echo "==============================================${NC}"
     echo ""
 
@@ -415,7 +399,6 @@ do_install() {
     local ip
     ip=$(get_public_ip)
     local crawler_port="${CRAWLER_API_PORT:-8091}"
-    local config_port="${CONFIG_BACKEND_PORT:-8081}"
 
     echo ""
     echo -e "${CYAN}=============================================="
@@ -426,13 +409,8 @@ do_install() {
     echo "    API 文档:    http://${ip}:${crawler_port}/docs"
     echo "    健康检查:    http://${ip}:${crawler_port}/health"
     echo ""
-    echo "  config-backend:"
-    echo "    配置接口:    http://${ip}:${config_port}/ymq/"
-    echo "    管理后台:    http://${ip}:${config_port}/admin/"
-    echo ""
     echo "  配置文件目录: ${INSTALL_DIR}/config/"
     echo "  下载文件目录: ${INSTALL_DIR}/download/"
-    echo "  后端数据目录: ${INSTALL_DIR}/config-backend-data/"
     echo ""
     echo -e "${YELLOW}  请编辑配置文件中的 Cookie 后重启服务:${NC}"
     echo "  vim ${INSTALL_DIR}/config/crawlers/douyin/web/config.yaml"
@@ -461,7 +439,7 @@ do_upgrade() {
         exit 1
     fi
 
-    info "正在升级 crawler-api + config-backend ..."
+    info "正在升级 crawler-api ..."
 
     cd "${INSTALL_DIR}"
 
@@ -505,7 +483,6 @@ do_rollback() {
     cd "${INSTALL_DIR}"
 
     CRAWLER_API_IMAGE="${CRAWLER_API_IMAGE%%:*}:${tag}" \
-    CONFIG_BACKEND_IMAGE="${CONFIG_BACKEND_IMAGE%%:*}:${tag}" \
     ${COMPOSE_CMD} up -d
 
     health_check
@@ -548,7 +525,7 @@ do_uninstall() {
         exit 1
     fi
 
-    echo -e "${YELLOW}即将卸载 crawler-api + config-backend${NC}"
+    echo -e "${YELLOW}即将卸载 crawler-api${NC}"
 
     local confirm="n"
     if is_interactive; then
@@ -613,12 +590,12 @@ case "${COMMAND}" in
         ;;
     --help|-h)
         echo ""
-        echo "crawler-api + config-backend Docker 管理脚本"
+        echo "crawler-api Docker 管理脚本"
         echo ""
         echo "用法: $0 [命令] [参数]"
         echo ""
         echo "命令:"
-        echo "  (无参数)          安装 crawler-api + config-backend"
+        echo "  (无参数)          安装 crawler-api"
         echo "  upgrade           升级到最新版本"
         echo "  rollback <版本>   回滚到指定版本 (例如: rollback v4.1.2)"
         echo "  list-versions     列出可用版本"

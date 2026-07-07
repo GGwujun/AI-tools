@@ -1,6 +1,6 @@
 ﻿const storage = require('../../utils/safe-storage');
 const { inferPlatformLabelFromUrl } = require('../../utils/parse-link');
-const { parseVideo, fetchConfig, inferFailureReason } = require('../../utils/parse-runner');
+const { parseVideo, inferFailureReason } = require('../../utils/parse-runner');
 const api = require('../../config/api');
 
 function formatDateTime(dateString) {
@@ -283,29 +283,22 @@ Page({
     }
     const hasResultData = !!options.data;
 
-    // 只拉一次 /ymq/ 配置（含广告 ID + 解析线路），存起来供广告和解析复用
-    this.parseConfig = null;
-    fetchConfig()
-      .then((config) => {
-        this.parseConfig = config;
-        if (config?.adUnitId) {
-          this.setData({ adUnitId: config.adUnitId });
-        }
-      })
-      .catch(() => {})
-      .then(() => {
-        // 配置拉完（成功或失败都继续），再触发解析或回看
-        if (hasResultData) {
-          try {
-            const resultData = JSON.parse(decodeURIComponent(options.data));
-            this.applyResultData(resultData);
-          } catch (error) {
-            console.error('解析结果数据失败:', error);
-          }
-        } else if (inputFromOptions) {
-          this.runParse(inputFromOptions);
-        }
-      });
+    // 从本地配置读取广告位 ID
+    if (api.adUnitId) {
+      this.setData({ adUnitId: api.adUnitId });
+    }
+
+    // 直接触发解析或回看（不再等待远程配置）
+    if (hasResultData) {
+      try {
+        const resultData = JSON.parse(decodeURIComponent(options.data));
+        this.applyResultData(resultData);
+      } catch (error) {
+        console.error('解析结果数据失败:', error);
+      }
+    } else if (inputFromOptions) {
+      this.runParse(inputFromOptions);
+    }
   },
 
   runParse(input) {
@@ -317,8 +310,8 @@ Page({
       pendingInput: input
     });
 
-    // 复用 onLoad 已拉的配置，parseVideo 不再单独请求 /ymq/
-    parseVideo(input, this.parseConfig)
+    // 直接调用解析（配置已写死，无需远程拉取）
+    parseVideo(input)
       .then((resultData) => {
         this.applyResultData(resultData);
         this.setData({ parseState: 'success', parseMessage: '解析完成' });

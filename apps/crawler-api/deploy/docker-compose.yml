@@ -21,25 +21,6 @@ services:
     networks:
       - app-network
 
-  config-backend:
-    image: ${CONFIG_BACKEND_IMAGE:-ggwujun/config-backend:latest}
-    container_name: config-backend
-    restart: always
-    ports:
-      - "${CONFIG_BACKEND_PORT:-8081}:8081"
-    volumes:
-      - ./config-backend-data:/app/data
-    environment:
-      TZ: Asia/Shanghai
-      CONFIG_BACKEND_USE_SQLITE: "1"
-      CONFIG_BACKEND_SQLITE_PATH: "/app/data/db.sqlite3"
-      CONFIG_BACKEND_SLAVE_ADDR: "http://crawler-api:8091/api/hybrid/video_data?url="
-    depends_on:
-      crawler-api:
-        condition: service_started
-    networks:
-      - app-network
-
 networks:
   app-network:
     driver: bridge

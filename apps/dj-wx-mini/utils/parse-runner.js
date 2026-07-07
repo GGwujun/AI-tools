@@ -184,15 +184,6 @@ function buildRouteOptions(config) {
   return rankRouteOptions(options);
 }
 
-async function fetchConfig() {
-  try {
-    const res = await request({ url: api.ymq, method: 'GET' });
-    return { ...FALLBACK_PARSE_CONFIG, ...(res.data?.data || {}) };
-  } catch (error) {
-    return { ...FALLBACK_PARSE_CONFIG };
-  }
-}
-
 function inferFailureReason(error) {
   const message = String(error?.message || error || '');
   if (/compliance/i.test(message)) return '疑似版权内容，按合规策略已拦截';
@@ -271,10 +262,9 @@ async function requestAcrossRoutes(url, routeSequence, config) {
 /**
  * 解析输入（分享文案/短链/混合文本），返回结果数据。
  * @param {string} input 用户输入
- * @param {object} [preloadedConfig] 可选，已拉取的 /ymq/ 配置；传入则不再单独请求 /ymq/
  * @returns {Promise<object>} resultData，结构与原 video-parse buildResultData 一致
  */
-async function parseVideo(input, preloadedConfig) {
+async function parseVideo(input) {
   const analysis = analyzeInput(input);
 
   if (!analysis.rawText) throw new Error('unsupported: empty input');
@@ -284,7 +274,7 @@ async function parseVideo(input, preloadedConfig) {
   const platform = analysis.platform;
   if (!targetUrl || !platform) throw new Error('unsupported platform');
 
-  const config = preloadedConfig ? { ...FALLBACK_PARSE_CONFIG, ...preloadedConfig } : await fetchConfig();
+  const config = FALLBACK_PARSE_CONFIG;
   const routeSequence = buildRouteOptions(config);
   if (!routeSequence.length) throw new Error('config missing');
 
@@ -297,7 +287,6 @@ async function parseVideo(input, preloadedConfig) {
 
 module.exports = {
   parseVideo,
-  fetchConfig,
   analyzeInput,
   inferFailureReason,
   FALLBACK_PARSE_CONFIG
