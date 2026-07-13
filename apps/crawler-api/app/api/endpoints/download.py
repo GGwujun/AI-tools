@@ -116,10 +116,8 @@ async def download_file_hybrid(request: Request,
 
             # 不能用 async with，否则 client 在 StreamingResponse 读取流之前就关闭了
             client = httpx.AsyncClient()
-            upstream_resp = await client.send(
-                client.build_request("GET", url, headers=__headers, follow_redirects=True),
-                stream=True,
-            )
+            req = client.build_request("GET", url, headers=__headers)
+            upstream_resp = await client.send(req, stream=True, follow_redirects=True)
             upstream_resp.raise_for_status()
 
             resp_headers = {}
