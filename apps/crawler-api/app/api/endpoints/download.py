@@ -5,7 +5,7 @@ import aiofiles
 import httpx
 import yaml
 from fastapi import APIRouter, Request, Query, HTTPException  # 导入FastAPI组件
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, StreamingResponse
 
 from app.api.models.APIResponseModel import ErrorResponseModel  # 导入响应模型
 from crawlers.hybrid.hybrid_crawler import HybridCrawler  # 导入混合数据爬虫
@@ -54,7 +54,10 @@ async def download_file_hybrid(request: Request,
                                    example="https://www.douyin.com/video/7372484719365098803",
                                    description="视频或图片的URL地址，也支持抖音|TikTok的分享链接，例如：https://v.douyin.com/e4J8Q7A/"),
                                prefix: bool = True,
-                               with_watermark: bool = False):
+                               with_watermark: bool = False,
+                               direct: bool = Query(
+                                   default=False,
+                                   description="是否为直链代理模式。传 true 时直接把 url 当视频/图片直链代理下载，不再走解析流程。")):
     """
     # [中文]
     ### 用途:
@@ -91,6 +94,42 @@ async def download_file_hybrid(request: Request,
         message = "Download endpoint is disabled in the configuration file. | 配置文件中已禁用下载端点。"
         return ErrorResponseModel(code=code, message=message, router=request.url.path,
                                   params=dict(request.query_params))
+
+    # 直链代理模式：不走解析，直接代理下载 CDN 视频/图片
+    # 支持自动检测 CDN 直链（douyinvod/bilivideo/kwimgs 等），也支持手动传 direct=true
+    _cdn_patterns = [
+        'douyinvod.com', 'bilivideo.com', 'kwimgs.com', 'yximgs.com',
+        'douyinpic.com', 'xhscdn.com', 'tiktokcdn.com', 'ppxvod.com',
+        'ixigua.com', 'huoshanvod.com', 'vlabvod.com', '365yg.com',
+        'sinaimg.cn', 'weibocdn.com', 'alicdn.com', 'bdstatic.com',
+        'bcebos.com', 'izuiyou.com', 'smtcdns.com', 'cibntv.net',
+        'qpic.cn', 'qnssl.com', 'myqcloud.com',
+    ]
+    is_direct = direct or any(p in url for p in _cdn_patterns)
+
+    if is_direct:
+        try:
+            __headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Referer': url,
+            }
+            async with httpx.AsyncClient() as client:
+                async with client.stream("GET", url, headers=__headers, follow_redirects=True, timeout=30.0) as response:
+                    response.raise_for_status()
+                    resp_headers = {
+                        'Content-Type': response.headers.get('Content-Type', 'video/mp4'),
+                    }
+                    if response.headers.get('Content-Length'):
+                        resp_headers['Content-Length'] = response.headers['Content-Length']
+                    return StreamingResponse(
+                        response.aiter_bytes(),
+                        media_type=resp_headers.get('Content-Type', 'video/mp4'),
+                        headers=resp_headers,
+                    )
+        except Exception as e:
+            code = 400
+            return ErrorResponseModel(code=code, message=str(e), router=request.url.path,
+                                      params=dict(request.query_params))
 
     # 开始解析数据/Start parsing data
     try:
