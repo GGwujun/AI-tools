@@ -5,7 +5,7 @@ import aiofiles
 import httpx
 import yaml
 from fastapi import APIRouter, Request, Query, HTTPException  # 导入FastAPI组件
-from starlette.responses import FileResponse, Response
+from starlette.responses import FileResponse, StreamingResponse
 
 from app.api.models.APIResponseModel import ErrorResponseModel  # 导入响应模型
 from crawlers.hybrid.hybrid_crawler import HybridCrawler  # 导入混合数据爬虫
@@ -113,18 +113,33 @@ async def download_file_hybrid(request: Request,
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 'Referer': url,
             }
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=__headers, follow_redirects=True, timeout=60.0)
-                response.raise_for_status()
-                resp_headers = {}
-                if response.headers.get('Content-Length'):
-                    resp_headers['Content-Length'] = response.headers['Content-Length']
-                return Response(
-                    content=response.content,
-                    status_code=response.status_code,
-                    headers=resp_headers,
-                    media_type=response.headers.get('Content-Type', 'video/mp4'),
-                )
+
+            # 不能用 async with，否则 client 在 StreamingResponse 读取流之前就关闭了
+            client = httpx.AsyncClient()
+            upstream_resp = await client.send(
+                client.build_request("GET", url, headers=__headers, follow_redirects=True),
+                stream=True,
+            )
+            upstream_resp.raise_for_status()
+
+            resp_headers = {}
+            if upstream_resp.headers.get('Content-Length'):
+                resp_headers['Content-Length'] = upstream_resp.headers['Content-Length']
+            content_type = upstream_resp.headers.get('Content-Type', 'video/mp4')
+
+            async def _generate():
+                try:
+                    async for chunk in upstream_resp.aiter_bytes():
+                        yield chunk
+                finally:
+                    await upstream_resp.aclose()
+                    await client.aclose()
+
+            return StreamingResponse(
+                _generate(),
+                media_type=content_type,
+                headers=resp_headers,
+            )
         except Exception as e:
             code = 400
             return ErrorResponseModel(code=code, message=str(e), router=request.url.path,
