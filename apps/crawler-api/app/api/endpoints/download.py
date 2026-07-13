@@ -5,7 +5,7 @@ import aiofiles
 import httpx
 import yaml
 from fastapi import APIRouter, Request, Query, HTTPException  # 导入FastAPI组件
-from starlette.responses import FileResponse, StreamingResponse
+from starlette.responses import FileResponse, Response
 
 from app.api.models.APIResponseModel import ErrorResponseModel  # 导入响应模型
 from crawlers.hybrid.hybrid_crawler import HybridCrawler  # 导入混合数据爬虫
@@ -114,18 +114,17 @@ async def download_file_hybrid(request: Request,
                 'Referer': url,
             }
             async with httpx.AsyncClient() as client:
-                async with client.stream("GET", url, headers=__headers, follow_redirects=True, timeout=30.0) as response:
-                    response.raise_for_status()
-                    resp_headers = {
-                        'Content-Type': response.headers.get('Content-Type', 'video/mp4'),
-                    }
-                    if response.headers.get('Content-Length'):
-                        resp_headers['Content-Length'] = response.headers['Content-Length']
-                    return StreamingResponse(
-                        response.aiter_bytes(),
-                        media_type=resp_headers.get('Content-Type', 'video/mp4'),
-                        headers=resp_headers,
-                    )
+                response = await client.get(url, headers=__headers, follow_redirects=True, timeout=60.0)
+                response.raise_for_status()
+                resp_headers = {}
+                if response.headers.get('Content-Length'):
+                    resp_headers['Content-Length'] = response.headers['Content-Length']
+                return Response(
+                    content=response.content,
+                    status_code=response.status_code,
+                    headers=resp_headers,
+                    media_type=response.headers.get('Content-Type', 'video/mp4'),
+                )
         except Exception as e:
             code = 400
             return ErrorResponseModel(code=code, message=str(e), router=request.url.path,
