@@ -1,5 +1,8 @@
 const {
-  inferPlatformLabelFromUrl
+  inferPlatformLabelFromUrl,
+  extractSupportedLinks,
+  detectPlatform,
+  getPlatformLabel
 } = require('../../utils/parse-link');
 const { getParseTasks, getParseTaskResult } = require('../../utils/task-store');
 const storage = require('../../utils/safe-storage');
@@ -47,7 +50,7 @@ function buildRecentItems(history, taskResults, fallbackCover) {
     }, [])
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  return merged.slice(0, 1).map((item) => ({
+  return merged.slice(0, 6).map((item) => ({
     id: item.id,
     title: item.title || '未命名素材',
     cover: item.cover || item.photo || fallbackCover,
@@ -68,7 +71,6 @@ Page({
       { name: '抖音', icon: '/images/icons_svg/platform-douyin.svg' },
       { name: '小红书', icon: '/images/icons_svg/platform-xiaohongshu.svg' },
       { name: '快手', icon: '/images/icons_svg/platform-kuaishou.svg' },
-      { name: '视频号', icon: '/images/icons_svg/platform-wechat-channel.svg' },
       { name: 'B站', icon: '/images/icons_svg/platform-bilibili.svg' }
     ],
     steps: [
@@ -90,6 +92,30 @@ Page({
   refreshPage() {
     this.setData({ dateText: formatDateText() });
     this.loadRecentItems();
+    this.checkClipboard();
+  },
+
+  // 检测剪贴板里的平台分享链接，自动填入输入框（同一条链接只提示一次）
+  checkClipboard() {
+    if (this.data.draftInput && this.data.draftInput.trim()) return;
+
+    wx.getClipboardData({
+      success: (res) => {
+        const links = extractSupportedLinks(res.data || '');
+        if (!links.length) return;
+
+        const link = links[0];
+        if (link === storage.get('lastClipboardLink', '')) return;
+        storage.set('lastClipboardLink', link);
+
+        this.setData({ draftInput: link });
+        const platform = detectPlatform(link);
+        wx.showToast({
+          title: `已识别${getPlatformLabel(platform)}链接，点击解析`,
+          icon: 'none'
+        });
+      }
+    });
   },
 
   loadRecentItems() {
@@ -176,5 +202,12 @@ Page({
 
   goToProfile() {
     wx.switchTab({ url: '/pages/about/about' });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '无水印视频提取，粘贴链接一键保存',
+      path: '/pages/home/home'
+    };
   }
 });

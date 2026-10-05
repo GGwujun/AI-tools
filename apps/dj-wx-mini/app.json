@@ -7,10 +7,8 @@
     "pages/about/detail/detail",
     "pages/about/complaint/complaint",
     "pages/parse-fail/parse-fail",
-    "pages/doc-extract/doc-extract",
     "pages/ai/ocr/ocr",
     "pages/ai/writer/writer",
-    "pages/ai/tts/tts",
     "pages/ai/eraser/eraser",
     "pages/video/video"
   ],

@@ -1,5 +1,9 @@
 <view class="page">
   <scroll-view scroll-y class="scroll safe-bottom" wx:if="{{resultData}}">
+    <view wx:if="{{fromShare}}" class="share-banner" bindtap="goHome">
+      <text class="share-banner-text">来自好友分享 · 点此解析你自己的视频</text>
+    </view>
+
     <view class="status-bar">
       <text class="status-ok">解析成功</text>
     </view>
@@ -83,6 +87,8 @@
       </view>
     </view>
 
+    <button class="ai-rewrite-btn" bindtap="goAiWriter">✍️ AI 改写文案 · 一键生成原创文案</button>
+
     <view class="notes-card">
       <text class="notes-title">补充说明</text>
       <text wx:for="{{resourceNotes}}" wx:key="*this" class="note-item">• {{item}}</text>
@@ -92,6 +98,8 @@
       <button class="ghost-btn" bindtap="goHome">再解析一条</button>
       <button class="member-btn" bindtap="goToHistory">查看素材库</button>
     </view>
+
+    <ad wx:if="{{bannerAdUnitId}}" class="banner-ad" unit-id="{{bannerAdUnitId}}"></ad>
   </scroll-view>
 
   <view wx:elif="{{parseState === 'loading'}}" class="state-wrap">

@@ -40,6 +40,14 @@ const ZHIPU_CONFIG = {
   model: 'glm-4-flash'
 };
 
+function decodeParam(value) {
+  try {
+    return value ? decodeURIComponent(value) : '';
+  } catch (e) {
+    return value || '';
+  }
+}
+
 Page({
   data: {
     topic: '',
@@ -50,11 +58,23 @@ Page({
     result: '',
     tags: [],
     isGenerating: false,
-    history: []
+    history: [],
+    isFromVideo: false,
+    sourcePlatform: ''
   },
 
-  onLoad() {
+  onLoad(options) {
     this.loadHistory();
+
+    // 从视频结果页跳转：带入原视频文案，直接改写
+    if (options && options.source === 'video' && options.title) {
+      const sourceText = decodeParam(options.title).trim().slice(0, 200);
+      this.setData({
+        topic: sourceText,
+        isFromVideo: true,
+        sourcePlatform: decodeParam(options.platform)
+      });
+    }
   },
 
   onTopicInput(e) {
@@ -92,7 +112,12 @@ Page({
     const platformData = PLATFORM_PROMPTS[platform];
     const styleData = STYLE_CONFIG[style];
 
-    const systemPrompt = `${platformData.prompt}\n\n另外，请根据用户选择的风格"${styleData.name}"来调整文案风格：${styleData.modifier}\n\n最后，在文案结尾添加3-5个适合的话题标签，用换行分隔。`;
+    let systemPrompt = `${platformData.prompt}\n\n另外，请根据用户选择的风格"${styleData.name}"来调整文案风格：${styleData.modifier}\n\n最后，在文案结尾添加3-5个适合的话题标签，用换行分隔。`;
+
+    // 从视频页带入的原始文案：走"原创改写"而非"按主题新创作"
+    if (this.data.isFromVideo) {
+      systemPrompt += '\n\n注意：用户输入的是一条视频的原始文案，请在保留原意和关键信息的基础上进行原创改写（用于二次创作发布），不要抛弃原文信息点全新创作。';
+    }
 
     try {
       const response = await this.requestZhipuAPI(systemPrompt, topic);

@@ -1,5 +1,9 @@
 <view class="page">
   <scroll-view scroll-y class="content">
+    <view wx:if="{{isFromVideo}}" class="source-banner">
+      <text class="source-banner-text">📖 已带入{{sourcePlatform || '视频'}}原文案，点击生成即为原创改写</text>
+    </view>
+
     <view class="card">
       <view class="card-header">
         <text class="card-title">输入主题</text>
@@ -7,7 +11,7 @@
       </view>
       <textarea
         class="textarea"
-        placeholder="描述视频内容，例如：分享一款超好用的护肤品..."
+        placeholder="描述视频内容，例如：分享一款超好用的护肤品...（也可以粘贴原视频文案来改写）"
         value="{{topic}}"
         bindinput="onTopicInput"
         maxlength="200"
@@ -46,7 +50,7 @@
     </view>
 
     <button class="generate-btn {{isGenerating ? 'loading' : ''}}" bindtap="generateContent" disabled="{{!topic || isGenerating}}">
-      {{isGenerating ? '生成中...' : '生成文案'}}
+      {{isGenerating ? '生成中...' : (isFromVideo ? '一键改写文案' : '生成文案')}}
     </button>
 
     <view wx:if="{{result}}" class="card result-card">

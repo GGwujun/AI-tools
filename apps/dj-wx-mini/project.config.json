@@ -2,7 +2,12 @@
   "compileType": "miniprogram",
   "libVersion": "3.0.2",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "node_modules"
+      }
+    ],
     "include": []
   },
   "setting": {

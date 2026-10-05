@@ -83,6 +83,8 @@ Page({
     adWatchedTimestamp: null,
     currentAction: null,
     adUnitId: '',
+    bannerAdUnitId: '',
+    fromShare: false,
     isFavorite: false,
     resultMeta: null,
     summaryItems: [],
@@ -273,7 +275,8 @@ Page({
     this.setData({
       hasWatchedAd: !!hasWatchedAd,
       adWatchedTimestamp: adWatchedTimestamp || null,
-      currentPicIndex: 0
+      currentPicIndex: 0,
+      fromShare: options.from === 'share'
     });
 
     // 读取输入，决定进页面后做什么
@@ -286,6 +289,9 @@ Page({
     // 从本地配置读取广告位 ID
     if (api.adUnitId) {
       this.setData({ adUnitId: api.adUnitId });
+    }
+    if (api.bannerAdUnitId) {
+      this.setData({ bannerAdUnitId: api.bannerAdUnitId });
     }
 
     // 直接触发解析或回看（不再等待远程配置）
@@ -1054,6 +1060,41 @@ Page({
   goHome() {
     wx.switchTab({
       url: '/pages/home/home'
+    });
+  },
+
+  // 分享给好友/群：卡片带封面和文案，好友点开直接重新解析这条视频
+  onShareAppMessage() {
+    const resultData = this.data.resultData;
+    const sourceUrl = this.data.resultMeta?.sourceUrl || this.data.pendingInput || '';
+
+    if (resultData && sourceUrl) {
+      return {
+        title: resultData.title || `来看看这条${this.data.resultMeta?.platformLabel || '视频'}，无水印直接保存`,
+        path: `/pages/video/video?input=${encodeURIComponent(sourceUrl)}&from=share`,
+        imageUrl: resultData.photo || ''
+      };
+    }
+
+    return {
+      title: '无水印视频提取，粘贴链接一键保存',
+      path: '/pages/home/home'
+    };
+  },
+
+  // AI 改写文案：把解析出的标题/文案带到文案生成页
+  goAiWriter() {
+    const resultData = this.data.resultData;
+    if (!resultData) return;
+
+    const params = [
+      'source=video',
+      `platform=${encodeURIComponent(resultData.meta?.platformLabel || '')}`,
+      `title=${encodeURIComponent(resultData.title || '')}`
+    ].join('&');
+
+    wx.navigateTo({
+      url: `/pages/ai/writer/writer?${params}`
     });
   }
 });

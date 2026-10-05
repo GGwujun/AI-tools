@@ -345,3 +345,43 @@
 .retry-btn::after {
   border: none;
 }
+
+/* 好友分享引导条 */
+.share-banner {
+  margin-bottom: 16rpx;
+  padding: 18rpx 24rpx;
+  border-radius: 16rpx;
+  background: #eef4ff;
+  border: 2rpx solid rgba(44, 118, 255, 0.25);
+}
+
+.share-banner-text {
+  color: #1565ff;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+/* AI 改写文案按钮 */
+.ai-rewrite-btn {
+  margin-top: 18rpx;
+  height: 82rpx;
+  border-radius: 20rpx;
+  font-size: 25rpx;
+  font-weight: 600;
+  line-height: 82rpx;
+  padding: 0 24rpx;
+  background: #fff;
+  color: #7a2ff2;
+  border: 2rpx solid #e6d9ff;
+}
+
+.ai-rewrite-btn::after {
+  border: none;
+}
+
+/* 底部 banner 广告 */
+.banner-ad {
+  margin-top: 20rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}

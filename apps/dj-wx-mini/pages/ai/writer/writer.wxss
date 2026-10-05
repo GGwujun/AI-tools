@@ -221,3 +221,18 @@
   margin-left: 20rpx;
   flex-shrink: 0;
 }
+
+/* 视频文案来源提示条 */
+.source-banner {
+  margin-bottom: 16rpx;
+  padding: 18rpx 24rpx;
+  border-radius: 16rpx;
+  background: #f3ecff;
+  border: 2rpx solid #e6d9ff;
+}
+
+.source-banner-text {
+  color: #7a2ff2;
+  font-size: 24rpx;
+  font-weight: 600;
+}
