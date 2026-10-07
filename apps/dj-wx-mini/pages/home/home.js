@@ -71,7 +71,34 @@ Page({
       { name: '抖音', icon: '/images/icons_svg/platform-douyin.svg' },
       { name: '小红书', icon: '/images/icons_svg/platform-xiaohongshu.svg' },
       { name: '快手', icon: '/images/icons_svg/platform-kuaishou.svg' },
-      { name: 'B站', icon: '/images/icons_svg/platform-bilibili.svg' }
+      { name: 'B站', icon: '/images/icons_svg/platform-bilibili.svg' },
+      { name: '更多平台', icon: '/images/icons_svg/platform-more.svg' }
+    ],
+    faqs: [
+      {
+        id: 'parse-fail',
+        q: '解析失败怎么办？',
+        a: '请确认复制的是完整分享链接（在视频分享页点「复制链接」）。部分链接有时效性，过期后重新分享一次即可；偶发失败稍后重试或换个线路。',
+        open: false
+      },
+      {
+        id: 'save-fail',
+        q: '视频保存不到相册？',
+        a: '首次保存需要授权「保存到相册」权限，拒绝过后可在微信设置中重新开启。大视频建议复制链接用浏览器下载。',
+        open: false
+      },
+      {
+        id: 'link-expire',
+        q: '提示链接已失效？',
+        a: '无水印直链通常有时效，解析成功后建议立即保存；已过期的素材重新解析一次即可。',
+        open: false
+      },
+      {
+        id: 'feedback',
+        q: '如何反馈问题？',
+        a: '在「我的」页面点击意见反馈，描述问题和链接一并提交，会尽快处理。',
+        open: false
+      }
     ],
     steps: [
       { index: '1', title: '复制链接' },
@@ -204,6 +231,15 @@ Page({
 
   goToLibrary() {
     wx.switchTab({ url: '/pages/kj/kj' });
+  },
+
+  toggleFaq(e) {
+    const id = e.currentTarget.dataset.id;
+    this.setData({
+      faqs: this.data.faqs.map((item) => (
+        item.id === id ? { ...item, open: !item.open } : item
+      ))
+    });
   },
 
   goToTools() {

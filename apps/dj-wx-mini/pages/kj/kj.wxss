@@ -231,3 +231,14 @@
 .empty-btn::after {
   border: none;
 }
+
+/* 平台筛选行 */
+.platform-row {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.platform-chip {
+  font-size: 20rpx;
+  padding: 10rpx 22rpx;
+}

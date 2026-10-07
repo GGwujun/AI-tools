@@ -301,3 +301,49 @@
   font-size: 20rpx;
   line-height: 1.6;
 }
+
+/* FAQ 折叠列表 */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.faq-item {
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f2f4f7;
+}
+
+.faq-item:last-child {
+  border-bottom: none;
+}
+
+.faq-q-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.faq-q {
+  color: #1d2939;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.faq-arrow {
+  color: #98a2b3;
+  font-size: 30rpx;
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.faq-arrow.open {
+  transform: rotate(-90deg);
+}
+
+.faq-a {
+  display: block;
+  margin-top: 14rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.6;
+}

@@ -22,6 +22,18 @@
       </view>
     </view>
 
+    <view wx:if="{{platformChips.length > 2}}" class="filter-row platform-row">
+      <view
+        wx:for="{{platformChips}}"
+        wx:key="id"
+        class="filter-chip platform-chip {{activePlatform === item.id ? 'active' : ''}}"
+        bindtap="switchPlatform"
+        data-id="{{item.id}}"
+      >
+        {{item.name}}
+      </view>
+    </view>
+
     <view wx:if="{{displayItems.length > 0}}" class="material-list">
       <view
         wx:for="{{displayItems}}"

@@ -27,6 +27,19 @@ function mapTaskStatus(status) {
   return map[status] || '记录';
 }
 
+// 从素材数据里动态生成平台筛选 chips（保留当前选中）
+function buildPlatformChips(...itemGroups) {
+  const names = new Set();
+  itemGroups.flat().forEach((item) => {
+    const label = item.platformText;
+    if (label && label !== '未知平台' && label !== '来源链接') names.add(label);
+  });
+
+  const chips = [{ id: 'all', name: '全部平台' }];
+  names.forEach((name) => chips.push({ id: name, name }));
+  return chips;
+}
+
 Page({
   data: {
     fallbackCover: '/images/gfgzh.jpeg',
@@ -41,7 +54,9 @@ Page({
     historyItems: [],
     favoriteItems: [],
     taskItems: [],
-    displayItems: []
+    displayItems: [],
+    activePlatform: 'all',
+    platformChips: [{ id: 'all', name: '全部平台' }]
   },
 
   onLoad() {
@@ -107,7 +122,8 @@ Page({
     this.setData({
       historyItems,
       favoriteItems,
-      taskItems
+      taskItems,
+      platformChips: buildPlatformChips(historyItems, favoriteItems, taskItems)
     }, () => this.applyFilters());
   },
 
@@ -119,14 +135,22 @@ Page({
     this.setData({ activeFilter: e.currentTarget.dataset.id }, () => this.applyFilters());
   },
 
+  switchPlatform(e) {
+    this.setData({ activePlatform: e.currentTarget.dataset.id }, () => this.applyFilters());
+  },
+
   applyFilters() {
-    const { activeFilter, keyword, historyItems, favoriteItems, taskItems } = this.data;
+    const { activeFilter, activePlatform, keyword, historyItems, favoriteItems, taskItems } = this.data;
     let list = historyItems.concat(favoriteItems, taskItems);
 
     if (activeFilter === 'video' || activeFilter === 'image') {
       list = list.filter((item) => item.type === activeFilter);
     } else if (activeFilter === 'favorite') {
       list = favoriteItems;
+    }
+
+    if (activePlatform !== 'all') {
+      list = list.filter((item) => item.platformText === activePlatform);
     }
 
     const normalizedKeyword = String(keyword || '').trim().toLowerCase();

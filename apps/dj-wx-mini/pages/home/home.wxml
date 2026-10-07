@@ -83,6 +83,27 @@
       </view>
     </view>
 
+    <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">热点问题</text>
+      </view>
+      <view class="faq-list">
+        <view
+          wx:for="{{faqs}}"
+          wx:key="id"
+          class="faq-item"
+          bindtap="toggleFaq"
+          data-id="{{item.id}}"
+        >
+          <view class="faq-q-row">
+            <text class="faq-q">{{item.q}}</text>
+            <text class="faq-arrow {{item.open ? 'open' : ''}}">›</text>
+          </view>
+          <text wx:if="{{item.open}}" class="faq-a">{{item.a}}</text>
+        </view>
+      </view>
+    </view>
+
     <view class="footer-nav-row">
       <view class="footer-shortcut" bindtap="goToTools">
         <text class="footer-shortcut-title">工具箱</text>
