@@ -50,7 +50,7 @@ function buildRecentItems(history, taskResults, fallbackCover) {
     }, [])
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  return merged.slice(0, 6).map((item) => ({
+  return merged.slice(0, 3).map((item) => ({
     id: item.id,
     title: item.title || '未命名素材',
     cover: item.cover || item.photo || fallbackCover,
@@ -156,6 +156,16 @@ Page({
       wx.showToast({ title: '请先粘贴分享链接', icon: 'none' });
       return;
     }
+
+    // 多条链接 → 批量解析页
+    const links = extractSupportedLinks(input);
+    if (links.length > 1) {
+      wx.navigateTo({
+        url: `/pages/batch/batch?input=${encodeURIComponent(input)}`
+      });
+      return;
+    }
+
     wx.navigateTo({
       url: `/pages/video/video?input=${encodeURIComponent(input)}`
     });

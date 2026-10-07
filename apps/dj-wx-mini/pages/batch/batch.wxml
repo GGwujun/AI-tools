@@ -1,0 +1,49 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+    <view class="hero-card">
+      <view class="input-bar">
+        <text class="input-placeholder-title">粘贴多条分享链接（自动识别）</text>
+        <text class="clear-text" bindtap="clearInput">清空</text>
+      </view>
+      <textarea
+        class="input-box"
+        value="{{rawInput}}"
+        placeholder="把复制好的分享文案整段粘贴进来，一行一条或混在一起都可以"
+        maxlength="5000"
+        auto-height
+        bindinput="onInput"
+      ></textarea>
+      <button class="primary-btn {{running ? 'disabled' : ''}}" bindtap="startBatch" disabled="{{running}}">
+        {{running ? '解析中...' : '开始批量解析'}}
+      </button>
+      <text class="helper-text">支持一次粘贴多条链接，逐条解析，看一次广告解锁整批</text>
+    </view>
+
+    <view wx:if="{{tasks.length}}" class="section-card">
+      <view class="section-head between">
+        <text class="section-title">解析队列（{{tasks.length}} 条）</text>
+        <text wx:if="{{!running}}" class="link-text" bindtap="retryFailed">重试失败项</text>
+      </view>
+
+      <view wx:for="{{tasks}}" wx:key="url" class="task-item" bindtap="openTask" data-index="{{index}}">
+        <image wx:if="{{item.cover}}" class="task-cover" src="{{item.cover}}" mode="aspectFill"></image>
+        <view wx:else class="task-cover task-cover-placeholder">
+          <text class="task-cover-text">{{item.platformLabel[0]}}</text>
+        </view>
+
+        <view class="task-main">
+          <text class="task-title">{{item.status === 'success' ? item.title : item.url}}</text>
+          <text wx:if="{{item.status === 'failed' && item.reason}}" class="task-reason">{{item.reason}}</text>
+          <view class="task-meta-row">
+            <text class="task-platform">{{item.platformLabel}}</text>
+            <text class="task-status {{item.status}}">{{item.status === 'pending' ? '排队中' : item.status === 'running' ? '解析中...' : item.status === 'success' ? '点击查看' : '失败'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{tasks.length && !running}}" class="bottom-actions">
+      <button class="ghost-btn" bindtap="goHome">回首页</button>
+    </view>
+  </scroll-view>
+</view>

@@ -7,6 +7,7 @@
     "pages/about/detail/detail",
     "pages/about/complaint/complaint",
     "pages/parse-fail/parse-fail",
+    "pages/batch/batch",
     "pages/ai/ocr/ocr",
     "pages/ai/writer/writer",
     "pages/ai/eraser/eraser",
