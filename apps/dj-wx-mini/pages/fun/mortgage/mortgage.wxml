@@ -1,6 +1,12 @@
 <view class="page">
   <scroll-view scroll-y class="content">
 
+    <!-- 顶部 tab -->
+    <view class="tab-bar">
+      <view class="tab-item {{tab === 'monthly' ? 'active' : ''}}" bindtap="onTabTap" data-tab="monthly">月供计算</view>
+      <view class="tab-item {{tab === 'prepay' ? 'active' : ''}}" bindtap="onTabTap" data-tab="prepay">提前还款</view>
+    </view>
+
     <view class="card">
       <view class="form-row">
         <text class="form-label">贷款总额</text>
@@ -26,10 +32,34 @@
         </view>
       </view>
 
-      <button class="go-btn" bindtap="start">开始计算</button>
+      <!-- 提前还款额外参数 -->
+      <block wx:if="{{tab === 'prepay'}}">
+        <view class="form-row">
+          <text class="form-label">已还期数</text>
+          <input class="form-input" type="number" value="{{paid}}" bindinput="onPaidInput" placeholder="月" />
+          <text class="form-unit">期</text>
+        </view>
+        <view class="form-row">
+          <text class="form-label">提前还款</text>
+          <input class="form-input" type="digit" value="{{prepay}}" bindinput="onPrepayInput" placeholder="一次性还入" />
+          <text class="form-unit">万</text>
+        </view>
+        <view class="form-row">
+          <text class="form-label">还款后</text>
+          <view class="mode-chips">
+            <view class="mode-chip {{after === 'shorten' ? 'active' : ''}}" bindtap="onAfterTap" data-after="shorten">缩短期限</view>
+            <view class="mode-chip {{after === 'payment' ? 'active' : ''}}" bindtap="onAfterTap" data-after="payment">减少月供</view>
+          </view>
+        </view>
+      </block>
+
+      <button class="go-btn" bindtap="{{tab === 'monthly' ? 'start' : 'startPrepay'}}">
+        {{tab === 'monthly' ? '开始计算' : '算一算能省多少'}}
+      </button>
     </view>
 
-    <view wx:if="{{result}}" class="card result-card">
+    <!-- 月供结果 -->
+    <view wx:if="{{tab === 'monthly' && result}}" class="card result-card">
       <view class="main-row">
         <view class="main-item">
           <text class="main-num">{{result.monthly}}</text>
@@ -58,6 +88,39 @@
       </view>
 
       <view class="note">结果仅供参考，实际以银行审批为准</view>
+    </view>
+
+    <!-- 提前还款结果 -->
+    <view wx:if="{{tab === 'prepay' && prepayResult}}" class="card result-card">
+      <view class="main-row">
+        <view class="main-item">
+          <text class="main-num">{{prepayResult.saved}}</text>
+          <text class="main-label">可省利息（元）</text>
+        </view>
+      </view>
+      <text class="decay-tip" wx:if="{{prepayResult.isShorten}}">月供不变 {{prepayResult.monthly}} 元，少还 {{prepayResult.savedMonths}} 期</text>
+      <text class="decay-tip" wx:else>月供 {{prepayResult.monthly}} 元 → {{prepayResult.newMonthly}} 元，期数不变</text>
+
+      <view class="stat-grid">
+        <view class="stat">
+          <text class="stat-num">{{prepayResult.newMonths}}</text>
+          <text class="stat-label">剩余期数（原 {{prepayResult.restMonths}} 期）</text>
+        </view>
+        <view class="stat">
+          <text class="stat-num">{{prepayResult.newMonthly}}</text>
+          <text class="stat-label">{{prepayResult.isShorten ? '月供不变（元）' : '新月供（元）'}}</text>
+        </view>
+        <view class="stat">
+          <text class="stat-num">{{prepayResult.newRestInterest}}</text>
+          <text class="stat-label">剩余利息（原 {{prepayResult.oldRestInterest}}）</text>
+        </view>
+        <view class="stat">
+          <text class="stat-num">{{prepayResult.remaining}}</text>
+          <text class="stat-label">还款后剩余本金（元）</text>
+        </view>
+      </view>
+
+      <view class="note">按等额本息估算，提前还款违约金等以银行实际政策为准</view>
     </view>
 
   </scroll-view>

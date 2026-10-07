@@ -184,6 +184,23 @@ const TOOL_CONFIG = {
         ]
       }
     ]
+  },
+  frames: {
+    name: '视频抽帧',
+    desc: '按间隔抽取关键帧，一键保存图片集',
+    icon: '/images/icons_svg/thumbnail.svg',
+    placeholder: '粘贴视频分享链接（抖音/快手/B站等）',
+    fields: [
+      {
+        key: 'interval', label: '抽帧间隔', type: 'choice', default: '1',
+        options: [
+          { value: '0.5', label: '每 0.5 秒' },
+          { value: '1', label: '每 1 秒（推荐）' },
+          { value: '2', label: '每 2 秒' },
+          { value: '5', label: '每 5 秒' }
+        ]
+      }
+    ]
   }
 };
 
@@ -337,6 +354,7 @@ Page({
     if (form.format) params.format = form.format;
     if (form.factor) params.factor = Number(form.factor);
     if (form.mode) params.mode = form.mode;
+    if (form.interval) params.interval = Number(form.interval);
     return params;
   },
 

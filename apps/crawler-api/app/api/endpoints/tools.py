@@ -1,4 +1,5 @@
 import asyncio
+import glob
 import json
 import os
 import re
@@ -536,6 +537,40 @@ async def tool_grid(src: str, params: dict, meta: dict) -> dict:
         _quiet_remove(frame_path)
 
 
+# 视频抽帧：按间隔抽取关键帧，输出图片集（截图/封面/做素材用）
+FRAMES_INTERVALS = (0.5, 1.0, 2.0, 5.0)
+FRAMES_MAX_COUNT = 48
+
+
+async def tool_frames(src: str, params: dict, meta: dict) -> dict:
+    interval = _to_float(params.get('interval'), 1.0)
+    if interval not in FRAMES_INTERVALS:
+        interval = 1.0
+    duration = meta['duration'] or 0.0
+    if duration <= 0:
+        raise HTTPException(status_code=400, detail='无法读取视频时长，请换一个视频')
+    count = int(duration / interval) + 1
+    if count > FRAMES_MAX_COUNT:
+        raise HTTPException(
+            status_code=400,
+            detail=f'按当前间隔会抽出约 {count} 帧（上限 48 帧），请选更大的间隔')
+    token = secrets.token_hex(12)
+    pattern = os.path.join(TOOLS_DIR, f'frames_{token}_%02d.jpg')
+    vf = f'fps=1/{interval:g},scale=720:-2'
+    await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', vf, '-q:v', '2', pattern],
+                      timeout=max(120, int(duration)))
+    outputs = sorted(glob.glob(os.path.join(TOOLS_DIR, f'frames_{token}_*.jpg')))
+    if not outputs:
+        raise HTTPException(status_code=500, detail='抽帧失败，请稍后重试')
+    return {
+        'output_type': 'images',
+        'images': [f'/api/tools/file/{os.path.basename(p)}' for p in outputs],
+        'filenames': [os.path.basename(p) for p in outputs],
+        'count': len(outputs),
+        'interval': interval,
+    }
+
+
 async def tool_asr(src: str, params: dict, meta: dict) -> dict:
     api_key = os.getenv('ZHIPU_API_KEY', '')
     if not api_key:
@@ -614,6 +649,7 @@ TOOL_HANDLERS = {
     'speed': tool_speed,
     'transform': tool_transform,
     'vertical': tool_vertical,
+    'frames': tool_frames,
 }
 
 # 文本型工具的描述（给前端展示处理时长预期）
@@ -624,6 +660,7 @@ TOOL_TIPS = {
     'reverse': '倒放需要整段重新编码，视频越长等待越久（最长 2 分钟）',
     'speed': '变速需要重新编码，声音会同步变速',
     'vertical': '转竖屏需要整段重新编码，视频越长等待越久',
+    'frames': '按所选间隔抽帧，最多 48 张',
 }
 
 

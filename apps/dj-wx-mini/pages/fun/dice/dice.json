@@ -1,6 +1,6 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "摇骰子",
+  "navigationBarTitleText": "随机决定器",
   "navigationBarBackgroundColor": "#2c2f3e",
   "navigationBarTextStyle": "white"
 }

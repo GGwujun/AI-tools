@@ -10,7 +10,102 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 40rpx 40rpx;
+  padding: 40rpx 40rpx 40rpx;
+}
+
+/* 模式切换 */
+.mode-tabs {
+  display: flex;
+  gap: 14rpx;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 44rpx;
+}
+
+.mode-tab {
+  padding: 14rpx 30rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 26rpx;
+}
+
+.mode-tab.active {
+  background: #ffd54a;
+  color: #4a3200;
+  font-weight: 700;
+}
+
+/* 是否决定：大硬币 */
+.big-coin {
+  width: 260rpx;
+  height: 260rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 96rpx;
+  font-weight: 800;
+  margin-bottom: 24rpx;
+  box-shadow: 0 12rpx 36rpx rgba(0, 0, 0, 0.35);
+}
+
+.big-coin.yes {
+  background: linear-gradient(135deg, #34d399, #059669);
+  color: #fff;
+}
+
+.big-coin.no {
+  background: linear-gradient(135deg, #f87171, #dc2626);
+  color: #fff;
+}
+
+/* 随机数/点名大字 */
+.big-num {
+  font-size: 140rpx;
+  font-weight: 800;
+  color: #ffd54a;
+  line-height: 1.2;
+  margin-bottom: 8rpx;
+  min-height: 170rpx;
+  display: flex;
+  align-items: center;
+}
+
+.big-name {
+  max-width: 600rpx;
+  font-size: 96rpx;
+  font-weight: 800;
+  color: #ffd54a;
+  line-height: 1.3;
+  margin-bottom: 8rpx;
+  min-height: 130rpx;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  word-break: break-all;
+}
+
+.pick-placeholder {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 28rpx;
+  margin: 60rpx 0 40rpx;
+}
+
+.big-hint {
+  display: block;
+  margin: 0 0 8rpx;
+}
+
+/* 结果跳动动画（是否/随机数/点名共用） */
+.coin-rolling {
+  animation: coinjump 0.45s ease-in-out infinite;
+}
+
+@keyframes coinjump {
+  0% { transform: scale(0.92) rotate(-3deg); }
+  50% { transform: scale(1.06) rotate(3deg); }
+  100% { transform: scale(0.92) rotate(-3deg); }
 }
 
 .dice-row {
@@ -174,4 +269,64 @@
   border-radius: 10rpx;
   padding: 8rpx 22rpx;
   font-weight: 600;
+}
+
+/* 随机数范围输入 */
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.range-input {
+  flex: 1;
+  background: #f5f6f8;
+  border-radius: 14rpx;
+  padding: 18rpx 24rpx;
+  font-size: 30rpx;
+  color: #333;
+  text-align: center;
+}
+
+.range-sep {
+  font-size: 32rpx;
+  color: #97a0b5;
+}
+
+/* 点名名单 */
+.card-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-head-row .card-title {
+  margin-bottom: 20rpx;
+}
+
+.pick-count {
+  font-size: 24rpx;
+  color: #2563ff;
+  background: rgba(37, 99, 255, 0.08);
+  border-radius: 10rpx;
+  padding: 6rpx 16rpx;
+}
+
+.name-area {
+  width: 100%;
+  min-height: 160rpx;
+  background: #f5f6f8;
+  border-radius: 14rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #333;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.clear-link {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  color: #f56c6c;
+  text-align: right;
 }

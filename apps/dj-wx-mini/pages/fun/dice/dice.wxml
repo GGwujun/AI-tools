@@ -1,38 +1,100 @@
 <view class="page">
   <view class="stage">
-    <view class="dice-row {{rolling ? 'rolling' : ''}}">
-      <view wx:for="{{cells}}" wx:key="index" wx:for-item="die" class="dice">
-        <view class="dice-face">
-          <view
-            wx:for="{{die}}"
-            wx:key="index"
-            wx:for-item="cell"
-            class="cell {{cell.on ? 'on' : ''}}"
-          ></view>
+    <!-- 模式切换 -->
+    <view class="mode-tabs">
+      <view
+        wx:for="{{modes}}"
+        wx:key="id"
+        class="mode-tab {{mode === item.id ? 'active' : ''}}"
+        bindtap="setMode"
+        data-mode="{{item.id}}"
+      >{{item.label}}</view>
+    </view>
+
+    <!-- 摇骰子 -->
+    <block wx:if="{{mode === 'dice'}}">
+      <view class="dice-row {{rolling ? 'rolling' : ''}}">
+        <view wx:for="{{cells}}" wx:key="index" wx:for-item="die" class="dice">
+          <view class="dice-face">
+            <view
+              wx:for="{{die}}"
+              wx:key="index"
+              wx:for-item="cell"
+              class="cell {{cell.on ? 'on' : ''}}"
+            ></view>
+          </view>
         </view>
       </view>
-    </view>
+      <view class="result" wx:if="{{!rolling}}">
+        <text class="result-num">{{total}}</text>
+        <text class="result-label">点</text>
+        <text class="result-hint" wx:if="{{shakeHint}}">{{shakeHint}}</text>
+      </view>
+    </block>
 
-    <view class="result" wx:if="{{!rolling}}">
-      <text class="result-num">{{total}}</text>
-      <text class="result-label">点</text>
-      <text class="result-hint" wx:if="{{shakeHint}}">{{shakeHint}}</text>
-    </view>
+    <!-- 是否决定 -->
+    <block wx:if="{{mode === 'yesno'}}">
+      <view class="big-coin {{yesno === '是' ? 'yes' : 'no'}} {{rolling ? 'coin-rolling' : ''}}">{{yesno}}</view>
+      <text class="result-hint big-hint" wx:if="{{!rolling && shakeHint}}">{{shakeHint}}</text>
+    </block>
+
+    <!-- 随机数 -->
+    <block wx:if="{{mode === 'number'}}">
+      <view class="big-num {{rolling ? 'coin-rolling' : ''}}">{{numberResult || '—'}}</view>
+    </block>
+
+    <!-- 点名抽人 -->
+    <block wx:if="{{mode === 'pick'}}">
+      <view wx:if="{{pickResult || rolling}}" class="big-name {{rolling ? 'coin-rolling' : ''}}">{{pickResult || '…'}}</view>
+      <view wx:else class="pick-placeholder">在下方填好名单，点按钮抽人</view>
+      <text class="result-hint big-hint" wx:if="{{!rolling && shakeHint}}">{{shakeHint}}</text>
+    </block>
 
     <button class="roll-btn {{rolling ? 'disabled' : ''}}" bindtap="tapRoll" disabled="{{rolling}}">
-      {{rolling ? '骰子翻滚中…' : '🎲 摇一个'}}
+      {{rolling ? '决定中…' : btnText}}
     </button>
-    <text class="shake-tip">把手机用力摇一摇也可以掷骰子</text>
+    <text class="shake-tip">把手机用力摇一摇也可以触发</text>
   </view>
 
   <view class="card bottom-card">
-    <text class="card-title">骰子个数</text>
-    <view class="count-row">
-      <view class="count-item {{count === 1 ? 'active' : ''}}" bindtap="setCount" data-count="1">1 个</view>
-      <view class="count-item {{count === 2 ? 'active' : ''}}" bindtap="setCount" data-count="2">2 个</view>
-      <view class="count-item {{count === 3 ? 'active' : ''}}" bindtap="setCount" data-count="3">3 个</view>
-    </view>
+    <!-- 骰子个数 -->
+    <block wx:if="{{mode === 'dice'}}">
+      <text class="card-title">骰子个数</text>
+      <view class="count-row">
+        <view class="count-item {{count === 1 ? 'active' : ''}}" bindtap="setCount" data-count="1">1 个</view>
+        <view class="count-item {{count === 2 ? 'active' : ''}}" bindtap="setCount" data-count="2">2 个</view>
+        <view class="count-item {{count === 3 ? 'active' : ''}}" bindtap="setCount" data-count="3">3 个</view>
+      </view>
+    </block>
 
+    <!-- 随机数范围 -->
+    <block wx:if="{{mode === 'number'}}">
+      <text class="card-title">数值范围（含两端）</text>
+      <view class="range-row">
+        <input class="range-input" type="number" value="{{minVal}}" bindinput="onMinInput" placeholder="最小" />
+        <text class="range-sep">~</text>
+        <input class="range-input" type="number" value="{{maxVal}}" bindinput="onMaxInput" placeholder="最大" />
+      </view>
+    </block>
+
+    <!-- 点名名单 -->
+    <block wx:if="{{mode === 'pick'}}">
+      <view class="card-head-row">
+        <text class="card-title">名单（换行/逗号/空格分隔）</text>
+        <text class="pick-count" wx:if="{{pickCount}}">{{pickCount}} 人</text>
+      </view>
+      <textarea
+        class="name-area"
+        value="{{nameText}}"
+        bindinput="onNameInput"
+        maxlength="2000"
+        auto-height
+        placeholder="张三 李四 王五…"
+      />
+      <view class="clear-link" bindtap="clearNames">清空名单</view>
+    </block>
+
+    <!-- 最近记录 -->
     <view class="history-wrap" wx:if="{{history.length > 1}}">
       <text class="card-title">最近记录</text>
       <view class="history-row">

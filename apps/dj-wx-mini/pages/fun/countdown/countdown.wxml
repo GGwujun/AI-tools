@@ -1,0 +1,72 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <view class="head-row">
+      <view class="today-label">今天是 {{todayLabel}}</view>
+      <view class="add-btn" bindtap="toggleAdd">{{adding ? '收起' : '+ 自定义'}}</view>
+    </view>
+
+    <!-- 自定义表单 -->
+    <view wx:if="{{adding}}" class="card">
+      <view class="form-row">
+        <text class="form-label">名称</text>
+        <input class="form-input" placeholder="如：考研、放假、发工资" maxlength="20" value="{{formName}}" bindinput="onNameInput" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">日期</text>
+        <picker mode="date" value="{{formDate}}" start="2024-01-01" bindchange="onDateChange">
+          <view class="form-input picker-value">{{formDate || '点这里选日期'}}</view>
+        </picker>
+      </view>
+      <view class="form-row">
+        <text class="form-label">重复</text>
+        <view class="repeat-chips">
+          <view class="repeat-chip {{formRepeat === 'yearly' ? 'active' : ''}}" bindtap="onRepeatTap" data-repeat="yearly">每年</view>
+          <view class="repeat-chip {{formRepeat === 'once' ? 'active' : ''}}" bindtap="onRepeatTap" data-repeat="once">仅一次</view>
+        </view>
+      </view>
+      <button class="save-btn" bindtap="saveItem">保存</button>
+    </view>
+
+    <!-- 常用倒数日 -->
+    <view class="card">
+      <view class="card-title">常用倒数日，点一下添加</view>
+      <view class="preset-grid">
+        <view
+          wx:for="{{presets}}"
+          wx:key="name"
+          class="preset-item {{item.added ? 'added' : ''}}"
+          bindtap="addPreset"
+          data-name="{{item.name}}"
+        >
+          <text class="preset-icon">{{item.icon}}</text>
+          <text class="preset-name">{{item.name}}</text>
+          <text class="preset-days">{{item.added ? '已添加' : item.days + ' 天'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 我的倒数日 -->
+    <view wx:if="{{!items.length}}" class="card empty-card">
+      <text class="empty-icon">⏳</text>
+      <text class="empty-text">还没有倒数日</text>
+      <text class="empty-sub">从上面的常用日子点一下，或点右上角自定义</text>
+    </view>
+
+    <view wx:for="{{items}}" wx:key="id" class="card item-card {{item.isToday ? 'today' : ''}}">
+      <view class="item-left">
+        <text class="item-name">{{item.name}}</text>
+        <text class="item-date">{{item.date}} · {{item.repeatLabel}}</text>
+        <view class="item-ops">
+          <button class="share-mini" open-type="share" data-name="{{item.name}}" data-days="{{item.days}}">分享</button>
+          <text class="item-del" catchtap="removeItem" data-id="{{item.id}}">删除</text>
+        </view>
+      </view>
+      <view class="item-days">
+        <text class="days-num {{item.isToday ? 'is-today' : ''}}">{{item.isToday ? '🎉' : item.days}}</text>
+        <text class="days-label">{{item.isToday ? '就是今天' : (item.days < 0 ? '已过期' : '天')}}</text>
+      </view>
+    </view>
+
+  </scroll-view>
+</view>
