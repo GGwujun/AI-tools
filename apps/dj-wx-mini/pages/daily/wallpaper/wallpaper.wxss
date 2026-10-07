@@ -1,0 +1,145 @@
+.page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-bottom: 60rpx;
+  box-sizing: border-box;
+}
+
+.content {
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+/* 主展示 */
+.hero-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.hero-swiper {
+  height: 880rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-info {
+  padding: 20rpx 12rpx 8rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.hero-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.hero-copyright {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.hero-actions {
+  padding: 16rpx 12rpx 12rpx;
+}
+
+.btn-save {
+  width: 100%;
+  height: 92rpx;
+  background: linear-gradient(135deg, #4f9cff, #2563ff);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 46rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-save[disabled] {
+  opacity: 0.7;
+  color: #fff;
+}
+
+/* 8 天列表 */
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14rpx;
+}
+
+.day-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  border-radius: 12rpx;
+  padding: 6rpx;
+  border: 4rpx solid transparent;
+}
+
+.day-item.active {
+  border-color: #2563ff;
+  background: #edf4ff;
+}
+
+.day-thumb {
+  width: 100%;
+  height: 140rpx;
+  border-radius: 10rpx;
+}
+
+.day-date {
+  font-size: 20rpx;
+  color: #666;
+  text-align: center;
+}
+
+.day-item.active .day-date {
+  color: #2563ff;
+  font-weight: 600;
+}
+
+.loading-card {
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.footer-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 0 30rpx;
+  font-size: 22rpx;
+  color: #bbb;
+}

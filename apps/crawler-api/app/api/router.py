@@ -7,7 +7,7 @@ from app.api.endpoints import (
     kuaishou_web,
     xiaohongshu_web,
     weibo_web,
-    hybrid_parsing, ios_shortcut, download, proxy, ai_proxy, tools,
+    hybrid_parsing, ios_shortcut, download, proxy, ai_proxy, tools, daily,
 )
 
 router = APIRouter()
@@ -48,3 +48,6 @@ router.include_router(ai_proxy.router, prefix="/ai", tags=["AI-Proxy"])
 
 # Tools routers (视频小工具: ffmpeg 音频提取/截图/转文字/裁剪/压缩/GIF/水印/九宫格)
 router.include_router(tools.router, prefix="/tools", tags=["Video-Tools"])
+
+# Daily routers (今日数据: 金价/油价/朝霞晚霞预测/每日壁纸)
+router.include_router(daily.router, prefix="/daily", tags=["Daily-Data"])

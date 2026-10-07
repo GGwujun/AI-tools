@@ -1,0 +1,62 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 主展示区 -->
+    <view class="hero-card" wx:if="{{images.length}}">
+      <swiper
+        class="hero-swiper"
+        current="{{current}}"
+        bindchange="onSwiperChange"
+        circular
+        duration="300"
+      >
+        <swiper-item wx:for="{{images}}" wx:key="date">
+          <image
+            class="hero-image"
+            src="{{item.src}}"
+            mode="aspectFill"
+            binderror="onImgError"
+            data-index="{{index}}"
+            bindtap="preview"
+          />
+        </swiper-item>
+      </swiper>
+
+      <view class="hero-info">
+        <text class="hero-title">{{images[current].title}}</text>
+        <text class="hero-copyright">{{images[current].copyright}}</text>
+      </view>
+
+      <view class="hero-actions">
+        <button class="btn-save" bindtap="save" disabled="{{saving}}">
+          {{saving ? '保存中…' : '💾 保存壁纸'}}
+        </button>
+      </view>
+    </view>
+
+    <!-- 最近 8 天 -->
+    <view class="card" wx:if="{{images.length}}">
+      <text class="card-title">最近 8 天</text>
+      <view class="day-grid">
+        <view
+          wx:for="{{images}}"
+          wx:key="date"
+          class="day-item {{current === index ? 'active' : ''}}"
+          bindtap="selectDay"
+          data-index="{{index}}"
+        >
+          <image class="day-thumb" src="{{item.src}}" mode="aspectFill" binderror="onImgError" data-index="{{index}}"></image>
+          <text class="day-date">{{item.date}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card loading-card" wx:if="{{loading}}">
+      <text class="loading-text">正在加载壁纸…</text>
+    </view>
+
+    <view class="footer-note">
+      <text>壁纸来自 Bing 每日一图，仅作个人欣赏使用</text>
+    </view>
+  </scroll-view>
+</view>

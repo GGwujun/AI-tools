@@ -47,6 +47,12 @@ module.exports = {
   // 视频小工具（ffmpeg 后端处理）
   toolsProcessApi: current.toolsProcessApi,
   toolsFileBase: current.toolsFileBase,
+  // 今日数据（金价/油价/朝霞晚霞/壁纸）
+  dailyGoldApi: `${current.toolsFileBase}/api/daily/gold`,
+  dailyOilApi: `${current.toolsFileBase}/api/daily/oil`,
+  dailySunsetApi: `${current.toolsFileBase}/api/daily/sunset`,
+  dailyWallpaperApi: `${current.toolsFileBase}/api/daily/wallpaper`,
+  dailyWallpaperFile: `${current.toolsFileBase}/api/daily/wallpaper/file`,
   // 广告位 ID
   adUnitId: current.adUnitId,
   bannerAdUnitId: current.bannerAdUnitId

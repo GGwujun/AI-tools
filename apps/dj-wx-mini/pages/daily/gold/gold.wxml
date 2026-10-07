@@ -1,0 +1,65 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 国际金价 -->
+    <view class="card gold-card" wx:if="{{intl}}">
+      <view class="gold-head">
+        <text class="gold-name">🌍 {{intl.name}}</text>
+        <text class="gold-time">{{intl.date}} {{intl.time}}</text>
+      </view>
+      <view class="gold-price {{intl.dir}}">
+        <text class="gold-value">{{intl.priceText}}</text>
+        <text class="gold-unit">{{intl.unit}}</text>
+      </view>
+      <view class="gold-change {{intl.dir}}">
+        <text>{{intl.arrow}} {{intl.changeText}}（{{intl.pctText}}）</text>
+      </view>
+      <view class="gold-extra" wx:if="{{convertedGram}}">
+        <text>按汇率 {{usdcny}} 折算约 {{convertedGram}} 元/克</text>
+      </view>
+    </view>
+
+    <!-- 上海金价 -->
+    <view class="card gold-card sh" wx:if="{{sh}}">
+      <view class="gold-head">
+        <text class="gold-name">🇨🇳 {{sh.name}}</text>
+        <text class="gold-time">{{sh.date}} {{sh.time}}</text>
+      </view>
+      <view class="gold-price {{sh.dir}}">
+        <text class="gold-value">{{sh.priceText}}</text>
+        <text class="gold-unit">{{sh.unit}}</text>
+      </view>
+      <view class="gold-change {{sh.dir}}">
+        <text>{{sh.arrow}} {{sh.changeText}}（{{sh.pctText}}）</text>
+      </view>
+    </view>
+
+    <!-- 克价换算 -->
+    <view class="card" wx:if="{{sh}}">
+      <text class="card-title">💰 金价换算</text>
+      <view class="calc-row">
+        <input
+          class="calc-input"
+          type="digit"
+          placeholder="输入克数"
+          value="{{grams}}"
+          bindinput="onGramsInput"
+        />
+        <text class="calc-unit">克</text>
+        <view class="calc-eq">≈</view>
+        <text class="calc-result">{{calcResult || '--'}}</text>
+        <text class="calc-unit">元</text>
+      </view>
+      <text class="calc-tip">按上海金价 {{sh.priceText}} 元/克估算，不含工费与品牌溢价</text>
+    </view>
+
+    <view class="card loading-card" wx:if="{{loading}}">
+      <text class="loading-text">正在获取最新金价…</text>
+    </view>
+
+    <view class="footer-note" wx:if="{{intl || sh}}">
+      <text>更新于 {{updatedAt}}</text>
+      <text>行情仅供参考，交易请以金交所/银行实时价为准</text>
+    </view>
+  </scroll-view>
+</view>

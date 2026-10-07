@@ -1,0 +1,80 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 调价窗口提醒 -->
+    <view class="card adj-card" wx:if="{{nextAdj}}">
+      <view class="adj-left">
+        <text class="adj-title">⏰ 下次调价</text>
+        <text class="adj-date">{{nextAdj}}</text>
+        <text class="adj-days">{{nextAdjDays}}</text>
+      </view>
+      <view class="adj-right">
+        <text class="adj-last">上次调价 {{lastAdj}}</text>
+      </view>
+    </view>
+
+    <!-- 当前省份大字价格 -->
+    <view class="card" wx:if="{{current}}">
+      <scroll-view scroll-x class="prov-scroll" scroll-into-view="prov-{{currentIndex}}" scroll-with-animation>
+        <view
+          wx:for="{{provinces}}"
+          wx:key="prov"
+          class="prov-chip {{current.prov === item.prov ? 'active' : ''}}"
+          id="prov-{{index}}"
+          bindtap="selectProv"
+          data-index="{{index}}"
+        >{{item.prov}}</view>
+      </scroll-view>
+
+      <view class="price-grid">
+        <view class="price-item">
+          <text class="price-label">92# 汽油</text>
+          <text class="price-value">{{current.p92Text}}</text>
+          <text class="price-unit">元/升</text>
+        </view>
+        <view class="price-item">
+          <text class="price-label">95# 汽油</text>
+          <text class="price-value">{{current.p95Text}}</text>
+          <text class="price-unit">元/升</text>
+        </view>
+        <view class="price-item">
+          <text class="price-label">0# 柴油</text>
+          <text class="price-value">{{current.p0Text}}</text>
+          <text class="price-unit">元/升</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 全国列表 -->
+    <view class="card" wx:if="{{provinces.length}}">
+      <text class="card-title">全国油价一览</text>
+      <view class="table-head">
+        <text class="col-prov">省份</text>
+        <text class="col-price">92#</text>
+        <text class="col-price">95#</text>
+        <text class="col-price">0#柴</text>
+      </view>
+      <view
+        wx:for="{{provinces}}"
+        wx:key="prov"
+        class="table-row {{current.prov === item.prov ? 'active' : ''}}"
+        bindtap="selectProv"
+        data-index="{{index}}"
+      >
+        <text class="col-prov">{{item.prov}}</text>
+        <text class="col-price">{{item.p92Text}}</text>
+        <text class="col-price">{{item.p95Text}}</text>
+        <text class="col-price">{{item.p0Text}}</text>
+      </view>
+    </view>
+
+    <view class="card loading-card" wx:if="{{loading}}">
+      <text class="loading-text">正在获取最新油价…</text>
+    </view>
+
+    <view class="footer-note" wx:if="{{provinces.length}}">
+      <text>数据来源：{{source}} {{updatedAt}}</text>
+      <text>油价仅供参考，以加油站实际价格为准</text>
+    </view>
+  </scroll-view>
+</view>

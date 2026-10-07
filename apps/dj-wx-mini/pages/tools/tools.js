@@ -40,6 +40,17 @@ const TOOL_SECTIONS = [
     tools: [
       { key: 'writer', name: '文案生成', icon: '/images/icons_svg/tool-ai-rewrite.svg', color: 'pink', desc: '智能生成标题、摘要与发布文案' }
     ]
+  },
+  {
+    id: 'daily',
+    title: '今日数据',
+    subtitle: '油价金价实时查，朝霞壁纸天天换',
+    tools: [
+      { key: 'oil', name: '今日油价', icon: '/images/icons_svg/wallet.svg', color: 'orange', desc: '31 省汽柴油价，调价提醒' },
+      { key: 'gold', name: '今日金价', icon: '/images/icons_svg/premium.svg', color: 'yellow', desc: '国际/上海金价，附换算器' },
+      { key: 'sunset', name: '朝霞预测', icon: '/images/icons_svg/hot.svg', color: 'red', desc: '火烧云指数，摄影人必备' },
+      { key: 'wallpaper', name: '每日壁纸', icon: '/images/icons_svg/hd.svg', color: 'blue', desc: 'Bing 高清壁纸一键保存' }
+    ]
   }
 ];
 
@@ -49,7 +60,11 @@ const VIDEO_TOOL_KEYS = ['extract_audio', 'screenshot', 'asr', 'clip', 'compress
 const ROUTE_MAP = {
   ocr: '/pages/ai/ocr/ocr',
   eraser: '/pages/ai/eraser/eraser',
-  writer: '/pages/ai/writer/writer'
+  writer: '/pages/ai/writer/writer',
+  oil: '/pages/daily/oil/oil',
+  gold: '/pages/daily/gold/gold',
+  sunset: '/pages/daily/sunset/sunset',
+  wallpaper: '/pages/daily/wallpaper/wallpaper'
 };
 
 Page({

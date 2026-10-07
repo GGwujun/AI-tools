@@ -1,0 +1,85 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 地点 + 模式 -->
+    <view class="card">
+      <view class="loc-row" bindtap="chooseLocation">
+        <view class="loc-info">
+          <text class="loc-label">观测地点</text>
+          <text class="loc-name">📍 {{placeName}}</text>
+        </view>
+        <text class="loc-change">更换</text>
+      </view>
+
+      <view class="seg-row">
+        <view class="seg">
+          <view class="seg-item {{mode === 'sunrise' ? 'active' : ''}}" bindtap="setMode" data-mode="sunrise">🌅 朝霞</view>
+          <view class="seg-item {{mode === 'sunset' ? 'active' : ''}}" bindtap="setMode" data-mode="sunset">🌇 晚霞</view>
+        </view>
+        <view class="seg">
+          <view class="seg-item {{day === 'today' ? 'active' : ''}}" bindtap="setDay" data-day="today">今天</view>
+          <view class="seg-item {{day === 'tomorrow' ? 'active' : ''}}" bindtap="setDay" data-day="tomorrow">明天</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 预测结果 -->
+    <view class="card score-card {{gradeClass}}" wx:if="{{result}}">
+      <view class="score-top">
+        <view class="score-num-wrap">
+          <text class="score-num">{{result.score}}</text>
+          <text class="score-max">/100</text>
+        </view>
+        <view class="score-grade-wrap">
+          <text class="score-grade">{{result.grade}}</text>
+          <text class="score-countdown" wx:if="{{countdownText}}">{{result.event_label}} {{countdownText}}</text>
+        </view>
+      </view>
+      <text class="score-tip">{{result.tip}}</text>
+
+      <view class="sun-row">
+        <view class="sun-item">
+          <text class="sun-label">🌅 日出</text>
+          <text class="sun-value">{{result.sunrise}}</text>
+        </view>
+        <view class="sun-item">
+          <text class="sun-label">🌇 日落</text>
+          <text class="sun-value">{{result.sunset}}</text>
+        </view>
+        <view class="sun-item">
+          <text class="sun-label">⏱ 最佳时段</text>
+          <text class="sun-value">{{result.window.start}}-{{result.window.end}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 逐小时云量 -->
+    <view class="card" wx:if="{{result && result.hours.length}}">
+      <text class="card-title">逐小时云量（最佳时段附近）</text>
+      <view class="cloud-legend">
+        <view class="legend-item"><view class="dot low"></view><text>低云</text></view>
+        <view class="legend-item"><view class="dot mid"></view><text>中云</text></view>
+        <view class="legend-item"><view class="dot high"></view><text>高云</text></view>
+        <text class="legend-score">火烧云指数</text>
+      </view>
+      <view wx:for="{{result.hours}}" wx:key="time" class="cloud-row">
+        <text class="cloud-time">{{item.time}}</text>
+        <view class="cloud-bars">
+          <view class="bar low"><view class="fill low-fill" style="width: {{item.lowW}}%;"></view></view>
+          <view class="bar mid"><view class="fill mid-fill" style="width: {{item.midW}}%;"></view></view>
+          <view class="bar high"><view class="fill high-fill" style="width: {{item.highW}}%;"></view></view>
+        </view>
+        <text class="cloud-score">{{item.sText}}</text>
+      </view>
+      <text class="cloud-note">中云是火烧云主力，低云过厚会挡光；指数综合三段云量与能见度估算</text>
+    </view>
+
+    <view class="card loading-card" wx:if="{{loading}}">
+      <text class="loading-text">正在计算云量模型…</text>
+    </view>
+
+    <view class="footer-note">
+      <text>云量数据来自 Open-Meteo (GFS)，仅供参考</text>
+    </view>
+  </scroll-view>
+</view>

@@ -11,6 +11,10 @@
     "pages/ai/ocr/ocr",
     "pages/ai/writer/writer",
     "pages/ai/eraser/eraser",
+    "pages/daily/oil/oil",
+    "pages/daily/gold/gold",
+    "pages/daily/sunset/sunset",
+    "pages/daily/wallpaper/wallpaper",
     "pages/tools/video-tool",
     "pages/video/video"
   ],
@@ -21,6 +25,9 @@
     "backgroundColor": "#f6f8ff",
     "backgroundTextStyle": "light"
   },
+  "requiredPrivateInfos": [
+    "chooseLocation"
+  ],
   "tabBar": {
     "color": "#97a0b5",
     "selectedColor": "#2563ff",

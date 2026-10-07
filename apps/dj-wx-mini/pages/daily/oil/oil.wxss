@@ -1,0 +1,183 @@
+.page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-bottom: 60rpx;
+  box-sizing: border-box;
+}
+
+.content {
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+/* 调价提醒 */
+.adj-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #ff9a44, #ff6a00);
+  color: #fff;
+}
+
+.adj-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.adj-title {
+  font-size: 26rpx;
+  opacity: 0.9;
+}
+
+.adj-date {
+  font-size: 44rpx;
+  font-weight: 700;
+  margin: 8rpx 0 4rpx;
+}
+
+.adj-days {
+  font-size: 24rpx;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 20rpx;
+  padding: 4rpx 18rpx;
+  align-self: flex-start;
+}
+
+.adj-right {
+  text-align: right;
+}
+
+.adj-last {
+  font-size: 24rpx;
+  opacity: 0.9;
+}
+
+/* 省份横滑选择 */
+.prov-scroll {
+  white-space: nowrap;
+  margin-bottom: 24rpx;
+}
+
+.prov-chip {
+  display: inline-block;
+  padding: 10rpx 28rpx;
+  margin-right: 14rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  color: #666;
+  background: #f5f6f8;
+}
+
+.prov-chip.active {
+  background: #ff6a00;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 大字价格 */
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+.price-item {
+  background: #fff8f2;
+  border-radius: 16rpx;
+  padding: 24rpx 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.price-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.price-value {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #ff6a00;
+  margin: 8rpx 0 4rpx;
+}
+
+.price-unit {
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+/* 全国列表 */
+.table-head,
+.table-row {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 12rpx;
+}
+
+.table-head {
+  font-size: 24rpx;
+  color: #999;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.table-row {
+  font-size: 28rpx;
+  color: #333;
+  border-bottom: 2rpx solid #f7f7f7;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row.active {
+  background: #fff8f2;
+  border-radius: 12rpx;
+  color: #ff6a00;
+  font-weight: 600;
+}
+
+.col-prov {
+  flex: 1.4;
+}
+
+.col-price {
+  flex: 1;
+  text-align: right;
+}
+
+.loading-card {
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.footer-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 0 30rpx;
+  font-size: 22rpx;
+  color: #bbb;
+}

@@ -64,6 +64,8 @@
 .purple { background: #f3ecff; }
 .pink { background: #fff0f5; }
 .indigo { background: #eef2ff; }
+.yellow { background: #fffbe6; }
+.red { background: #fff0f0; }
 
 .tool-name {
   display: block;
