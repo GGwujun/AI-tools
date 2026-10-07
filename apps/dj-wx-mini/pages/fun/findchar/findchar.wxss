@@ -1,0 +1,163 @@
+.page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-bottom: 60rpx;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.content {
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+/* 状态 */
+.stat-row {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.stat {
+  flex: 1;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.stat-value {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 大字 */
+.big-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 60rpx 0;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.big-char {
+  font-size: 220rpx;
+  font-weight: 700;
+  color: #2c2f3e;
+  line-height: 1.2;
+}
+
+/* 选项 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18rpx;
+}
+
+.opt {
+  background: #fff;
+  border-radius: 16rpx;
+  height: 120rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52rpx;
+  font-weight: 600;
+  color: #333;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  border: 4rpx solid transparent;
+}
+
+.opt.hit {
+  background: #eafaf1;
+  border-color: #52c41a;
+  color: #52c41a;
+}
+
+.opt.miss {
+  background: #fff0f0;
+  border-color: #ff4d4f;
+  color: #ff4d4f;
+  animation: shake 0.25s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8rpx); }
+  75% { transform: translateX(8rpx); }
+}
+
+.footer-note {
+  display: flex;
+  justify-content: center;
+  padding: 30rpx 0;
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+/* 弹层 */
+.mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  width: 560rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 50rpx 40rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.dialog-emoji {
+  font-size: 90rpx;
+}
+
+.dialog-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.dialog-sub {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.dialog-btn {
+  width: 100%;
+  height: 92rpx;
+  background: linear-gradient(135deg, #7dd3a0, #52c41a);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  border-radius: 46rpx;
+  border: none;
+  margin-top: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

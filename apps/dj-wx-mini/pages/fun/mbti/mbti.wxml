@@ -1,0 +1,94 @@
+<view class="page">
+  <!-- 答题 -->
+  <view wx:if="{{phase === 'quiz'}}" class="quiz-wrap">
+    <view class="progress-row">
+      <text class="progress-text">{{qIndex + 1}} / {{total}}</text>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{(qIndex + 1) / total * 100}}%;"></view>
+    </view>
+
+    <view class="q-card">
+      <text class="q-text">{{question.q}}</text>
+      <view class="opt-large" bindtap="choose" data-side="a">
+        <text class="opt-badge">A</text>
+        <text class="opt-content">{{question.a}}</text>
+      </view>
+      <view class="opt-large b" bindtap="choose" data-side="b">
+        <text class="opt-badge">B</text>
+        <text class="opt-content">{{question.b}}</text>
+      </view>
+    </view>
+
+    <text class="quiz-tip">凭第一直觉选，不要想太久哦</text>
+  </view>
+
+  <!-- 结果 -->
+  <scroll-view scroll-y class="content" wx:if="{{phase === 'result'}}">
+    <!-- 类型卡 -->
+    <view class="result-hero">
+      <text class="result-emoji">{{result.type.emoji}}</text>
+      <text class="result-code">{{result.code}}</text>
+      <text class="result-name">{{result.type.name}}</text>
+      <text class="result-tagline">{{result.type.tagline}}</text>
+    </view>
+
+    <!-- 维度条 -->
+    <view class="card">
+      <text class="card-title">你的性格维度</text>
+      <view wx:for="{{result.dims}}" wx:key="dim" class="dim-row">
+        <view class="dim-labels">
+          <text class="dim-letter strong-{{item.left}}">{{item.left}} {{item.leftCount}}</text>
+          <text class="dim-letter strong-{{item.right}}">{{item.rightCount}} {{item.right}}</text>
+        </view>
+        <view class="dim-bar">
+          <view class="dim-fill" style="width: {{item.pctLeft}}%;"></view>
+        </view>
+        <text class="dim-name">{{item.label}}</text>
+      </view>
+    </view>
+
+    <!-- 完整解析 -->
+    <view class="card">
+      <text class="card-title">🔒 完整解析</text>
+
+      <block wx:if="{{unlocked}}">
+        <view class="report-sec">
+          <text class="report-label">性格画像</text>
+          <text class="report-text">{{result.type.desc}}</text>
+        </view>
+        <view class="report-sec">
+          <text class="report-label">适合的方向</text>
+          <view class="tag-row">
+            <text wx:for="{{result.type.jobs}}" wx:key="*this" class="report-tag">{{item}}</text>
+          </view>
+        </view>
+        <view class="report-sec">
+          <text class="report-label">同款名人</text>
+          <view class="tag-row">
+            <text wx:for="{{result.type.celebs}}" wx:key="*this" class="report-tag celeb">{{item}}</text>
+          </view>
+        </view>
+        <view class="report-sec">
+          <text class="report-label">恋爱建议</text>
+          <text class="report-text">{{result.type.love}}</text>
+        </view>
+        <text class="report-note">* 趣味测试结果仅供参考，人是多面的，别被四个字母定义～</text>
+      </block>
+
+      <view wx:else class="lock-box">
+        <text class="lock-icon">🎁</text>
+        <text class="lock-text">看一段视频广告，解锁 {{result.code}} 的完整报告：性格画像、适合方向、同款名人、恋爱建议</text>
+        <button class="unlock-btn {{adLoading ? 'loading' : ''}}" bindtap="unlock" disabled="{{adLoading}}">
+          {{adLoading ? '广告加载中…' : '观看视频解锁'}}
+        </button>
+        <text class="lock-note">一次解锁，永久有效</text>
+      </view>
+    </view>
+
+    <button class="restart-btn" bindtap="restart">🔄 重新测试</button>
+    <view class="footer-note">
+      <text>把测试结果分享给朋友，看看 TA 是什么人格</text>
+    </view>
+  </scroll-view>
+</view>

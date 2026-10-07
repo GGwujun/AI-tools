@@ -51,6 +51,22 @@ const TOOL_SECTIONS = [
       { key: 'sunset', name: '朝霞预测', icon: '/images/icons_svg/hot.svg', color: 'red', desc: '火烧云指数，摄影人必备' },
       { key: 'wallpaper', name: '每日壁纸', icon: '/images/icons_svg/hd.svg', color: 'blue', desc: 'Bing 高清壁纸一键保存' }
     ]
+  },
+  {
+    id: 'fun',
+    title: '趣味日常',
+    subtitle: '小游戏和实用小工具，天天来玩',
+    tools: [
+      { key: 'nickname', name: '空白昵称', icon: '/images/icons_svg/tool-copywriting.svg', color: 'indigo', desc: '生成隐形昵称，一键复制' },
+      { key: 'danmaku', name: '手持弹幕', icon: '/images/icons_svg/message.svg', color: 'blue', desc: '全屏滚动应援字，超醒目' },
+      { key: 'dice', name: '摇骰子', icon: '/images/icons_svg/refresh.svg', color: 'green', desc: '摇一摇或点击，随机决定' },
+      { key: 'food', name: '今天吃什么', icon: '/images/icons_svg/gift.svg', color: 'orange', desc: '选择困难症救星' },
+      { key: 'qrcode', name: '二维码生成', icon: '/images/icons_svg/add-library.svg', color: 'purple', desc: '网址文本一键变二维码' },
+      { key: 'findchar', name: '字中找字', icon: '/images/icons_svg/search.svg', color: 'pink', desc: '汉字拆解小游戏，考眼力' },
+      { key: 'pun', name: '谐音梗', icon: '/images/icons_svg/copy-text.svg', color: 'yellow', desc: '聊天表情包文案库' },
+      { key: 'mbti', name: 'MBTI 测试', icon: '/images/icons_svg/member-benefit.svg', color: 'red', desc: '16 型人格趣味测试' },
+      { key: 'calorie', name: 'AI 卡路里', icon: '/images/icons_svg/recommended-plan.svg', color: 'green', desc: '拍张照就知道吃了多少' }
+    ]
   }
 ];
 
@@ -64,7 +80,16 @@ const ROUTE_MAP = {
   oil: '/pages/daily/oil/oil',
   gold: '/pages/daily/gold/gold',
   sunset: '/pages/daily/sunset/sunset',
-  wallpaper: '/pages/daily/wallpaper/wallpaper'
+  wallpaper: '/pages/daily/wallpaper/wallpaper',
+  nickname: '/pages/fun/nickname/nickname',
+  danmaku: '/pages/fun/danmaku/danmaku',
+  dice: '/pages/fun/dice/dice',
+  food: '/pages/fun/food/food',
+  qrcode: '/pages/fun/qrcode/qrcode',
+  findchar: '/pages/fun/findchar/findchar',
+  pun: '/pages/fun/pun/pun',
+  mbti: '/pages/fun/mbti/mbti',
+  calorie: '/pages/fun/calorie/calorie'
 };
 
 Page({

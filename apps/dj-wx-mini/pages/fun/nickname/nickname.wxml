@@ -1,0 +1,31 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <view class="card intro">
+      <text class="intro-text">复制下面的空白字符，去微信修改昵称时粘贴，就能拥有"隐形昵称"。不同微信版本支持的字符不同，一个不行就换下一个试试。</text>
+    </view>
+
+    <view
+      wx:for="{{chars}}"
+      wx:key="code"
+      class="card char-card"
+      bindtap="copy"
+      data-index="{{index}}"
+    >
+      <view class="char-preview"><text class="char-glyph">{{item.char}}</text></view>
+      <view class="char-info">
+        <view class="char-name-row">
+          <text class="char-name">{{item.name}}</text>
+          <text class="char-hot" wx:if="{{item.hot}}">🔥 成功率高</text>
+        </view>
+        <text class="char-code">{{item.code}}</text>
+        <text class="char-note">{{item.note}}</text>
+      </view>
+      <text class="char-copy">复制</text>
+    </view>
+
+    <view class="footer-note">
+      <text>长按预览框其实是空的，这就是空白字符～</text>
+    </view>
+  </scroll-view>
+</view>

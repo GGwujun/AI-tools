@@ -1,0 +1,48 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 转盘 -->
+    <view class="wheel-wrap">
+      <view class="pointer"></view>
+      <view class="wheel" style="background: {{wheelBg}}; transform: rotate({{rotateDeg}}deg);">
+        <view wx:for="{{wheel}}" wx:key="name" class="wheel-item" style="transform: rotate({{item.angle}}deg);">
+          <text class="wheel-name">{{item.name}}</text>
+        </view>
+        <view class="wheel-center" bindtap="spin">
+          <text class="wheel-go">{{spinning ? '…' : 'GO'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 结果 -->
+    <view class="card result-card {{result ? 'show' : ''}}">
+      <text class="result-title" wx:if="{{result}}">今天就吃</text>
+      <text class="result-name" wx:if="{{result}}">{{result}}</text>
+      <text class="result-empty" wx:else>点中间的 GO，开始转！</text>
+    </view>
+
+    <!-- 自定义菜单 -->
+    <view class="card">
+      <text class="card-title">自定义菜品（优先上盘）</text>
+      <view class="add-row">
+        <input class="add-input" placeholder="输入菜品名" value="{{newFood}}" bindinput="onInput" maxlength="6" confirm-type="done" bindconfirm="addFood" />
+        <text class="add-btn" bindtap="addFood">添加</text>
+      </view>
+      <view class="custom-list">
+        <view wx:for="{{customFoods}}" wx:key="*this" class="custom-tag">
+          <text>{{item}}</text>
+          <text class="custom-del" bindtap="removeFood" data-name="{{item}}">×</text>
+        </view>
+        <text wx:if="{{!customFoods.length}}" class="custom-empty">还没添加，默认菜单上阵中</text>
+      </view>
+    </view>
+
+    <!-- 最近 -->
+    <view class="card" wx:if="{{history.length}}">
+      <text class="card-title">最近的选择</text>
+      <view class="history-row">
+        <text wx:for="{{history}}" wx:key="*this" class="history-chip">{{item}}</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

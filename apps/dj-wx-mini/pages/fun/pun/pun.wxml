@@ -1,0 +1,38 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 分类 -->
+    <scroll-view scroll-x class="cat-scroll">
+      <view
+        wx:for="{{categories}}"
+        wx:key="*this"
+        class="cat-chip {{currentCat === item ? 'active' : ''}}"
+        bindtap="selectCat"
+        data-cat="{{item}}"
+      >{{item}}</view>
+    </scroll-view>
+
+    <!-- 主卡片 -->
+    <view class="card pun-card" bindtap="next">
+      <text class="pun-text">{{current.t}}</text>
+      <text class="pun-cat"># {{current.c}}</text>
+      <view class="pun-actions" catchtap="stop">
+        <text class="pun-btn" catchtap="copy">📋 复制</text>
+        <text class="pun-btn primary" catchtap="next">🎲 换一条</text>
+      </view>
+    </view>
+
+    <!-- 最近看过 -->
+    <view class="card" wx:if="{{history.length > 1}}">
+      <text class="card-title">最近看过</text>
+      <view wx:for="{{history}}" wx:key="*this" class="history-row" bindtap="tapHistory" data-text="{{item}}">
+        <text class="history-text">{{item}}</text>
+        <text class="history-copy">复制</text>
+      </view>
+    </view>
+
+    <view class="footer-note">
+      <text>点击卡片任意位置也可换一条</text>
+    </view>
+  </scroll-view>
+</view>

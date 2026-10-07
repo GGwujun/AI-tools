@@ -8,8 +8,8 @@ import time
 
 import aiofiles
 import httpx
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import FileResponse, Response
 
 from crawlers.hybrid.hybrid_crawler import HybridCrawler
 
@@ -543,3 +543,33 @@ async def serve_tool_file(filename: str):
     if not os.path.isfile(path):
         raise HTTPException(status_code=404, detail='文件已过期或不存在（产物保留 2 小时）')
     return FileResponse(path, filename=filename)
+
+
+# ---------------------------------------------------------------------------
+# 二维码生成（趣味工具）：同步生成 PNG，无需落盘
+_QR_CACHE: dict = {}
+
+
+@router.get('/qrcode', summary='生成二维码图片')
+async def tools_qrcode(text: str = Query(..., min_length=1, max_length=1000),
+                       size: int = Query(600, ge=200, le=1200)):
+    import io
+    import qrcode
+    from qrcode.image.pure import PyPNGImage
+
+    key = f'{size}:{text}'
+    png = _QR_CACHE.get(key)
+    if png is None:
+        if len(_QR_CACHE) > 300:
+            _QR_CACHE.clear()
+        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M, border=2)
+        qr.add_data(text)
+        qr.make(fit=True)
+        # 让边长尽量接近目标 size（modules + 4 边框）
+        qr.box_size = max(4, round(size / (qr.modules_count + 4)))
+        buf = io.BytesIO()
+        qr.make_image(image_factory=PyPNGImage).save(buf)
+        png = buf.getvalue()
+        _QR_CACHE[key] = png
+    return Response(content=png, media_type='image/png',
+                    headers={'Cache-Control': 'public, max-age=86400'})

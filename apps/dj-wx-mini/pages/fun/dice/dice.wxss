@@ -1,0 +1,177 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #2c2f3e, #43475c 60%, #f5f7fa 60.01%);
+  padding-bottom: 60rpx;
+  box-sizing: border-box;
+}
+
+/* 上半舞台区（深色） */
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 40rpx 40rpx;
+}
+
+.dice-row {
+  display: flex;
+  gap: 30rpx;
+  margin-bottom: 40rpx;
+}
+
+.dice {
+  width: 160rpx;
+  height: 160rpx;
+}
+
+.dice-face {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 28rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 18rpx;
+  box-sizing: border-box;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.35);
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell.on::after {
+  content: '';
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #64748b, #1e293b);
+}
+
+/* 翻滚动画 */
+.rolling .dice {
+  animation: tumble 0.45s linear infinite;
+}
+
+.rolling .dice:nth-child(2) { animation-delay: 0.06s; }
+.rolling .dice:nth-child(3) { animation-delay: 0.12s; }
+
+@keyframes tumble {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.08); }
+  50% { transform: rotate(180deg) scale(0.95); }
+  75% { transform: rotate(270deg) scale(1.05); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.result {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.result-num {
+  font-size: 88rpx;
+  font-weight: 800;
+  color: #ffd54a;
+  line-height: 1;
+}
+
+.result-label {
+  font-size: 30rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.result-hint {
+  font-size: 26rpx;
+  color: #ffd54a;
+  margin-left: 12rpx;
+}
+
+.roll-btn {
+  width: 420rpx;
+  height: 96rpx;
+  background: linear-gradient(135deg, #ffd54a, #ffb300);
+  color: #4a3200;
+  font-size: 34rpx;
+  font-weight: 700;
+  border-radius: 48rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 179, 0, 0.4);
+}
+
+.roll-btn.disabled {
+  opacity: 0.6;
+  color: #4a3200;
+}
+
+.shake-tip {
+  margin-top: 24rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 下半卡片（浅色） */
+.card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.count-row {
+  display: flex;
+  gap: 20rpx;
+}
+
+.count-item {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  border-radius: 14rpx;
+  background: #f5f6f8;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.count-item.active {
+  background: #2c2f3e;
+  color: #ffd54a;
+  font-weight: 600;
+}
+
+.history-wrap {
+  margin-top: 30rpx;
+}
+
+.history-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.history-chip {
+  font-size: 26rpx;
+  color: #333;
+  background: #f5f6f8;
+  border-radius: 10rpx;
+  padding: 8rpx 22rpx;
+  font-weight: 600;
+}

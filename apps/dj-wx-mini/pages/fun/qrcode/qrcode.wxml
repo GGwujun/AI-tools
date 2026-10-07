@@ -1,0 +1,55 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <view class="card">
+      <text class="card-title">二维码内容</text>
+      <textarea
+        class="qr-input"
+        placeholder="输入网址或文字，如 https://example.com"
+        value="{{text}}"
+        bindinput="onInput"
+        maxlength="500"
+        auto-height
+      ></textarea>
+      <view class="row-gap">
+        <text class="mini-btn" bindtap="pasteFromClipboard">📋 粘贴</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <text class="card-title">尺寸</text>
+      <view class="opt-row">
+        <view class="opt-chip {{size === 480 ? 'active' : ''}}" bindtap="setSize" data-size="480">480px</view>
+        <view class="opt-chip {{size === 720 ? 'active' : ''}}" bindtap="setSize" data-size="720">720px</view>
+        <view class="opt-chip {{size === 1080 ? 'active' : ''}}" bindtap="setSize" data-size="1080">1080px</view>
+      </view>
+    </view>
+
+    <button class="gen-btn" bindtap="generate">⚙️ 生成二维码</button>
+
+    <view class="card result-card" wx:if="{{qrUrl}}">
+      <view class="qr-wrap {{generating ? 'loading' : ''}}" bindtap="preview">
+        <image class="qr-image" src="{{qrUrl}}" mode="aspectFit" bindload="onImgLoad" binderror="onImgError"></image>
+      </view>
+      <view class="qr-actions">
+        <text class="action-btn" bindtap="preview">🔍 放大</text>
+        <text class="action-btn primary" bindtap="save">💾 保存到相册</text>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{history.length}}">
+      <view class="history-head">
+        <text class="card-title">最近生成</text>
+        <text class="clear-btn" bindtap="clearHistory">清空</text>
+      </view>
+      <view wx:for="{{history}}" wx:key="*this" class="history-row" bindtap="useHistory" data-text="{{item}}">
+        <text class="history-text">{{item}}</text>
+        <text class="history-use">使用</text>
+      </view>
+    </view>
+
+    <view class="footer-note">
+      <text>扫码安全提示：请勿生成违法违规内容</text>
+    </view>
+  </scroll-view>
+</view>

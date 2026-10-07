@@ -1,0 +1,60 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 状态栏 -->
+    <view class="stat-row">
+      <view class="stat">
+        <text class="stat-value">{{levelIndex + 1}}/{{totalLevels}}</text>
+        <text class="stat-label">关卡</text>
+      </view>
+      <view class="stat">
+        <text class="stat-value">{{score}}</text>
+        <text class="stat-label">得分</text>
+      </view>
+      <view class="stat">
+        <text class="stat-value">{{foundCount}}/{{targetCount}}</text>
+        <text class="stat-label">已找到</text>
+      </view>
+    </view>
+
+    <!-- 大字 -->
+    <view class="big-card">
+      <text class="big-char">{{bigChar}}</text>
+    </view>
+
+    <!-- 选项 -->
+    <view class="grid">
+      <view
+        wx:for="{{options}}"
+        wx:key="char"
+        class="opt {{item.state}}"
+        bindtap="tapOption"
+        data-index="{{index}}"
+      >{{item.char}}</view>
+    </view>
+
+    <view class="footer-note">
+      <text>点击你认为藏在大字里的字，找对一个 +10 分，找错 -5 分</text>
+    </view>
+  </scroll-view>
+
+  <!-- 过关弹层 -->
+  <view class="mask" wx:if="{{showPass}}">
+    <view class="dialog">
+      <text class="dialog-emoji">🎉</text>
+      <text class="dialog-title">全部找到！</text>
+      <text class="dialog-sub">当前得分 {{score}} 分</text>
+      <button class="dialog-btn" bindtap="nextLevel">下一关</button>
+    </view>
+  </view>
+
+  <!-- 通关弹层 -->
+  <view class="mask" wx:if="{{showFinish}}">
+    <view class="dialog">
+      <text class="dialog-emoji">🏆</text>
+      <text class="dialog-title">全部通关！</text>
+      <text class="dialog-sub">得分 {{score}} 分 · 用时 {{usedTime}} · 失误 {{wrongCount}} 次</text>
+      <button class="dialog-btn" bindtap="startGame">再来一局</button>
+    </view>
+  </view>
+</view>

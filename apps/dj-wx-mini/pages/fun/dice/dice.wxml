@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="stage">
+    <view class="dice-row {{rolling ? 'rolling' : ''}}">
+      <view wx:for="{{cells}}" wx:key="index" wx:for-item="die" class="dice">
+        <view class="dice-face">
+          <view
+            wx:for="{{die}}"
+            wx:key="index"
+            wx:for-item="cell"
+            class="cell {{cell.on ? 'on' : ''}}"
+          ></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="result" wx:if="{{!rolling}}">
+      <text class="result-num">{{total}}</text>
+      <text class="result-label">点</text>
+      <text class="result-hint" wx:if="{{shakeHint}}">{{shakeHint}}</text>
+    </view>
+
+    <button class="roll-btn {{rolling ? 'disabled' : ''}}" bindtap="tapRoll" disabled="{{rolling}}">
+      {{rolling ? '骰子翻滚中…' : '🎲 摇一个'}}
+    </button>
+    <text class="shake-tip">把手机用力摇一摇也可以掷骰子</text>
+  </view>
+
+  <view class="card bottom-card">
+    <text class="card-title">骰子个数</text>
+    <view class="count-row">
+      <view class="count-item {{count === 1 ? 'active' : ''}}" bindtap="setCount" data-count="1">1 个</view>
+      <view class="count-item {{count === 2 ? 'active' : ''}}" bindtap="setCount" data-count="2">2 个</view>
+      <view class="count-item {{count === 3 ? 'active' : ''}}" bindtap="setCount" data-count="3">3 个</view>
+    </view>
+
+    <view class="history-wrap" wx:if="{{history.length > 1}}">
+      <text class="card-title">最近记录</text>
+      <view class="history-row">
+        <text wx:for="{{history}}" wx:key="*this" class="history-chip">{{item}}</text>
+      </view>
+    </view>
+  </view>
+</view>

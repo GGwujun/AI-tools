@@ -47,6 +47,8 @@ module.exports = {
   // 视频小工具（ffmpeg 后端处理）
   toolsProcessApi: current.toolsProcessApi,
   toolsFileBase: current.toolsFileBase,
+  // 二维码生成（图片直出）
+  qrcodeApi: `${current.toolsFileBase}/api/tools/qrcode`,
   // 今日数据（金价/油价/朝霞晚霞/壁纸）
   dailyGoldApi: `${current.toolsFileBase}/api/daily/gold`,
   dailyOilApi: `${current.toolsFileBase}/api/daily/oil`,
