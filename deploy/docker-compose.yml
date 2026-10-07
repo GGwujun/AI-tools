@@ -26,6 +26,9 @@ services:
       - crawler-download:/app/download
     environment:
       TZ: Asia/Shanghai
+      # 智谱 AI key（AI 代理用）。在本目录建 .env 文件写入:
+      #   ZHIPU_API_KEY=你的智谱key
+      ZHIPU_API_KEY: "${ZHIPU_API_KEY:-}"
 
 volumes:
   crawler-download:

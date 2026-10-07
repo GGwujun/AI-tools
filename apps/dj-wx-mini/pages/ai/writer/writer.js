@@ -1,4 +1,6 @@
-// AI文案生成器 - 接入智谱AI
+// AI文案生成器 - 走后端 AI 代理（key 在服务器端，不在小程序里）
+const api = require('../../../config/api');
+
 const PLATFORM_PROMPTS = {
   douyin: {
     id: 'douyin',
@@ -33,12 +35,8 @@ const STYLE_CONFIG = {
   casual: { id: 'casual', name: '轻松随意', emoji: '☀️', modifier: '像朋友聊天一样轻松自然' }
 };
 
-// 智谱AI配置
-const ZHIPU_CONFIG = {
-  baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
-  apiKey: 'f9ff2dfa21804ed8bdeeb511deaf888b.M0YaO5MyJ5Xa5Wvs',
-  model: 'glm-4-flash'
-};
+// 模型走后端白名单，这里只声明用哪个
+const AI_MODEL = 'glm-4-flash';
 
 function decodeParam(value) {
   try {
@@ -142,19 +140,17 @@ Page({
   requestZhipuAPI(systemPrompt, userMessage) {
     return new Promise((resolve, reject) => {
       wx.request({
-        url: `${ZHIPU_CONFIG.baseUrl}/chat/completions`,
+        url: api.aiChatApi,
         method: 'POST',
         header: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${ZHIPU_CONFIG.apiKey}`
+          'Content-Type': 'application/json'
         },
         data: {
-          model: ZHIPU_CONFIG.model,
+          model: AI_MODEL,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
-          ],
-          stream: false
+          ]
         },
         success: (res) => {
           if (res.statusCode === 200 && res.data.choices && res.data.choices[0]) {

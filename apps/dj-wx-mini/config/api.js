@@ -10,8 +10,9 @@ const HOSTS = {
     parseSlaveAddr2: 'https://dsx-family.site/api/hybrid/video_data?url=',
     downloadApi: 'https://wtf.dsx-family.site/api/download',
     proxyBase: 'https://wtf.dsx-family.site/api/video',
+    aiChatApi: 'https://wtf.dsx-family.site/api/ai/chat/completions',
     adUnitId: 'adunit-7b8540876c787467',  // 线上激励视频广告位 ID
-    bannerAdUnitId: ''  // 结果页 banner 广告位 ID（微信后台创建后填入，留空不展示）
+    bannerAdUnitId: ''  // 结果页 banner 广告位 ID（原生模板/智能接入，留空不渲染）
   },
   // 本地开发：连本机起的后端
   local: {
@@ -19,6 +20,7 @@ const HOSTS = {
     parseSlaveAddr2: '',
     downloadApi: 'http://127.0.0.1:8091/api/download',
     proxyBase: 'http://127.0.0.1:8091/api/video',
+    aiChatApi: 'http://127.0.0.1:8091/api/ai/chat/completions',
     adUnitId: '',  // 本地不展示广告
     bannerAdUnitId: ''
   }
@@ -36,6 +38,8 @@ module.exports = {
   // crawler-api 代理接口
   getVideoSize: `${current.proxyBase}/video_size`,
   downloadImage: `${current.proxyBase}/download_image`,
+  // AI 代理（智谱，key 在服务器端）
+  aiChatApi: current.aiChatApi,
   // 广告位 ID
   adUnitId: current.adUnitId,
   bannerAdUnitId: current.bannerAdUnitId

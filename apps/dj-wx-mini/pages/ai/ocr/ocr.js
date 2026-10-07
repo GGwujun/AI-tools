@@ -1,8 +1,5 @@
-// 文字识别 OCR - 使用智谱AI图像理解
-const ZHIPU_CONFIG = {
-  baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
-  apiKey: 'f9ff2dfa21804ed8bdeeb511deaf888b.M0YaO5MyJ5Xa5Wvs'
-};
+// 文字识别 OCR - 走后端 AI 代理（key 在服务器端，不在小程序里）
+const api = require('../../../config/api');
 
 Page({
   data: {
@@ -87,11 +84,10 @@ Page({
         const base64Image = 'data:image/jpeg;base64,' + res.data;
 
         wx.request({
-          url: `${ZHIPU_CONFIG.baseUrl}/chat/completions`,
+          url: api.aiChatApi,
           method: 'POST',
           header: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ZHIPU_CONFIG.apiKey}`
+            'Content-Type': 'application/json'
           },
           data: {
             model: 'glm-4.6v',

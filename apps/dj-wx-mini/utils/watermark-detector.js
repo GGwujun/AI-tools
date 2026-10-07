@@ -1,6 +1,7 @@
+// 走后端 AI 代理（key 在服务器端，不在小程序里）
+const api = require('../config/api');
+
 const SERVICE_CONFIG = {
-  baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
-  apiKey: 'f9ff2dfa21804ed8bdeeb511deaf888b.M0YaO5MyJ5Xa5Wvs',
   model: 'glm-4.6v'
 };
 
@@ -87,11 +88,10 @@ function parseRegions(rawText) {
 async function detectWatermarkRegions(imagePath) {
   const base64Data = await readFileBase64(imagePath);
   const response = await request({
-    url: `${SERVICE_CONFIG.baseUrl}/chat/completions`,
+    url: api.aiChatApi,
     method: 'POST',
     header: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${SERVICE_CONFIG.apiKey}`
+      'Content-Type': 'application/json'
     },
     data: {
       model: SERVICE_CONFIG.model,
