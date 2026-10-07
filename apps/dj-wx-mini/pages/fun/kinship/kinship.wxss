@@ -1,0 +1,133 @@
+.page {
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+
+.content {
+  height: 100vh;
+  padding: 28rpx 24rpx 48rpx;
+  box-sizing: border-box;
+}
+
+.result-card {
+  padding: 40rpx 28rpx;
+  margin-bottom: 24rpx;
+  border-radius: 30rpx;
+  background: linear-gradient(135deg, rgba(21, 101, 255, 0.08), rgba(122, 47, 242, 0.06));
+  border: 1rpx solid #e8effc;
+  min-height: 200rpx;
+  box-sizing: border-box;
+}
+
+.path {
+  color: #667085;
+  font-size: 26rpx;
+  line-height: 1.8;
+  word-break: break-all;
+}
+
+.path.placeholder {
+  color: #98a2b3;
+}
+
+.path-item {
+  color: #1565ff;
+  font-weight: 600;
+}
+
+.path-me {
+  color: #667085;
+}
+
+.answer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24rpx;
+}
+
+.answer-text {
+  color: #101828;
+  font-size: 64rpx;
+  font-weight: 800;
+}
+
+.answer-bad {
+  color: #d92d20;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.copy-btn {
+  margin: 0;
+  background: #fff;
+  color: #1565ff;
+  font-size: 24rpx;
+  border-radius: 999rpx;
+  padding: 0 30rpx;
+  line-height: 2.4;
+}
+
+.card {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  border-radius: 30rpx;
+  background: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(16, 24, 40, 0.04);
+  border: 1rpx solid #eef2f6;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.card-title {
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.head-actions {
+  display: flex;
+  gap: 26rpx;
+}
+
+.link-btn {
+  color: #1565ff;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.word-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rpx;
+}
+
+.word-chip {
+  width: calc(20% - 15rpx);
+  padding: 20rpx 0;
+  text-align: center;
+  border-radius: 18rpx;
+  background: #f2f4f7;
+  color: #101828;
+  font-size: 26rpx;
+  font-weight: 600;
+  border: 1rpx solid transparent;
+  box-sizing: border-box;
+}
+
+.word-chip.disabled {
+  opacity: 0.4;
+}
+
+.tip {
+  display: block;
+  margin-top: 22rpx;
+  color: #98a2b3;
+  font-size: 22rpx;
+  line-height: 1.6;
+}

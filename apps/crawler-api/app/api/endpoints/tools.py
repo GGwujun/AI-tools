@@ -383,6 +383,57 @@ async def tool_audio_convert(src: str, params: dict, meta: dict) -> dict:
         'format': fmt, 'duration': round(meta['duration'], 1)})
 
 
+def _atempo_chain(factor: float) -> str:
+    """atempo 单次只支持 [0.5, 2.0]，超出范围串多级。"""
+    parts = []
+    while factor > 2.0:
+        parts.append('atempo=2.0')
+        factor /= 2.0
+    while factor < 0.5:
+        parts.append('atempo=0.5')
+        factor /= 0.5
+    parts.append(f'atempo={factor:.4g}')
+    return ','.join(parts)
+
+
+async def tool_speed(src: str, params: dict, meta: dict) -> dict:
+    factor = _clamp(_to_float(params.get('factor'), 1.0), 0.25, 4.0)
+    vf = f'setpts=PTS/{factor:.4g}'
+    out = _out_path('speed', 'mp4')
+    if meta['has_audio']:
+        args = FFMPEG_BASE + ['-i', src, '-vf', vf, '-af', _atempo_chain(factor)]
+    else:
+        args = FFMPEG_BASE + ['-i', src, '-vf', vf]
+    args += ['-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+             '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', out]
+    await _run_ffmpeg(args, timeout=max(120, int(meta['duration'] * 2)))
+    return _file_result('speed', out, {
+        'factor': round(factor, 2), 'duration': round(meta['duration'] / factor, 1)})
+
+
+# 镜像/翻转/旋转：mirror 水平镜像(自拍常用)、vflip 垂直翻转、r90/r180/r270 顺时针旋转
+TRANSFORM_MODES = {
+    'mirror': ('hflip', False),
+    'vflip': ('vflip', False),
+    'r90': ('transpose=1', True),
+    'r180': ('transpose=1,transpose=1', False),
+    'r270': ('transpose=2', True),
+}
+
+
+async def tool_transform(src: str, params: dict, meta: dict) -> dict:
+    mode = params.get('mode') if params.get('mode') in TRANSFORM_MODES else 'mirror'
+    vf, swap = TRANSFORM_MODES[mode]
+    width, height = (meta['height'], meta['width']) if swap else (meta['width'], meta['height'])
+    out = _out_path('transformed', 'mp4')
+    await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', vf,
+                                     '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+                                     '-c:a', 'copy', '-movflags', '+faststart', out])
+    return _file_result('transformed', out, {
+        'mode': mode, 'width': width, 'height': height,
+        'duration': round(meta['duration'], 1)})
+
+
 async def tool_gif(src: str, params: dict, meta: dict) -> dict:
     duration = meta['duration']
     start = _clamp(_to_float(params.get('start'), 0.0), 0.0, max(duration - 1, 0.0) if duration else 0.0)
@@ -525,6 +576,8 @@ TOOL_HANDLERS = {
     'reverse': tool_reverse,
     'mute': tool_mute,
     'audio_convert': tool_audio_convert,
+    'speed': tool_speed,
+    'transform': tool_transform,
 }
 
 # 文本型工具的描述（给前端展示处理时长预期）
@@ -533,6 +586,7 @@ TOOL_TIPS = {
     'compress': '压缩需要重新编码，1 分钟视频约需 30 秒',
     'watermark': '添加水印需要重新编码，请耐心等待',
     'reverse': '倒放需要整段重新编码，视频越长等待越久（最长 2 分钟）',
+    'speed': '变速需要重新编码，声音会同步变速',
 }
 
 
@@ -792,10 +846,33 @@ async def img_watermark(paths: list, params: dict) -> dict:
     return _file_result('img_watermarked', out, {})
 
 
+IMG_CONVERT_TARGETS = {'png': 'png', 'jpg': 'jpg', 'webp': 'webp'}
+
+
+async def img_convert(paths: list, params: dict) -> dict:
+    src = paths[0]
+    target = IMG_CONVERT_TARGETS.get(params.get('target'), 'png')
+    out = _out_path('img_converted', target)
+    if target == 'png':
+        args = FFMPEG_BASE + ['-i', src, out]
+    elif target == 'webp':
+        args = FFMPEG_BASE + ['-i', src, '-quality:v', '85', out]
+    else:
+        # 透明 PNG 转 JPG 垫白底：按原图尺寸生成白色底图再覆盖
+        meta = await _probe(src)
+        w, h = max(meta['width'], 2), max(meta['height'], 2)
+        fc = '[0:v]format=rgba[fg];[1:v][fg]overlay=format=auto,format=yuv420p'
+        args = FFMPEG_BASE + ['-i', src, '-f', 'lavfi', '-i', f'color=c=white:s={w}x{h}',
+                              '-filter_complex', fc, '-frames:v', '1', '-q:v', '2', out]
+    await _run_ffmpeg(args, timeout=120)
+    return _file_result('img_converted', out, {'target': target})
+
+
 IMAGE_TOOL_HANDLERS = {
     'image_compress': img_compress,
     'image_stitch': img_stitch,
     'image_watermark': img_watermark,
+    'image_convert': img_convert,
 }
 
 

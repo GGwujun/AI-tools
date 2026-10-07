@@ -1,0 +1,48 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 添加入口 -->
+    <view class="head-row">
+      <view class="today-label">今天是 {{todayLabel}}</view>
+      <view class="add-btn" bindtap="toggleAdd">{{adding ? '收起' : '+ 添加'}}</view>
+    </view>
+
+    <!-- 添加表单 -->
+    <view wx:if="{{adding}}" class="card">
+      <view class="form-row">
+        <text class="form-label">名称</text>
+        <input class="form-input" placeholder="如：妈妈生日" maxlength="20" value="{{formName}}" bindinput="onNameInput" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">日期</text>
+        <picker mode="date" value="{{formDate || todayStr}}" bindchange="onDateChange">
+          <view class="form-input picker-value">{{formDate || '点这里选日期'}}</view>
+        </picker>
+      </view>
+      <view class="form-row">
+        <text class="form-label">重复</text>
+        <text class="form-note">每年重复提醒（生日、纪念日）</text>
+      </view>
+      <button class="save-btn" bindtap="saveItem">保存</button>
+    </view>
+
+    <!-- 列表 -->
+    <view wx:if="{{!items.length && !adding}}" class="card empty-card">
+      <text class="empty-icon">🎂</text>
+      <text class="empty-text">还没有纪念日，点右上角添加</text>
+      <text class="empty-sub">生日、周年、考试、还款日都能记</text>
+    </view>
+
+    <view wx:for="{{items}}" wx:key="id" class="card item-card {{item.isToday ? 'today' : ''}}">
+      <view class="item-left">
+        <text class="item-name">{{item.name}}</text>
+        <text class="item-date">{{item.date}} · {{item.repeatLabel}}</text>
+      </view>
+      <view class="item-right">
+        <text class="item-badge {{item.isToday ? 'is-today' : ''}}">{{item.badge}}</text>
+        <text class="item-del" catchtap="removeItem" data-id="{{item.id}}">删除</text>
+      </view>
+    </view>
+
+  </scroll-view>
+</view>

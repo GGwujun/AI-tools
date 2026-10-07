@@ -28,7 +28,11 @@
     "pages/tools/image-tool",
     "pages/tools/merge-tool",
     "pages/fun/teleprompter/teleprompter",
+    "pages/fun/kinship/kinship",
+    "pages/fun/anniversary/anniversary",
+    "pages/fun/mortgage/mortgage",
     "pages/daily/history/history",
+    "pages/daily/rate/rate",
     "pages/video/video"
   ],
   "window": {

@@ -1,0 +1,161 @@
+.page {
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+
+.content {
+  height: 100vh;
+  padding: 28rpx 24rpx 48rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  border-radius: 30rpx;
+  background: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(16, 24, 40, 0.04);
+  border: 1rpx solid #eef2f6;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.card-title {
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.card-sub {
+  color: #98a2b3;
+  font-size: 20rpx;
+}
+
+.convert-card {
+  border-color: rgba(21, 101, 255, 0.18);
+  background: linear-gradient(160deg, #fff, #f5f9ff);
+}
+
+.convert-row {
+  display: flex;
+  gap: 18rpx;
+}
+
+.convert-input {
+  flex: 1;
+  padding: 20rpx 26rpx;
+  border-radius: 18rpx;
+  background: #fff;
+  color: #101828;
+  font-size: 32rpx;
+  font-weight: 700;
+  box-sizing: border-box;
+  border: 1rpx solid #e4e7ec;
+}
+
+.convert-picker {
+  padding: 20rpx 26rpx;
+  border-radius: 18rpx;
+  background: #edf4ff;
+  color: #1565ff;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.convert-result {
+  display: flex;
+  align-items: baseline;
+  gap: 14rpx;
+  margin-top: 26rpx;
+}
+
+.convert-num {
+  color: #1565ff;
+  font-size: 64rpx;
+  font-weight: 800;
+}
+
+.convert-unit {
+  color: #98a2b3;
+  font-size: 24rpx;
+}
+
+.loading-card {
+  text-align: center;
+  color: #98a2b3;
+  font-size: 26rpx;
+}
+
+.error-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-color: rgba(240, 68, 56, 0.25);
+  background: #fffafa;
+}
+
+.error-text {
+  color: #d92d20;
+  font-size: 26rpx;
+}
+
+.retry-btn {
+  margin: 0;
+  background: #fee4e2;
+  color: #b42318;
+  font-size: 24rpx;
+  border-radius: 999rpx;
+}
+
+.rate-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f2f4f7;
+}
+
+.rate-row:last-child {
+  border-bottom: none;
+}
+
+.rate-row.head {
+  padding: 12rpx 0;
+}
+
+.rate-row.head text {
+  color: #98a2b3;
+  font-size: 22rpx;
+  font-weight: 400;
+}
+
+.rate-name {
+  flex: 1.2;
+  color: #101828;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.rate-per {
+  flex: 1;
+  color: #667085;
+  font-size: 24rpx;
+}
+
+.rate-value {
+  flex: 0.8;
+  text-align: right;
+  color: #1565ff;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.source-note {
+  margin-top: 18rpx;
+  color: #98a2b3;
+  font-size: 20rpx;
+}

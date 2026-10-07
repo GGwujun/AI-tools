@@ -131,6 +131,43 @@ const TOOL_CONFIG = {
         ]
       }
     ]
+  },
+  speed: {
+    name: '视频变速',
+    desc: '加速或慢放，声音自动同步变速',
+    icon: '/images/icons_svg/play.svg',
+    placeholder: '粘贴视频分享链接（抖音/快手/B站等）',
+    tip: '变速需要重新编码，声音会同步变速',
+    fields: [
+      {
+        key: 'factor', label: '倍速', type: 'choice', default: '2',
+        options: [
+          { value: '0.5', label: '0.5x 慢放' },
+          { value: '0.75', label: '0.75x' },
+          { value: '1.25', label: '1.25x' },
+          { value: '1.5', label: '1.5x' },
+          { value: '2', label: '2x 快放' }
+        ]
+      }
+    ]
+  },
+  transform: {
+    name: '镜像旋转',
+    desc: '水平镜像、翻转、旋转，随手拍正回来',
+    icon: '/images/icons_svg/refresh.svg',
+    placeholder: '粘贴视频分享链接（抖音/快手/B站等）',
+    fields: [
+      {
+        key: 'mode', label: '处理方式', type: 'choice', default: 'mirror',
+        options: [
+          { value: 'mirror', label: '水平镜像' },
+          { value: 'vflip', label: '垂直翻转' },
+          { value: 'r90', label: '旋转90°' },
+          { value: 'r180', label: '旋转180°' },
+          { value: 'r270', label: '旋转270°' }
+        ]
+      }
+    ]
   }
 };
 
@@ -282,6 +319,8 @@ Page({
     if (form.start !== '' && form.start != null && !Number.isNaN(Number(form.start)) && tool === 'gif') params.start = Number(form.start);
     if (form.quality) params.quality = form.quality;
     if (form.format) params.format = form.format;
+    if (form.factor) params.factor = Number(form.factor);
+    if (form.mode) params.mode = form.mode;
     return params;
   },
 

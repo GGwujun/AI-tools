@@ -55,6 +55,22 @@ const TOOL_CONFIG = {
         ]
       }
     ]
+  },
+  image_convert: {
+    name: '图片转格式',
+    desc: 'JPG/PNG/WebP 互转，透明图自动垫白底',
+    icon: '/images/icons_svg/refresh.svg',
+    maxImages: 1,
+    fields: [
+      {
+        key: 'target', label: '目标格式', type: 'choice', default: 'png',
+        options: [
+          { value: 'png', label: 'PNG 无损' },
+          { value: 'jpg', label: 'JPG 通用' },
+          { value: 'webp', label: 'WebP 体积小' }
+        ]
+      }
+    ]
   }
 };
 
@@ -210,6 +226,7 @@ Page({
     }
     if (form.quality) params.quality = form.quality;
     if (form.direction) params.direction = form.direction;
+    if (form.target) params.target = form.target;
     return params;
   },
 

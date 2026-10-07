@@ -1,0 +1,64 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <view class="card">
+      <view class="form-row">
+        <text class="form-label">贷款总额</text>
+        <input class="form-input" type="digit" value="{{amount}}" bindinput="onAmountInput" placeholder="万元" />
+        <text class="form-unit">万</text>
+      </view>
+      <view class="form-row">
+        <text class="form-label">年利率</text>
+        <input class="form-input" type="digit" value="{{rate}}" bindinput="onRateInput" placeholder="如 3.6" />
+        <text class="form-unit">%</text>
+      </view>
+      <view class="form-row">
+        <text class="form-label">贷款期限</text>
+        <picker range="{{yearLabels}}" value="{{yearIndex}}" bindchange="onYearChange">
+          <view class="form-input picker-value">{{yearLabels[yearIndex]}}</view>
+        </picker>
+      </view>
+      <view class="form-row">
+        <text class="form-label">还款方式</text>
+        <view class="mode-chips">
+          <view class="mode-chip {{mode === 'equal-payment' ? 'active' : ''}}" bindtap="onModeTap" data-mode="equal-payment">等额本息</view>
+          <view class="mode-chip {{mode === 'equal-principal' ? 'active' : ''}}" bindtap="onModeTap" data-mode="equal-principal">等额本金</view>
+        </view>
+      </view>
+
+      <button class="go-btn" bindtap="start">开始计算</button>
+    </view>
+
+    <view wx:if="{{result}}" class="card result-card">
+      <view class="main-row">
+        <view class="main-item">
+          <text class="main-num">{{result.monthly}}</text>
+          <text class="main-label">{{result.isInterest ? '每月还款（元）' : '首月还款（元）'}}</text>
+        </view>
+      </view>
+      <text wx:if="{{!result.isInterest}}" class="decay-tip">每月递减 {{result.monthlyDecay}} 元，末月约 {{result.monthlyEnd}} 元</text>
+
+      <view class="stat-grid">
+        <view class="stat">
+          <text class="stat-num">{{result.totalInterest}}</text>
+          <text class="stat-label">利息总额（元）</text>
+        </view>
+        <view class="stat">
+          <text class="stat-num">{{result.totalPay}}</text>
+          <text class="stat-label">还款总额（元）</text>
+        </view>
+        <view class="stat">
+          <text class="stat-num">{{result.totalPrincipal}}</text>
+          <text class="stat-label">贷款本金（元）</text>
+        </view>
+        <view class="stat">
+          <text class="stat-num">{{result.months}}</text>
+          <text class="stat-label">还款期数（月）</text>
+        </view>
+      </view>
+
+      <view class="note">结果仅供参考，实际以银行审批为准</view>
+    </view>
+
+  </scroll-view>
+</view>

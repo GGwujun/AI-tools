@@ -60,6 +60,7 @@ module.exports = {
   dailyWallpaperApi: `${current.toolsFileBase}/api/daily/wallpaper`,
   dailyWallpaperFile: `${current.toolsFileBase}/api/daily/wallpaper/file`,
   dailyHistoryApi: `${current.toolsFileBase}/api/daily/history`,
+  dailyRateApi: `${current.toolsFileBase}/api/daily/rate`,
   // 广告位 ID
   adUnitId: current.adUnitId,
   bannerAdUnitId: current.bannerAdUnitId

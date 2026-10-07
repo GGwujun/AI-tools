@@ -1,0 +1,44 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 结果展示 -->
+    <view class="result-card">
+      <view class="path" wx:if="{{picked.length}}">
+        我
+        <text wx:for="{{picked}}" wx:key="index" class="path-item"> › {{item}}的</text>
+        <text class="path-me"> 是…</text>
+      </view>
+      <view class="path placeholder" wx:else>从下面选一个亲戚开始，比如「爸爸」</view>
+
+      <view wx:if="{{result}}" class="answer">
+        <text class="answer-text">{{result}}</text>
+        <button class="copy-btn" size="mini" bindtap="reset">重来</button>
+      </view>
+      <view wx:elif="{{unsupported}}" class="answer bad">
+        <text class="answer-bad">这个关系有点绕，暂不支持，点重来试试</text>
+      </view>
+    </view>
+
+    <!-- 按键 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">选关系{{maxed ? '（最多三层）' : ''}}</text>
+        <view class="head-actions">
+          <text class="link-btn" bindtap="undo">撤回</text>
+          <text class="link-btn" bindtap="reset">清空</text>
+        </view>
+      </view>
+      <view class="word-grid">
+        <view
+          wx:for="{{words}}"
+          wx:key="*this"
+          class="word-chip {{maxed || unsupported ? 'disabled' : ''}}"
+          bindtap="onWordTap"
+          data-word="{{item}}"
+        >{{item}}</view>
+      </view>
+      <view class="tip">连续选择表示层层关系：爸爸 › 哥哥 = 爸爸的哥哥</view>
+    </view>
+
+  </scroll-view>
+</view>

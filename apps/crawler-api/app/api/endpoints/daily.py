@@ -427,6 +427,48 @@ async def wallpaper_file(url: str = Query(...)):
 
 
 # ---------------------------------------------------------------------------
+# 今日汇率（新浪行情，免 key）
+# (代码, 币种, 单位)；日元/韩元习惯按 100 报价
+FX_CODES = [
+    ("fx_susdcny", "美元 USD", 1),
+    ("fx_seurcny", "欧元 EUR", 1),
+    ("fx_shkdcny", "港币 HKD", 1),
+    ("fx_sjpycny", "日元 JPY", 100),
+    ("fx_sgbpcny", "英镑 GBP", 1),
+    ("fx_saudcny", "澳元 AUD", 1),
+    ("fx_scadcny", "加元 CAD", 1),
+    ("fx_schfcny", "瑞郎 CHF", 1),
+    ("fx_skrwcny", "韩元 KRW", 100),
+]
+
+
+@router.get("/rate", summary="今日汇率(常用货币兑人民币)")
+async def daily_rate():
+    cached = _cache_get("rate", 1800)
+    if cached:
+        return cached
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            text = await _sina_text([c[0] for c in FX_CODES], client)
+        rates = []
+        for code, name, per in FX_CODES:
+            fields = _sina_fields(text, code)
+            rate = _f(fields[1]) if fields else None
+            if rate:
+                rates.append({"code": code.replace("fx_s", "").replace("cny", "").upper(),
+                              "name": name, "per": per, "rate": rate})
+        if not rates:
+            raise ValueError("sina empty")
+        result = {"code": 200, "message": "ok", "tip": "中国银行折算价，仅供参考",
+                  "data": {"rates": rates,
+                           "updated_at": datetime.now(TZ8).strftime("%Y-%m-%d %H:%M")}}
+        _cache_set("rate", 1800, result)
+        return result
+    except Exception:
+        return {"code": 502, "message": "汇率数据暂时不可用，请稍后再试"}
+
+
+# ---------------------------------------------------------------------------
 # 历史上的今天
 async def _history_from_60s(mmdd: str):
     """60s API（vikiboss/60s），免 key、国内可达。"""

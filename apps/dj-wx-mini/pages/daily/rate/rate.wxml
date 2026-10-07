@@ -1,0 +1,48 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 换算器 -->
+    <view class="card convert-card">
+      <view class="card-head">
+        <text class="card-title">快捷换算</text>
+        <text class="card-sub" wx:if="{{updatedAt}}">更新于 {{updatedAt}}</text>
+      </view>
+      <view class="convert-row">
+        <input class="convert-input" type="digit" value="{{amount}}" bindinput="onAmountInput" placeholder="金额" />
+        <picker range="{{currencyNames}}" value="{{currencyIndex}}" bindchange="onCurrencyChange">
+          <view class="convert-picker">{{rates.length ? rates[currencyIndex].name : '加载中'}} ▾</view>
+        </picker>
+      </view>
+      <view class="convert-result">
+        <text class="convert-num">{{converted || '—'}}</text>
+        <text class="convert-unit">人民币 CNY</text>
+      </view>
+    </view>
+
+    <!-- 加载/错误 -->
+    <view wx:if="{{loading}}" class="card loading-card"><text>汇率查询中…</text></view>
+    <view wx:if="{{error}}" class="card error-card">
+      <text class="error-text">{{error}}</text>
+      <button class="retry-btn" size="mini" bindtap="retry">重试</button>
+    </view>
+
+    <!-- 汇率列表 -->
+    <view wx:if="{{rates.length}}" class="card">
+      <view class="card-head">
+        <text class="card-title">兑人民币牌价</text>
+      </view>
+      <view class="rate-row head">
+        <text class="rate-name">币种</text>
+        <text class="rate-per">单位</text>
+        <text class="rate-value">人民币</text>
+      </view>
+      <view wx:for="{{rates}}" wx:key="code" class="rate-row">
+        <text class="rate-name">{{item.name}}</text>
+        <text class="rate-per">{{item.per}} {{item.code}}</text>
+        <text class="rate-value">{{item.display}}</text>
+      </view>
+      <view class="source-note">数据：新浪财经中行折算价，仅供参考</view>
+    </view>
+
+  </scroll-view>
+</view>
