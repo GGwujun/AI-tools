@@ -117,6 +117,47 @@ const TOOL_CONFIG = {
         ]
       }
     ]
+  },
+  image_collage: {
+    name: '图片拼贴',
+    desc: '4 张拼 2x2、9 张拼 3x3，朋友圈九图神器',
+    icon: '/images/icons_svg/thumbnail.svg',
+    maxImages: 9,
+    tip: '先选模板，再按模板张数选图',
+    fields: [
+      {
+        key: 'layout', label: '拼贴模板', type: 'choice', default: '2x2',
+        options: [
+          { value: '2x2', label: '2x2（4 张）' },
+          { value: '3x3', label: '3x3（9 张）' }
+        ]
+      }
+    ]
+  },
+  image_recolor: {
+    name: '证件照换底色',
+    desc: '蓝底/红底/白底互换，报名考试神器',
+    icon: '/images/icons_svg/premium.svg',
+    maxImages: 1,
+    tip: '仅适合纯色底证件照，生活照效果不佳',
+    fields: [
+      {
+        key: 'from', label: '现在底色', type: 'choice', default: 'blue',
+        options: [
+          { value: 'blue', label: '蓝色' },
+          { value: 'red', label: '红色' },
+          { value: 'white', label: '白色' }
+        ]
+      },
+      {
+        key: 'to', label: '换成', type: 'choice', default: 'white',
+        options: [
+          { value: 'blue', label: '蓝色' },
+          { value: 'red', label: '红色' },
+          { value: 'white', label: '白色' }
+        ]
+      }
+    ]
   }
 };
 
@@ -262,6 +303,13 @@ Page({
       wx.showToast({ title: '拼接至少需要 2 张图片', icon: 'none' });
       return null;
     }
+    if (tool === 'image_collage') {
+      const need = form.layout === '3x3' ? 9 : 4;
+      if (images.length !== need) {
+        wx.showToast({ title: `该模板需要 ${need} 张图片（已选 ${images.length} 张）`, icon: 'none' });
+        return null;
+      }
+    }
 
     const params = {};
     if (tool === 'image_watermark') {
@@ -279,6 +327,15 @@ Page({
     if (form.target) params.target = form.target;
     if (form.color) params.color = form.color;
     if (form.width) params.width = form.width;
+    if (form.layout) params.layout = form.layout;
+    if (tool === 'image_recolor') {
+      if (form.from === form.to) {
+        wx.showToast({ title: '请选择两种不同的颜色', icon: 'none' });
+        return null;
+      }
+      params.from = form.from;
+      params.to = form.to;
+    }
     if (tool === 'image_resize') {
       if (form.preset === 'custom') {
         const w = parseInt(form.customW, 10);

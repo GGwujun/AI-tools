@@ -201,6 +201,37 @@ const TOOL_CONFIG = {
         ]
       }
     ]
+  },
+  subtitle: {
+    name: '视频加字幕',
+    desc: '多行文字逐条烧录到画面，口播视频必备',
+    icon: '/images/icons_svg/copy-text.svg',
+    placeholder: '粘贴视频分享链接（抖音/快手/B站等）',
+    tip: '每行字幕按时长依次轮播，需要重新编码',
+    fields: [
+      {
+        key: 'text', label: '字幕内容', type: 'textarea', default: '',
+        placeholder: '一行一条字幕，如：\n大家好今天教大家做菜\n先准备好两个鸡蛋',
+        maxlength: 600
+      },
+      {
+        key: 'per', label: '每条时长', type: 'choice', default: '3',
+        options: [
+          { value: '2', label: '2 秒' },
+          { value: '3', label: '3 秒（推荐）' },
+          { value: '4', label: '4 秒' },
+          { value: '5', label: '5 秒' }
+        ]
+      },
+      {
+        key: 'size', label: '字号', type: 'choice', default: 'medium',
+        options: [
+          { value: 'small', label: '小' },
+          { value: 'medium', label: '中' },
+          { value: 'large', label: '大' }
+        ]
+      }
+    ]
   }
 };
 
@@ -328,6 +359,16 @@ Page({
       }
       params.text = text;
       params.position = this.data.position;
+      if (form.size) params.size = form.size;
+    }
+    if (tool === 'subtitle') {
+      const text = String(form.text || '').trim();
+      if (!text) {
+        wx.showToast({ title: '请输入字幕内容', icon: 'none' });
+        return null;
+      }
+      params.text = text;
+      if (form.per) params.per = Number(form.per);
       if (form.size) params.size = form.size;
     }
     if (tool === 'clip') {

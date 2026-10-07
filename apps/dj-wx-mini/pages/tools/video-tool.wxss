@@ -100,6 +100,18 @@
   font-size: 26rpx;
 }
 
+.field-area {
+  width: 100%;
+  min-height: 200rpx;
+  padding: 18rpx 24rpx;
+  border-radius: 16rpx;
+  background: #f7f8fa;
+  color: #101828;
+  font-size: 26rpx;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
 .choice-row {
   display: flex;
   flex-wrap: wrap;

@@ -571,6 +571,45 @@ async def tool_frames(src: str, params: dict, meta: dict) -> dict:
     }
 
 
+# 视频字幕烧录：多行文本逐条按时长轮播（drawtext + enable 时间窗，不用 subtitles 滤镜省去文件路径转义）
+SUBTITLE_SIZES = {'small': 36, 'medium': 48, 'large': 64}
+SUBTITLE_MAX_LINES = 40
+
+
+async def tool_subtitle(src: str, params: dict, meta: dict) -> dict:
+    text = str(params.get('text') or '').strip()
+    if not text:
+        raise HTTPException(status_code=400, detail='请输入字幕文字')
+    lines = [l.strip()[:60] for l in text.replace('\r\n', '\n').split('\n') if l.strip()]
+    lines = lines[:SUBTITLE_MAX_LINES]
+    if not lines:
+        raise HTTPException(status_code=400, detail='请输入字幕文字')
+    per = _clamp(_to_float(params.get('per'), 3.0), 1.0, 10.0)
+    size = SUBTITLE_SIZES.get(params.get('size'), SUBTITLE_SIZES['medium'])
+    font = _find_font().replace('\\', '/')
+    font_escaped = font.replace(':', '\\:')
+
+    parts = []
+    t = 0.0
+    for line in lines:
+        parts.append(
+            f"drawtext=fontfile='{font_escaped}':text='{_escape_drawtext(line)}':"
+            f"fontsize={size}:fontcolor=white:borderw=2:bordercolor=black@0.75:"
+            f"x=(w-text_w)/2:y=h*0.82:enable='between(t,{t:.2f},{t + per:.2f})'")
+        t += per
+    vf = ','.join(parts)
+
+    out = _out_path('subtitled', 'mp4')
+    await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', vf,
+                                     '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+                                     '-c:a', 'copy', '-movflags', '+faststart', out],
+                      timeout=max(120, int(meta['duration'] * 2)))
+    extra = {'lines': len(lines), 'per': round(per, 1), 'duration': round(meta['duration'], 1)}
+    if t > meta['duration']:
+        extra['note'] = '字幕较长，超出视频结尾的部分不会显示'
+    return _file_result('subtitled', out, extra)
+
+
 async def tool_asr(src: str, params: dict, meta: dict) -> dict:
     api_key = os.getenv('ZHIPU_API_KEY', '')
     if not api_key:
@@ -650,6 +689,7 @@ TOOL_HANDLERS = {
     'transform': tool_transform,
     'vertical': tool_vertical,
     'frames': tool_frames,
+    'subtitle': tool_subtitle,
 }
 
 # 文本型工具的描述（给前端展示处理时长预期）
@@ -661,6 +701,7 @@ TOOL_TIPS = {
     'speed': '变速需要重新编码，声音会同步变速',
     'vertical': '转竖屏需要整段重新编码，视频越长等待越久',
     'frames': '按所选间隔抽帧，最多 48 张',
+    'subtitle': '烧录字幕需要整段重新编码，视频越长等待越久',
 }
 
 
@@ -1006,6 +1047,70 @@ async def img_border(paths: list, params: dict) -> dict:
     return _file_result('img_bordered', out, {'color': color_key, 'width': width_key})
 
 
+# 图片拼贴：2x2(4张) / 3x3(9张)，每格 cover 裁剪后 xstack
+COLLAGE_LAYOUTS = {'2x2': (4, 2, 1080), '3x3': (9, 3, 1080)}
+
+
+def _xstack_layout(cols: int, rows: int) -> str:
+    cells = []
+    for r in range(rows):
+        for c in range(cols):
+            x = '+'.join(f'w{i}' for i in range(c)) if c else '0'
+            y = '+'.join(f'h{i * cols}' for i in range(r)) if r else '0'
+            cells.append(f'{x}_{y}')
+    return '|'.join(cells)
+
+
+async def img_collage(paths: list, params: dict) -> dict:
+    layout = params.get('layout') if params.get('layout') in COLLAGE_LAYOUTS else '2x2'
+    n, cols, size = COLLAGE_LAYOUTS[layout]
+    if len(paths) != n:
+        raise HTTPException(status_code=400, detail=f'该拼贴模板需要 {n} 张图片')
+    cell = size // cols
+    fc = [f'[{i}:v]scale={cell}:{cell}:force_original_aspect_ratio=increase,'
+          f'crop={cell}:{cell},setsar=1[c{i}]' for i in range(n)]
+    stack_in = ''.join(f'[c{i}]' for i in range(n))
+    fc.append(f'{stack_in}xstack=inputs={n}:layout={_xstack_layout(cols, cols)}[v]')
+
+    inputs = [arg for p in paths for arg in ('-i', p)]
+    out = _out_path('img_collage', _img_out_ext(paths[0]))
+    args = FFMPEG_BASE + inputs + ['-filter_complex', ';'.join(fc), '-map', '[v]', '-frames:v', '1']
+    if out.endswith('.jpg'):
+        args += ['-q:v', '2', out]
+    else:
+        args += [out]
+    await _run_ffmpeg(args, timeout=180)
+    return _file_result('img_collage', out, {'layout': layout, 'count': n})
+
+
+# 证件照换底色：chromakey 抠纯色底 + 目标色画布（仅适合影棚纯色底证件照）
+RECOLOR_COLORS = {
+    'blue': ('0x438EDB', 0.25),
+    'red': ('0xD9001B', 0.25),
+    'white': ('white', 0.12),
+}
+
+
+async def img_recolor(paths: list, params: dict) -> dict:
+    src = paths[0]
+    frm = params.get('from') if params.get('from') in RECOLOR_COLORS else 'blue'
+    to = params.get('to') if params.get('to') in RECOLOR_COLORS else 'white'
+    if frm == to:
+        raise HTTPException(status_code=400, detail='请选择两种不同的颜色')
+    key_color, similarity = RECOLOR_COLORS[frm]
+    target = RECOLOR_COLORS[to][0]
+    meta = await _probe(src)
+    w, h = max(meta['width'], 2), max(meta['height'], 2)
+    fc = f'[0:v]chromakey={key_color}:{similarity}:0.03[fg];[1:v][fg]overlay=format=auto,format=yuv420p'
+    out = _out_path('img_recolored', 'jpg')
+    args = FFMPEG_BASE + ['-i', src, '-f', 'lavfi', '-i', f'color=c={target}:s={w}x{h}',
+                          '-filter_complex', fc, '-frames:v', '1', '-q:v', '2', out]
+    await _run_ffmpeg(args, timeout=120)
+    return _file_result('img_recolored', out, {
+        'from': frm, 'to': to,
+        'note': '仅适合纯色底证件照，复杂背景或浅色衣物可能出现边缘瑕疵'})
+
+
 IMAGE_TOOL_HANDLERS = {
     'image_compress': img_compress,
     'image_stitch': img_stitch,
@@ -1013,6 +1118,8 @@ IMAGE_TOOL_HANDLERS = {
     'image_convert': img_convert,
     'image_resize': img_resize,
     'image_border': img_border,
+    'image_collage': img_collage,
+    'image_recolor': img_recolor,
 }
 
 
@@ -1096,6 +1203,10 @@ async def process_image_tool(request: Request):
     if tool == 'image_stitch':
         if n < 2 or n > MAX_UPLOAD_IMAGES:
             raise HTTPException(status_code=400, detail=f'拼接需要 2~{MAX_UPLOAD_IMAGES} 张图片')
+    elif tool == 'image_collage':
+        need = COLLAGE_LAYOUTS.get(params.get('layout'), COLLAGE_LAYOUTS['2x2'])[0]
+        if n != need:
+            raise HTTPException(status_code=400, detail=f'该拼贴模板需要 {need} 张图片')
     else:
         if n != 1:
             raise HTTPException(status_code=400, detail='请上传 1 张图片')

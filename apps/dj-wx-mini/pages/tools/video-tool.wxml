@@ -47,6 +47,19 @@
           </view>
         </block>
 
+        <block wx:elif="{{item.type === 'textarea'}}">
+          <text class="field-label">{{item.label}}</text>
+          <textarea
+            class="field-area"
+            value="{{form[item.key]}}"
+            placeholder="{{item.placeholder}}"
+            maxlength="{{item.maxlength || 600}}"
+            auto-height
+            bindinput="onFieldInput"
+            data-key="{{item.key}}"
+          />
+        </block>
+
         <block wx:else>
           <text class="field-label">{{item.label}}</text>
           <input
