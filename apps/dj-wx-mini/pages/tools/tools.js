@@ -8,6 +8,7 @@ const TOOL_SECTIONS = [
     tools: [
       { key: 'asr', name: '视频转文字', icon: '/images/icons_svg/tool-video-to-text.svg', color: 'blue', desc: '提取口播文案，一键复制' },
       { key: 'extract_audio', name: '音频提取', icon: '/images/icons_svg/extract-audio.svg', color: 'indigo', desc: '提取视频音轨保存为 MP3' },
+      { key: 'audio_convert', name: '音频转格式', icon: '/images/icons_svg/tool-audio.svg', color: 'yellow', desc: 'MP3/WAV/AAC 等格式互转' },
       { key: 'screenshot', name: '视频截图', icon: '/images/icons_svg/extract-cover.svg', color: 'green', desc: '截取任意一帧保存为图片' },
       { key: 'ocr', name: '文案提取', icon: '/images/icons_svg/tool-copywriting.svg', color: 'purple', desc: '识别短视频文案、正文和标签' }
     ]
@@ -21,14 +22,19 @@ const TOOL_SECTIONS = [
       { key: 'compress', name: '视频压缩', icon: '/images/icons_svg/package.svg', color: 'orange', desc: '缩小体积，方便发送保存' },
       { key: 'convert', name: '转 MP4', icon: '/images/icons_svg/refresh.svg', color: 'indigo', desc: 'MOV/WebM 等格式转 MP4' },
       { key: 'gif', name: '视频转 GIF', icon: '/images/icons_svg/play.svg', color: 'pink', desc: '制作表情包和循环动图' },
-      { key: 'watermark', name: '文字水印', icon: '/images/icons_svg/coupon.svg', color: 'purple', desc: '给视频加上专属文字标识' }
+      { key: 'watermark', name: '文字水印', icon: '/images/icons_svg/coupon.svg', color: 'purple', desc: '给视频加上专属文字标识' },
+      { key: 'reverse', name: '视频倒放', icon: '/images/icons_svg/refresh.svg', color: 'pink', desc: '画面声音全部倒着播' },
+      { key: 'mute', name: '视频去声音', icon: '/images/icons_svg/tool-audio.svg', color: 'indigo', desc: '一键静音，几秒完成' }
     ]
   },
   {
     id: 'image-process',
     title: '图片处理',
-    subtitle: '图片裁切与去水印',
+    subtitle: '压缩、拼接、加水印',
     tools: [
+      { key: 'image_compress', name: '图片压缩', icon: '/images/icons_svg/package.svg', color: 'orange', desc: '缩小体积，发图不占空间' },
+      { key: 'image_stitch', name: '图片拼接', icon: '/images/icons_svg/thumbnail.svg', color: 'purple', desc: '多张拼长图，聊天记录神器' },
+      { key: 'image_watermark', name: '图片水印', icon: '/images/icons_svg/coupon.svg', color: 'yellow', desc: '给图片加专属文字标识' },
       { key: 'grid', name: '九宫格切图', icon: '/images/icons_svg/thumbnail.svg', color: 'green', desc: '一张图切成 9 张发朋友圈' },
       { key: 'eraser', name: '图片去水印', icon: '/images/icons_svg/tool-image-remove-watermark.svg', color: 'blue', desc: '处理图片贴片、角标和日期水印' }
     ]
@@ -71,7 +77,8 @@ const TOOL_SECTIONS = [
 ];
 
 // 走通用工具页的工具 id（其余走独立页面）
-const VIDEO_TOOL_KEYS = ['extract_audio', 'screenshot', 'asr', 'clip', 'compress', 'convert', 'gif', 'watermark', 'grid'];
+const VIDEO_TOOL_KEYS = ['extract_audio', 'screenshot', 'asr', 'clip', 'compress', 'convert', 'gif', 'watermark', 'grid', 'reverse', 'mute', 'audio_convert'];
+const IMAGE_TOOL_KEYS = ['image_compress', 'image_stitch', 'image_watermark'];
 
 const ROUTE_MAP = {
   ocr: '/pages/ai/ocr/ocr',
@@ -102,6 +109,11 @@ Page({
 
     if (VIDEO_TOOL_KEYS.indexOf(tool) >= 0) {
       wx.navigateTo({ url: `/pages/tools/video-tool?tool=${tool}` });
+      return;
+    }
+
+    if (IMAGE_TOOL_KEYS.indexOf(tool) >= 0) {
+      wx.navigateTo({ url: `/pages/tools/image-tool?tool=${tool}` });
       return;
     }
 

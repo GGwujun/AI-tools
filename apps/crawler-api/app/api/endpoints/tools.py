@@ -8,7 +8,7 @@ import time
 
 import aiofiles
 import httpx
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 
 from crawlers.hybrid.hybrid_crawler import HybridCrawler
@@ -336,6 +336,53 @@ async def tool_convert(src: str, params: dict, meta: dict) -> dict:
     return _file_result('converted', out, {'duration': round(meta['duration'], 1)})
 
 
+REVERSE_MAX_SECONDS = 120  # reverse 滤镜需要全帧缓存，限制时长防内存爆炸
+
+
+async def tool_reverse(src: str, params: dict, meta: dict) -> dict:
+    if meta['duration'] > REVERSE_MAX_SECONDS:
+        raise HTTPException(status_code=400,
+                            detail=f'倒放最长支持 {REVERSE_MAX_SECONDS // 60} 分钟（视频过长会占满服务器内存）')
+    args = FFMPEG_BASE + ['-i', src, '-vf', 'reverse']
+    if meta['has_audio']:
+        args += ['-af', 'areverse', '-c:a', 'aac', '-b:a', '128k']
+    args += ['-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast', '-movflags', '+faststart']
+    out = _out_path('reversed', 'mp4')
+    await _run_ffmpeg(args + [out], timeout=max(120, int(meta['duration'] * 4)))
+    return _file_result('reversed', out, {'duration': round(meta['duration'], 1)})
+
+
+async def tool_mute(src: str, params: dict, meta: dict) -> dict:
+    if not meta['has_audio']:
+        raise HTTPException(status_code=400, detail='这个视频本来就没有声音')
+    out = _out_path('muted', 'mp4')
+    # 只移除音轨，视频流直接复制，秒级完成
+    await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-c:v', 'copy', '-an',
+                                     '-movflags', '+faststart', out])
+    return _file_result('muted', out, {'duration': round(meta['duration'], 1)})
+
+
+AUDIO_FORMATS = {
+    # 目标格式 -> (输出扩展名, 编码参数)
+    'mp3': ('mp3', ['-c:a', 'libmp3lame', '-b:a', '192k']),
+    'wav': ('wav', ['-c:a', 'pcm_s16le']),
+    'aac': ('aac', ['-c:a', 'aac', '-b:a', '192k']),
+    'm4a': ('m4a', ['-c:a', 'aac', '-b:a', '192k']),
+    'ogg': ('ogg', ['-c:a', 'libopus', '-b:a', '128k']),
+}
+
+
+async def tool_audio_convert(src: str, params: dict, meta: dict) -> dict:
+    if not meta['has_audio']:
+        raise HTTPException(status_code=400, detail='源文件没有音轨，无法转换音频格式')
+    fmt = params.get('format') if params.get('format') in AUDIO_FORMATS else 'mp3'
+    ext, codec_args = AUDIO_FORMATS[fmt]
+    out = _out_path('audio_converted', ext)
+    await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vn'] + codec_args + [out])
+    return _file_result('audio_converted', out, {
+        'format': fmt, 'duration': round(meta['duration'], 1)})
+
+
 async def tool_gif(src: str, params: dict, meta: dict) -> dict:
     duration = meta['duration']
     start = _clamp(_to_float(params.get('start'), 0.0), 0.0, max(duration - 1, 0.0) if duration else 0.0)
@@ -475,6 +522,9 @@ TOOL_HANDLERS = {
     'gif': tool_gif,
     'watermark': tool_watermark,
     'grid': tool_grid,
+    'reverse': tool_reverse,
+    'mute': tool_mute,
+    'audio_convert': tool_audio_convert,
 }
 
 # 文本型工具的描述（给前端展示处理时长预期）
@@ -482,6 +532,7 @@ TOOL_TIPS = {
     'asr': '视频越长处理越久，请耐心等待',
     'compress': '压缩需要重新编码，1 分钟视频约需 30 秒',
     'watermark': '添加水印需要重新编码，请耐心等待',
+    'reverse': '倒放需要整段重新编码，视频越长等待越久（最长 2 分钟）',
 }
 
 
@@ -543,6 +594,189 @@ async def serve_tool_file(filename: str):
     if not os.path.isfile(path):
         raise HTTPException(status_code=404, detail='文件已过期或不存在（产物保留 2 小时）')
     return FileResponse(path, filename=filename)
+
+
+# ---------------------------------------------------------------------------
+# 图片小工具：multipart 上传本地图（压缩/拼接/加水印）
+MAX_UPLOAD_IMAGES = 9
+MAX_IMAGE_BYTES = 20 * 1024 * 1024
+ALLOWED_IMG_EXTS = {'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'}
+IMG_WM_SIZES = {'small': 48, 'medium': 72, 'large': 96}
+
+
+def _img_out_ext(src: str) -> str:
+    """png 保持 png（保住透明度），其余统一 jpg。"""
+    return 'png' if src.lower().endswith('.png') else 'jpg'
+
+
+async def img_compress(paths: list, params: dict) -> dict:
+    src = paths[0]
+    q_map = {'high': 3, 'balanced': 6, 'small': 10}
+    q = q_map.get(params.get('quality'), 6)
+    ext = _img_out_ext(src)
+    out = _out_path('img_compressed', ext)
+    scale = "scale='min(1920,iw)':-2"  # 宽度超 1920 时等比缩小
+    if ext == 'png':
+        await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', scale, out], timeout=120)
+    else:
+        await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', scale, '-q:v', str(q), out], timeout=120)
+
+    note = ''
+    if os.path.getsize(out) >= os.path.getsize(src):
+        os.remove(out)
+        shutil.copyfile(src, out)
+        note = '原图片已经很精简，未再压缩'
+    return _file_result('img_compressed', out, {'note': note})
+
+
+async def img_stitch(paths: list, params: dict) -> dict:
+    direction = params.get('direction') if params.get('direction') in ('h', 'v') else 'h'
+    n = len(paths)
+    # 水平拼接统一高度 1280，垂直拼接统一宽度 1080，再 hstack/vstack
+    parts, labels = [], []
+    for i in range(n):
+        scale = "scale=-2:1280" if direction == 'h' else "scale=1080:-2"
+        parts.append(f'[{i}:v]{scale}[s{i}]')
+        labels.append(f'[s{i}]')
+    stack = f"hstack=inputs={n}" if direction == 'h' else f"vstack=inputs={n}"
+    fc = ';'.join(parts + [''.join(labels) + stack])
+    out = _out_path('img_stitched', 'jpg')
+    args = FFMPEG_BASE + []
+    for p in paths:
+        args += ['-i', p]
+    args += ['-filter_complex', fc, '-q:v', '2', out]
+    await _run_ffmpeg(args, timeout=180)
+    return _file_result('img_stitched', out, {'direction': '横向' if direction == 'h' else '纵向', 'count': n})
+
+
+async def img_watermark(paths: list, params: dict) -> dict:
+    src = paths[0]
+    text = str(params.get('text') or '').strip()
+    if not text:
+        raise HTTPException(status_code=400, detail='请输入水印文字')
+    if len(text) > 20:
+        raise HTTPException(status_code=400, detail='水印文字最多 20 个字')
+    pos = params.get('position') if params.get('position') in WATERMARK_POSITIONS else 'br'
+    x_expr, y_expr = WATERMARK_POSITIONS[pos]
+    font_size = IMG_WM_SIZES.get(params.get('size'), 72)
+    font = _find_font()
+    font_escaped = font.replace('\\', '/').replace(':', '\\:')
+    vf = (f"drawtext=fontfile='{font_escaped}':"
+          f"text='{_escape_drawtext(text)}':fontsize={font_size}:"
+          f"fontcolor=white@0.85:shadowx=2:shadowy=2:shadowcolor=black@0.6:"
+          f"x={x_expr}:y={y_expr}")
+    ext = _img_out_ext(src)
+    out = _out_path('img_watermarked', ext)
+    if ext == 'png':
+        await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', vf, out], timeout=120)
+    else:
+        await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', vf, '-q:v', '2', out], timeout=120)
+    return _file_result('img_watermarked', out, {})
+
+
+IMAGE_TOOL_HANDLERS = {
+    'image_compress': img_compress,
+    'image_stitch': img_stitch,
+    'image_watermark': img_watermark,
+}
+
+
+async def _save_image_upload(f) -> str:
+    """校验并保存一张上传图片，返回落盘路径。"""
+    ext = (f.filename or '').rsplit('.', 1)[-1].lower()
+    if ext not in ALLOWED_IMG_EXTS:
+        raise HTTPException(status_code=400, detail=f'不支持的图片格式: .{ext}')
+    dest = _out_path('imgup', ext)
+    data = await f.read()
+    if len(data) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail='单张图片不能超过 20MB')
+    with open(dest, 'wb') as fp:
+        fp.write(data)
+    return dest
+
+
+@router.post('/image_upload', summary='图片小工具：单图暂存上传（wx.uploadFile 一次只能传一个文件）')
+async def upload_image_tool_file(f: UploadFile = File(...)):
+    """
+    # [中文]
+    ### 用途:
+    - 小程序选图后先把每张图传到服务器暂存（保留 2 小时）
+    - 返回 name，多张图传完后调用 /image_process 的 JSON 模式统一处理
+    """
+    os.makedirs(TOOLS_DIR, exist_ok=True)
+    if _cleanup_outputs() > MAX_DIR_BYTES:
+        raise HTTPException(status_code=503, detail='服务器繁忙，请稍后再试')
+
+    dest = await _save_image_upload(f)
+    return {'code': 200, 'message': 'ok', 'data': {'name': os.path.basename(dest)}}
+
+
+@router.post('/image_process', summary='图片小工具统一处理入口（multipart 或 JSON 两种模式）')
+async def process_image_tool(request: Request):
+    """
+    # [中文]
+    ### 用途:
+    - 图片小工具：压缩 / 拼接 / 加文字水印
+    ### 参数:
+    - 模式一（multipart）：tool/params 表单 + files 图片（压缩/水印 1 张，拼接 2~9 张）
+    - 模式二（JSON）：{tool, params, names: [image_upload 返回的 name 列表]}
+    """
+    content_type = (request.headers.get('content-type') or '').lower()
+    is_json = content_type.startswith('application/json')
+
+    if is_json:
+        try:
+            body = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail='请求体不是合法 JSON')
+        tool = body.get('tool')
+        params = body.get('params') if isinstance(body.get('params'), dict) else {}
+        names = body.get('names') or []
+        if not isinstance(names, list):
+            names = []
+        saved = []
+        for name in names:
+            name = str(name)
+            if not name.startswith('imgup_') or not FILENAME_PATTERN.match(name):
+                raise HTTPException(status_code=400, detail='非法的图片引用')
+            path = os.path.join(TOOLS_DIR, name)
+            if not os.path.isfile(path):
+                raise HTTPException(status_code=404, detail='上传的图片已过期（保留 2 小时），请重新选择')
+            saved.append(path)
+    else:
+        form = await request.form()
+        tool = form.get('tool') or ''
+        try:
+            params = json.loads(form.get('params')) if form.get('params') else {}
+        except ValueError:
+            params = {}
+        saved = []
+        for f in form.getlist('files'):
+            saved.append(await _save_image_upload(f))
+
+    if tool not in IMAGE_TOOL_HANDLERS:
+        raise HTTPException(status_code=400, detail=f'未知工具: {tool}')
+
+    n = len(saved)
+    if tool == 'image_stitch':
+        if n < 2 or n > MAX_UPLOAD_IMAGES:
+            raise HTTPException(status_code=400, detail=f'拼接需要 2~{MAX_UPLOAD_IMAGES} 张图片')
+    else:
+        if n != 1:
+            raise HTTPException(status_code=400, detail='请上传 1 张图片')
+
+    os.makedirs(TOOLS_DIR, exist_ok=True)
+    if _cleanup_outputs() > MAX_DIR_BYTES:
+        raise HTTPException(status_code=503, detail='服务器繁忙，请稍后再试')
+
+    try:
+        async with _semaphore:
+            data = await IMAGE_TOOL_HANDLERS[tool](saved, params)
+    finally:
+        for p in saved:
+            _quiet_remove(p)
+
+    return {'code': 200, 'message': 'ok', 'tip': '', 'data': data}
 
 
 # ---------------------------------------------------------------------------

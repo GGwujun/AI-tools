@@ -1,0 +1,133 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+
+    <!-- 工具说明 -->
+    <view class="tool-header">
+      <image class="tool-header-icon" src="{{toolIcon}}" mode="aspectFit"></image>
+      <view class="tool-header-main">
+        <text class="tool-header-name">{{toolName}}</text>
+        <text class="tool-header-desc">{{toolDesc}}</text>
+      </view>
+    </view>
+
+    <!-- 选图 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">{{tool === 'image_stitch' ? '选择图片（2~9 张）' : '选择图片'}}</text>
+      </view>
+      <view class="image-grid">
+        <view wx:for="{{images}}" wx:key="*this" class="image-cell">
+          <image class="cell-img" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}"></image>
+          <view class="cell-remove" catchtap="removeImage" data-index="{{index}}">×</view>
+        </view>
+        <view wx:if="{{images.length < maxImages}}" class="image-cell add-cell" bindtap="chooseImages">
+          <text class="add-sign">+</text>
+          <text class="add-text">选图</text>
+        </view>
+      </view>
+      <text class="image-tip">支持 JPG/PNG/WebP 等，单张不超过 20MB</text>
+    </view>
+
+    <!-- 参数表单 -->
+    <view wx:if="{{fields.length}}" class="card">
+      <view class="card-head">
+        <text class="card-title">参数设置</text>
+      </view>
+
+      <view wx:for="{{fields}}" wx:key="key" class="field-item">
+        <block wx:if="{{item.type === 'choice'}}">
+          <text class="field-label">{{item.label}}</text>
+          <view class="choice-row">
+            <view
+              wx:for="{{item.options}}"
+              wx:for-item="option"
+              wx:key="value"
+              class="choice-chip {{form[item.key] === option.value ? 'active' : ''}}"
+              bindtap="onChoiceTap"
+              data-key="{{item.key}}"
+              data-value="{{option.value}}"
+            >{{option.label}}</view>
+          </view>
+        </block>
+
+        <block wx:else>
+          <text class="field-label">{{item.label}}</text>
+          <input
+            class="field-input"
+            type="text"
+            value="{{form[item.key]}}"
+            placeholder="{{item.placeholder}}"
+            maxlength="{{item.maxlength || 20}}"
+            bindinput="onFieldInput"
+            data-key="{{item.key}}"
+          />
+        </block>
+      </view>
+
+      <!-- 水印位置九宫格 -->
+      <view wx:if="{{tool === 'image_watermark'}}" class="field-item">
+        <text class="field-label">水印位置</text>
+        <view class="position-grid">
+          <view
+            wx:for="{{positionRows}}"
+            wx:for-item="row"
+            wx:for-index="rowIndex"
+            wx:key="rowIndex"
+            class="position-row"
+          >
+            <view
+              wx:for="{{row}}"
+              wx:for-item="cell"
+              wx:key="*this"
+              class="position-cell {{position === cell ? 'active' : ''}}"
+              bindtap="onPositionTap"
+              data-id="{{cell}}"
+            >
+              <view class="position-dot"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 执行按钮 -->
+    <button class="run-btn" bindtap="startProcess" disabled="{{running}}">
+      {{running ? '处理中...' : '开始处理'}}
+    </button>
+
+    <!-- 处理中状态 -->
+    <view wx:if="{{running}}" class="card status-card">
+      <view class="status-spinner"></view>
+      <view class="status-main">
+        <text class="status-title">{{uploading ? '正在上传图片' : '正在处理，请稍候'}}</text>
+        <text class="status-meta">已用时 {{elapsed}} 秒{{uploadText ? ' · ' + uploadText : (toolTip ? ' · ' + toolTip : '')}}</text>
+      </view>
+    </view>
+
+    <!-- 失败 -->
+    <view wx:if="{{error}}" class="card error-card">
+      <text class="error-title">处理失败</text>
+      <text class="error-detail">{{error}}</text>
+      <button class="retry-btn" bindtap="retry">重新处理</button>
+    </view>
+
+    <!-- 结果：图片 -->
+    <view wx:if="{{result}}" class="card result-card">
+      <view class="card-head">
+        <text class="card-title">处理完成，点击图片可预览</text>
+      </view>
+      <image class="result-image" src="{{result.urlAbs}}" mode="widthFix" bindtap="previewResult"></image>
+      <view class="file-meta-row">
+        <text class="file-name2">{{result.filename}}</text>
+        <text class="file-sub2">{{result.sizeText}}</text>
+      </view>
+      <text wx:if="{{result.note}}" class="file-note">{{result.note}}</text>
+      <view class="btn-row">
+        <button class="ghost-btn" bindtap="copyLink">复制链接</button>
+        <button class="primary-btn" bindtap="saveResult">保存到相册</button>
+      </view>
+      <text class="result-tip">文件服务器保留 2 小时，请及时保存</text>
+    </view>
+
+  </scroll-view>
+</view>

@@ -131,7 +131,7 @@
       </view>
       <text wx:if="{{result.note}}" class="file-note">{{result.note}}</text>
 
-      <view wx:if="{{tool === 'extract_audio'}}" class="btn-row">
+      <view wx:if="{{tool === 'extract_audio' || tool === 'audio_convert'}}" class="btn-row">
         <button class="ghost-btn" bindtap="toggleAudio">{{audioPlaying ? '暂停试听' : '试听'}}</button>
         <button class="ghost-btn" bindtap="copyLink">复制链接</button>
         <button class="primary-btn" bindtap="saveResult">发给朋友</button>

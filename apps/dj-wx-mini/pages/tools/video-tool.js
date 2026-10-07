@@ -97,6 +97,40 @@ const TOOL_CONFIG = {
     desc: '把图片切成 9 张，发朋友圈九宫格必备',
     icon: '/images/icons_svg/thumbnail.svg',
     placeholder: '粘贴图片链接，或图集/视频分享链接'
+  },
+  reverse: {
+    name: '视频倒放',
+    desc: '画面声音全部倒着播，做魔法效果必备',
+    icon: '/images/icons_svg/refresh.svg',
+    placeholder: '粘贴视频分享链接（抖音/快手/B站等）',
+    tip: '倒放需要整段重新编码，仅支持 2 分钟内的视频',
+    fields: []
+  },
+  mute: {
+    name: '视频去声音',
+    desc: '一键去掉视频声音，保留画面',
+    icon: '/images/icons_svg/tool-audio.svg',
+    placeholder: '粘贴视频分享链接（抖音/快手/B站等）',
+    tip: '只移除音轨不重新编码，几秒即可完成',
+    fields: []
+  },
+  audio_convert: {
+    name: '音频转格式',
+    desc: '把视频/音频的声音转成 MP3、WAV 等格式',
+    icon: '/images/icons_svg/extract-audio.svg',
+    placeholder: '粘贴视频分享链接或音频直链',
+    fields: [
+      {
+        key: 'format', label: '目标格式', type: 'choice', default: 'mp3',
+        options: [
+          { value: 'mp3', label: 'MP3' },
+          { value: 'wav', label: 'WAV' },
+          { value: 'aac', label: 'AAC' },
+          { value: 'm4a', label: 'M4A' },
+          { value: 'ogg', label: 'OGG' }
+        ]
+      }
+    ]
   }
 };
 
@@ -247,6 +281,7 @@ Page({
     if (form.time !== '' && form.time != null && !Number.isNaN(Number(form.time))) params.time = Number(form.time);
     if (form.start !== '' && form.start != null && !Number.isNaN(Number(form.start)) && tool === 'gif') params.start = Number(form.start);
     if (form.quality) params.quality = form.quality;
+    if (form.format) params.format = form.format;
     return params;
   },
 
@@ -430,13 +465,14 @@ Page({
 
     const url = this.absUrl(result.url);
     const ext = (result.filename || '').split('.').pop();
+    const AUDIO_EXTS = ['mp3', 'wav', 'aac', 'm4a', 'ogg', 'flac'];
 
     this.downloadToTemp(url)
       .then((filePath) => {
         if (ext === 'mp4') {
           return this.saveVideo(filePath);
         }
-        if (ext === 'mp3') {
+        if (AUDIO_EXTS.indexOf(ext) >= 0) {
           return this.shareFile(filePath, result.filename);
         }
         return this.saveImage(filePath);

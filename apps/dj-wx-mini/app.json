@@ -25,6 +25,7 @@
     "pages/fun/mbti/mbti",
     "pages/fun/calorie/calorie",
     "pages/tools/video-tool",
+    "pages/tools/image-tool",
     "pages/video/video"
   ],
   "window": {
