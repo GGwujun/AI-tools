@@ -75,6 +75,7 @@ function getPreferredVideoDownloadUrl(resultData) {
 Page({
   data: {
     resultData: null,
+    quickTools: [],
     parseState: 'idle',
     parseMessage: '',
     failureReason: '',
@@ -339,10 +340,40 @@ Page({
   },
 
   applyResultData(resultData) {
-    this.setData({ resultData, currentPicIndex: 0 });
+    const quickTools = (resultData.pics && resultData.pics.length)
+      ? [{ id: 'grid', name: '九宫格切图' }]
+      : [
+          { id: 'asr', name: '转文字' },
+          { id: 'extract_audio', name: '提取音频' },
+          { id: 'screenshot', name: '截图' },
+          { id: 'clip', name: '裁剪' },
+          { id: 'compress', name: '压缩' },
+          { id: 'gif', name: '转GIF' },
+          { id: 'watermark', name: '加水印' },
+          { id: 'convert', name: '转MP4' }
+        ];
+
+    this.setData({ resultData, currentPicIndex: 0, quickTools });
     this.prepareResultState(resultData);
     this.saveToHistory(resultData);
     this.checkFavoriteStatus(resultData);
+  },
+
+  // 结果页快捷工具入口：把原分享链接带给工具页复用
+  goVideoTool(e) {
+    const resultData = this.data.resultData;
+    if (!resultData) return;
+
+    const toolId = e.currentTarget.dataset.id;
+    const sourceUrl = resultData.videourl || resultData.pics?.[0] || '';
+    if (!sourceUrl) {
+      wx.showToast({ title: '缺少来源链接', icon: 'none' });
+      return;
+    }
+
+    wx.navigateTo({
+      url: `/pages/tools/video-tool?tool=${toolId}&url=${encodeURIComponent(sourceUrl)}`
+    });
   },
 
   confirmAdWatch: function (e) {
@@ -1060,6 +1091,12 @@ Page({
   goHome() {
     wx.switchTab({
       url: '/pages/home/home'
+    });
+  },
+
+  goToolbox() {
+    wx.switchTab({
+      url: '/pages/tools/tools'
     });
   },
 

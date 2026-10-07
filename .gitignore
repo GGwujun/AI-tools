@@ -42,6 +42,11 @@ logs/
 *.db
 *.pid
 
+# 密钥配置（生产在服务器 /opt/jiu9/deploy/.env，本地在 apps/crawler-api/.env.local）
+.env
+.env.*
+!.env.example
+
 # 临时 / 备份
 *.tar.gz
 *.bak

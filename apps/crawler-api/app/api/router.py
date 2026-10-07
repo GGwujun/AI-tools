@@ -7,7 +7,7 @@ from app.api.endpoints import (
     kuaishou_web,
     xiaohongshu_web,
     weibo_web,
-    hybrid_parsing, ios_shortcut, download, proxy, ai_proxy,
+    hybrid_parsing, ios_shortcut, download, proxy, ai_proxy, tools,
 )
 
 router = APIRouter()
@@ -45,3 +45,6 @@ router.include_router(proxy.router, prefix="/video", tags=["Video-Proxy"])
 
 # AI routers (代理: 智谱 AI，key 走服务器环境变量 ZHIPU_API_KEY)
 router.include_router(ai_proxy.router, prefix="/ai", tags=["AI-Proxy"])
+
+# Tools routers (视频小工具: ffmpeg 音频提取/截图/转文字/裁剪/压缩/GIF/水印/九宫格)
+router.include_router(tools.router, prefix="/tools", tags=["Video-Tools"])

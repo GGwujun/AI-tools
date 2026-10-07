@@ -1,12 +1,24 @@
 <view class="page">
   <scroll-view scroll-y class="scroll safe-bottom">
-    <view class="grid">
-      <view wx:for="{{toolCards}}" wx:key="key" class="tool-card" bindtap="onToolTap" data-tool="{{item.key}}">
-        <view class="tool-icon {{item.color}}">
-          <image class="tool-icon-image" src="{{item.icon}}" mode="aspectFit"></image>
+    <view wx:for="{{sections}}" wx:key="id" wx:for-item="section" class="tool-section">
+      <view class="section-head">
+        <text class="section-title">{{section.title}}</text>
+        <text class="section-subtitle">{{section.subtitle}}</text>
+      </view>
+      <view class="grid">
+        <view
+          wx:for="{{section.tools}}"
+          wx:key="key"
+          class="tool-card"
+          bindtap="onToolTap"
+          data-tool="{{item.key}}"
+        >
+          <view class="tool-icon {{item.color}}">
+            <image class="tool-icon-image" src="{{item.icon}}" mode="aspectFit"></image>
+          </view>
+          <text class="tool-name">{{item.name}}</text>
+          <text class="tool-desc">{{item.desc}}</text>
         </view>
-        <text class="tool-name">{{item.name}}</text>
-        <text class="tool-desc">{{item.desc}}</text>
       </view>
     </view>
   </scroll-view>

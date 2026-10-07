@@ -80,3 +80,25 @@
   font-size: 22rpx;
   line-height: 1.6;
 }
+
+.tool-section {
+  margin-bottom: 36rpx;
+}
+
+.section-head {
+  margin: 0 4rpx 16rpx;
+}
+
+.section-title {
+  display: block;
+  color: #101828;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.section-subtitle {
+  display: block;
+  margin-top: 6rpx;
+  color: #98a2b3;
+  font-size: 22rpx;
+}

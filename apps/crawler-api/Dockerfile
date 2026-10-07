@@ -8,6 +8,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR /app
 
+# ffmpeg（视频小工具）+ 思源黑体（文字水印需要中文字体）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg fonts-noto-cjk \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ \
     -r requirements.txt

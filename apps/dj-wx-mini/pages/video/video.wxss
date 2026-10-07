@@ -385,3 +385,52 @@
   border-radius: 12rpx;
   overflow: hidden;
 }
+
+/* 结果页快捷工具入口 */
+.tool-chips-card {
+  margin-top: 20rpx;
+  padding: 24rpx 28rpx;
+  border-radius: 26rpx;
+  background: #fff;
+  border: 1rpx solid #eef2f6;
+  box-shadow: 0 10rpx 28rpx rgba(16, 24, 40, 0.04);
+}
+
+.tool-chips-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18rpx;
+}
+
+.tool-chips-title {
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.tool-chips-more {
+  color: #1565ff;
+  font-size: 24rpx;
+}
+
+.tool-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.tool-chip {
+  padding: 12rpx 26rpx;
+  border-radius: 999rpx;
+  background: #f2f4f7;
+  color: #344054;
+  font-size: 24rpx;
+  border: 1rpx solid transparent;
+}
+
+.tool-chip:active {
+  background: #edf4ff;
+  color: #1565ff;
+  border-color: rgba(21, 101, 255, 0.3);
+}

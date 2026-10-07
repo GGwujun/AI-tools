@@ -11,6 +11,7 @@
     "pages/ai/ocr/ocr",
     "pages/ai/writer/writer",
     "pages/ai/eraser/eraser",
+    "pages/tools/video-tool",
     "pages/video/video"
   ],
   "window": {

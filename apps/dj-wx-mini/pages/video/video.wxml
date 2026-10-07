@@ -89,6 +89,22 @@
 
     <button class="ai-rewrite-btn" bindtap="goAiWriter">✍️ AI 改写文案 · 一键生成原创文案</button>
 
+    <view class="tool-chips-card">
+      <view class="tool-chips-head">
+        <text class="tool-chips-title">🧰 视频小工具</text>
+        <text class="tool-chips-more" bindtap="goToolbox">全部工具</text>
+      </view>
+      <view class="tool-chips-row">
+        <view
+          wx:for="{{quickTools}}"
+          wx:key="id"
+          class="tool-chip"
+          bindtap="goVideoTool"
+          data-id="{{item.id}}"
+        >{{item.name}}</view>
+      </view>
+    </view>
+
     <view class="notes-card">
       <text class="notes-title">补充说明</text>
       <text wx:for="{{resourceNotes}}" wx:key="*this" class="note-item">• {{item}}</text>
