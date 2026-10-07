@@ -32,6 +32,9 @@
     "pages/fun/anniversary/anniversary",
     "pages/fun/mortgage/mortgage",
     "pages/fun/countdown/countdown",
+    "pages/fun/password/password",
+    "pages/fun/bmi/bmi",
+    "pages/fun/color/color",
     "pages/daily/history/history",
     "pages/daily/rate/rate",
     "pages/video/video"

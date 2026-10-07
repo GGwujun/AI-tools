@@ -91,6 +91,32 @@ const TOOL_CONFIG = {
         ]
       }
     ]
+  },
+  image_border: {
+    name: '图片加边框',
+    desc: '相框式边框，小红书白边照神器',
+    icon: '/images/icons_svg/thumbnail.svg',
+    maxImages: 1,
+    fields: [
+      {
+        key: 'color', label: '边框颜色', type: 'choice', default: 'white',
+        options: [
+          { value: 'white', label: '白色' },
+          { value: 'black', label: '黑色' },
+          { value: 'red', label: '砖红' },
+          { value: 'blue', label: '蓝色' },
+          { value: 'yellow', label: '奶黄' }
+        ]
+      },
+      {
+        key: 'width', label: '边框粗细', type: 'choice', default: 'medium',
+        options: [
+          { value: 'thin', label: '窄' },
+          { value: 'medium', label: '适中（推荐）' },
+          { value: 'wide', label: '宽' }
+        ]
+      }
+    ]
   }
 };
 
@@ -251,6 +277,8 @@ Page({
     if (form.quality) params.quality = form.quality;
     if (form.direction) params.direction = form.direction;
     if (form.target) params.target = form.target;
+    if (form.color) params.color = form.color;
+    if (form.width) params.width = form.width;
     if (tool === 'image_resize') {
       if (form.preset === 'custom') {
         const w = parseInt(form.customW, 10);

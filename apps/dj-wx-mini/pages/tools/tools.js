@@ -42,6 +42,7 @@ const TOOL_SECTIONS = [
       { key: 'image_watermark', name: '图片水印', icon: '/images/icons_svg/coupon.svg', color: 'yellow', desc: '给图片加专属文字标识' },
       { key: 'image_convert', name: '图片转格式', icon: '/images/icons_svg/refresh.svg', color: 'red', desc: 'JPG/PNG/WebP 互转' },
       { key: 'image_resize', name: '图片改尺寸', icon: '/images/icons_svg/thumbnail.svg', color: 'indigo', desc: '证件照/头像尺寸一键裁剪' },
+      { key: 'image_border', name: '图片加边框', icon: '/images/icons_svg/thumbnail.svg', color: 'pink', desc: '白边照/相框，发圈神器' },
       { key: 'grid', name: '九宫格切图', icon: '/images/icons_svg/thumbnail.svg', color: 'green', desc: '一张图切成 9 张发朋友圈' },
       { key: 'eraser', name: '图片去水印', icon: '/images/icons_svg/tool-image-remove-watermark.svg', color: 'blue', desc: '处理图片贴片、角标和日期水印' }
     ]
@@ -85,14 +86,17 @@ const TOOL_SECTIONS = [
       { key: 'kinship', name: '亲戚称呼', icon: '/images/icons_svg/service.svg', color: 'blue', desc: '过年拜年不叫错辈分' },
       { key: 'anniversary', name: '纪念日倒数', icon: '/images/icons_svg/calendar.svg', color: 'pink', desc: '生日周年不错过' },
       { key: 'mortgage', name: '房贷计算器', icon: '/images/icons_svg/wallet.svg', color: 'yellow', desc: '月供/提前还款一算便知' },
-      { key: 'countdown', name: '倒数日', icon: '/images/icons_svg/calendar.svg', color: 'orange', desc: '考试放假节日倒计时' }
+      { key: 'countdown', name: '倒数日', icon: '/images/icons_svg/calendar.svg', color: 'orange', desc: '考试放假节日倒计时' },
+      { key: 'password', name: '密码生成器', icon: '/images/icons_svg/copy-text.svg', color: 'green', desc: '随机强密码，一键复制' },
+      { key: 'bmi', name: 'BMI 计算器', icon: '/images/icons_svg/recommended-plan.svg', color: 'red', desc: '体重指数 + 健康范围' },
+      { key: 'color', name: '颜色代码转换', icon: '/images/icons_svg/search.svg', color: 'blue', desc: 'HEX/RGB/HSL 互转取色' }
     ]
   }
 ];
 
 // 走通用工具页的工具 id（其余走独立页面）
 const VIDEO_TOOL_KEYS = ['extract_audio', 'screenshot', 'asr', 'clip', 'compress', 'convert', 'gif', 'watermark', 'grid', 'reverse', 'mute', 'audio_convert', 'speed', 'transform', 'vertical', 'frames'];
-const IMAGE_TOOL_KEYS = ['image_compress', 'image_stitch', 'image_watermark', 'image_convert', 'image_resize'];
+const IMAGE_TOOL_KEYS = ['image_compress', 'image_stitch', 'image_watermark', 'image_convert', 'image_resize', 'image_border'];
 
 const ROUTE_MAP = {
   ocr: '/pages/ai/ocr/ocr',
@@ -118,6 +122,9 @@ const ROUTE_MAP = {
   anniversary: '/pages/fun/anniversary/anniversary',
   mortgage: '/pages/fun/mortgage/mortgage',
   countdown: '/pages/fun/countdown/countdown',
+  password: '/pages/fun/password/password',
+  bmi: '/pages/fun/bmi/bmi',
+  color: '/pages/fun/color/color',
   rate: '/pages/daily/rate/rate'
 };
 

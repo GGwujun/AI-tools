@@ -2,5 +2,7 @@
   "navigationBarTitleText": "工具箱",
   "navigationBarBackgroundColor": "#f6f8ff",
   "navigationBarTextStyle": "black",
-  "usingComponents": {}
+  "usingComponents": {
+    "banner-ad": "/components/banner-ad/banner-ad"
+  }
 }

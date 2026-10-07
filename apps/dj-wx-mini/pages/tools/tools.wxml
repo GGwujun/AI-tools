@@ -21,5 +21,6 @@
         </view>
       </view>
     </view>
+    <banner-ad />
   </scroll-view>
 </view>

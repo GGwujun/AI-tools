@@ -1,0 +1,62 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 颜色预览 -->
+    <view class="preview" style="background: {{hex}}">
+      <text class="preview-hex" style="color: {{r + g + b > 380 ? '#101828' : '#ffffff'}}">{{hex}}</text>
+    </view>
+
+    <view class="card">
+      <view class="card-title">RGB 滑杆</view>
+      <view class="slider-row">
+        <text class="slider-label r">R {{r}}</text>
+        <slider class="slider" min="0" max="255" value="{{r}}" activeColor="#e14141" block-size="20" bindchanging="onSlider" data-key="r" bindchange="onSlider" />
+      </view>
+      <view class="slider-row">
+        <text class="slider-label g">G {{g}}</text>
+        <slider class="slider" min="0" max="255" value="{{g}}" activeColor="#10b981" block-size="20" bindchanging="onSlider" data-key="g" bindchange="onSlider" />
+      </view>
+      <view class="slider-row">
+        <text class="slider-label b">B {{b}}</text>
+        <slider class="slider" min="0" max="255" value="{{b}}" activeColor="#2f6df6" block-size="20" bindchanging="onSlider" data-key="b" bindchange="onSlider" />
+      </view>
+
+      <view class="hex-row">
+        <input class="hex-input" value="{{hexInput}}" maxlength="7" bindinput="onHexInput" bindblur="applyHex" placeholder="#1565FF" />
+        <view class="hex-apply" bindtap="applyHex">解析</view>
+      </view>
+    </view>
+
+    <!-- 代码 -->
+    <view class="card">
+      <view class="card-title">点一下复制</view>
+      <view class="code-row" bindtap="copy" data-text="{{hex}}">
+        <text class="code-label">HEX</text>
+        <text class="code-value">{{hex}}</text>
+        <text class="code-copy">复制</text>
+      </view>
+      <view class="code-row" bindtap="copy" data-text="{{rgbText}}">
+        <text class="code-label">RGB</text>
+        <text class="code-value">{{rgbText}}</text>
+        <text class="code-copy">复制</text>
+      </view>
+      <view class="code-row" bindtap="copy" data-text="{{hslText}}">
+        <text class="code-label">HSL</text>
+        <text class="code-value">{{hslText}}</text>
+        <text class="code-copy">复制</text>
+      </view>
+    </view>
+
+    <!-- 常用色 -->
+    <view class="card">
+      <view class="card-title">常用色</view>
+      <view class="preset-grid">
+        <view wx:for="{{presets}}" wx:key="hex" class="preset-cell" bindtap="applyPreset" data-hex="{{item.hex}}">
+          <view class="preset-swatch" style="background: {{item.hex}}"></view>
+          <text class="preset-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+  </scroll-view>
+</view>

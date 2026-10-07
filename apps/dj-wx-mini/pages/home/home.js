@@ -105,6 +105,16 @@ Page({
       { index: '2', title: '粘贴解析' },
       { index: '3', title: '保存到相册' }
     ],
+    hotTools: [
+      { key: 'asr', name: '视频转文字', icon: '/images/icons_svg/tool-video-to-text.svg', url: '/pages/tools/video-tool?tool=asr' },
+      { key: 'extract_audio', name: '音频提取', icon: '/images/icons_svg/extract-audio.svg', url: '/pages/tools/video-tool?tool=extract_audio' },
+      { key: 'compress', name: '视频压缩', icon: '/images/icons_svg/package.svg', url: '/pages/tools/video-tool?tool=compress' },
+      { key: 'grid', name: '九宫格切图', icon: '/images/icons_svg/thumbnail.svg', url: '/pages/tools/video-tool?tool=grid' },
+      { key: 'eraser', name: '图片去水印', icon: '/images/icons_svg/tool-image-remove-watermark.svg', url: '/pages/ai/eraser/eraser' },
+      { key: 'vertical', name: '视频转竖屏', icon: '/images/icons_svg/video.svg', url: '/pages/tools/video-tool?tool=vertical' },
+      { key: 'oil', name: '今日油价', icon: '/images/icons_svg/wallet.svg', url: '/pages/daily/oil/oil' },
+      { key: 'countdown', name: '倒数日', icon: '/images/icons_svg/calendar.svg', url: '/pages/fun/countdown/countdown' }
+    ],
     recentItems: []
   },
 
@@ -244,6 +254,11 @@ Page({
 
   goToTools() {
     wx.switchTab({ url: '/pages/tools/tools' });
+  },
+
+  openHotTool(e) {
+    const url = e.currentTarget.dataset.url;
+    if (url) wx.navigateTo({ url });
   },
 
   goToProfile() {

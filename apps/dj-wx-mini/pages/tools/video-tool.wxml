@@ -169,5 +169,8 @@
       </view>
     </view>
 
+    <!-- 结果后 banner 广告位（bannerAdUnitId 为空不渲染） -->
+    <banner-ad wx:if="{{result}}" />
+
   </scroll-view>
 </view>

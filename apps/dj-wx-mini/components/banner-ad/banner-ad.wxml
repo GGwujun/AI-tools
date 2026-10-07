@@ -1,0 +1,3 @@
+<view wx:if="{{unitId}}" class="banner-wrap">
+  <ad unit-id="{{unitId}}" ad-intervals="30" ad-theme="light"></ad>
+</view>

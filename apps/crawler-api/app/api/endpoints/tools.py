@@ -979,12 +979,40 @@ async def img_resize(paths: list, params: dict) -> dict:
         'note': '已按比例居中裁剪至目标尺寸'})
 
 
+# 图片加边框：pad 按比例外扩（相框/小红书白边照）
+IMG_BORDER_COLORS = {
+    'white': 'white', 'black': 'black',
+    'red': '0xE14141', 'blue': '0x2F6DF6', 'yellow': '0xFFD54A',
+}
+IMG_BORDER_WIDTHS = {'thin': 1.04, 'medium': 1.08, 'wide': 1.16}  # 输出总宽 = 原图 * 系数
+
+
+async def img_border(paths: list, params: dict) -> dict:
+    src = paths[0]
+    color_key = params.get('color') if params.get('color') in IMG_BORDER_COLORS else 'white'
+    color = IMG_BORDER_COLORS[color_key]
+    width_key = params.get('width') if params.get('width') in IMG_BORDER_WIDTHS else 'medium'
+    factor = IMG_BORDER_WIDTHS[width_key]
+    # 截成偶数，避免 jpg 的 yuv 色度抽样报奇数尺寸错误
+    vf = (f'pad=trunc(iw*{factor:g}/2)*2:trunc(ih*{factor:g}/2)*2:'
+          f'(ow-iw)/2:(oh-ih)/2:color={color}')
+    ext = _img_out_ext(src)
+    out = _out_path('img_bordered', ext)
+    if ext == 'png':
+        args = FFMPEG_BASE + ['-i', src, '-vf', vf, out]
+    else:
+        args = FFMPEG_BASE + ['-i', src, '-vf', vf, '-q:v', '2', out]
+    await _run_ffmpeg(args, timeout=120)
+    return _file_result('img_bordered', out, {'color': color_key, 'width': width_key})
+
+
 IMAGE_TOOL_HANDLERS = {
     'image_compress': img_compress,
     'image_stitch': img_stitch,
     'image_watermark': img_watermark,
     'image_convert': img_convert,
     'image_resize': img_resize,
+    'image_border': img_border,
 }
 
 

@@ -1,0 +1,53 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <view class="card">
+      <view class="form-row">
+        <text class="form-label">身高</text>
+        <input class="form-input" type="digit" value="{{height}}" bindinput="onHeightInput" placeholder="cm" />
+        <text class="form-unit">cm</text>
+      </view>
+      <view class="form-row">
+        <text class="form-label">体重</text>
+        <input class="form-input" type="digit" value="{{weight}}" bindinput="onWeightInput" placeholder="kg" />
+        <text class="form-unit">kg</text>
+      </view>
+      <button class="go-btn" bindtap="start">开始计算</button>
+    </view>
+
+    <view wx:if="{{result}}" class="card result-card">
+      <view class="bmi-main">
+        <text class="bmi-num" style="color: {{result.color}}">{{result.bmi}}</text>
+        <view class="bmi-tag" style="background: {{result.color}}1a; color: {{result.color}}">{{result.label}}</view>
+      </view>
+
+      <!-- 分段刻度条 -->
+      <view class="gauge">
+        <view class="gauge-track">
+          <view class="gauge-needle" style="left: {{result.percent}}%"></view>
+        </view>
+        <view class="gauge-labels">
+          <text class="gl">偏瘦</text>
+          <text class="gl">正常</text>
+          <text class="gl">超重</text>
+          <text class="gl">肥胖</text>
+        </view>
+      </view>
+
+      <view class="stat-grid">
+        <view class="stat">
+          <text class="stat-num">{{result.healthyMin}} ~ {{result.healthyMax}}</text>
+          <text class="stat-label">健康体重范围（kg）</text>
+        </view>
+        <view class="stat">
+          <text class="stat-num">{{result.diffText}}</text>
+          <text class="stat-label">参考（健康中心 BMI 21.75）</text>
+        </view>
+      </view>
+
+      <view class="tip-line" style="color: {{result.color}}">{{result.tip}}</view>
+      <view class="note">按中国成人 BMI 标准计算，不适合孕妇、儿童和健身肌肉量大的人群</view>
+    </view>
+
+  </scroll-view>
+</view>

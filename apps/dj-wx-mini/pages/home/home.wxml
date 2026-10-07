@@ -42,6 +42,25 @@
     </view>
 
     <view class="section-card">
+      <view class="section-head between">
+        <text class="section-title">热门工具</text>
+        <text class="link-text" bindtap="goToTools">全部工具</text>
+      </view>
+      <view class="hot-grid">
+        <view
+          wx:for="{{hotTools}}"
+          wx:key="key"
+          class="hot-item"
+          bindtap="openHotTool"
+          data-url="{{item.url}}"
+        >
+          <image class="hot-icon" src="{{item.icon}}" mode="aspectFit"></image>
+          <text class="hot-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card">
       <view class="section-head">
         <text class="section-title">3 步完成保存</text>
       </view>
@@ -107,7 +126,7 @@
     <view class="footer-nav-row">
       <view class="footer-shortcut" bindtap="goToTools">
         <text class="footer-shortcut-title">工具箱</text>
-        <text class="footer-shortcut-desc">文案提取、图片去水印、文案生成</text>
+        <text class="footer-shortcut-desc">50+ 个小工具：视频、图片、日常</text>
       </view>
       <view class="footer-shortcut" bindtap="goToProfile">
         <text class="footer-shortcut-title">我的</text>
