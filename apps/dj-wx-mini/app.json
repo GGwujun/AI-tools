@@ -26,6 +26,9 @@
     "pages/fun/calorie/calorie",
     "pages/tools/video-tool",
     "pages/tools/image-tool",
+    "pages/tools/merge-tool",
+    "pages/fun/teleprompter/teleprompter",
+    "pages/daily/history/history",
     "pages/video/video"
   ],
   "window": {

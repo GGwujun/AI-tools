@@ -424,3 +424,126 @@ async def wallpaper_file(url: str = Query(...)):
                     yield chunk
 
     return StreamingResponse(gen(), media_type="image/jpeg")
+
+
+# ---------------------------------------------------------------------------
+# 历史上的今天
+async def _history_from_60s(mmdd: str):
+    """60s API（vikiboss/60s），免 key、国内可达。"""
+    mm, dd = mmdd.split("-")
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get("https://60s.viki.moe/v2/today_in_history",
+                             params={"month": int(mm), "day": int(dd)},
+                             headers={"User-Agent": UA})
+        r.raise_for_status()
+        body = r.json()
+    if body.get("code") != 200:
+        raise ValueError(body.get("message", "60s error"))
+    events = []
+    for item in (body.get("data") or {}).get("items") or []:
+        year = str(item.get("year", "")).strip()
+        title = str(item.get("title", "")).strip()
+        desc = str(item.get("description", "")).strip()
+        if year and title:
+            events.append({"year": year, "title": title, "description": desc})
+    if not events:
+        raise ValueError("60s empty")
+    return events
+
+
+async def _history_from_tianapi(key: str, mmdd: str):
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get("https://apis.tianapi.com/lishi/index",
+                             params={"key": key, "date": mmdd})
+        r.raise_for_status()
+        body = r.json()
+        if body.get("code") != 200:
+            raise ValueError(body.get("msg", "tianapi error"))
+    events = []
+    for item in body.get("newslist") or []:
+        year = str(item.get("year", "")).strip()
+        title = str(item.get("title", "")).strip()
+        if year and title:
+            events.append({"year": year, "title": title})
+    if not events:
+        raise ValueError("tianapi empty")
+    return events
+
+
+async def _history_from_wiki(mmdd: str):
+    mm, dd = mmdd.split("-")
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(f"https://zh.wikipedia.org/api/rest_v1/feed/onthisday/events/{mm}/{dd}",
+                             headers={"User-Agent": UA})
+        r.raise_for_status()
+        payload = r.json()
+    events = []
+    for item in payload.get("events") or []:
+        year = item.get("year")
+        text = str(item.get("text", "")).strip()
+        if year and text:
+            events.append({"year": str(year), "title": text})
+    if not events:
+        raise ValueError("wiki empty")
+    return events
+
+
+def _year_sort_key(year: str):
+    y = year.replace("公元前", "-").replace("前", "-").strip()
+    try:
+        return int(y)
+    except ValueError:
+        return 99999
+
+
+@router.get("/history", summary="历史上的今天")
+async def daily_history(date: str = Query("", max_length=5)):
+    """date 为 MM-DD，默认今天（北京时间）。"""
+    mmdd = date.strip()
+    if mmdd:
+        if not re.fullmatch(r"(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])", mmdd):
+            return {"code": 400, "message": "日期格式应为 MM-DD"}
+        mm, dd = mmdd.split("-")
+        mmdd = f"{int(mm):02d}-{int(dd):02d}"
+    else:
+        mmdd = datetime.now(TZ8).strftime("%m-%d")
+
+    cached = _cache_get(f"history:{mmdd}", 12 * 3600)
+    if cached:
+        return cached
+
+    events = None
+    source = ""
+    is_today = mmdd == datetime.now(TZ8).strftime("%m-%d")
+    # 1) 今天的数据走 60s API（免 key、国内可达；注意它忽略 date 参数，只能查今天）
+    # 2) 任意日期：天行数据（可选 key） 3) 中文维基（需境外网络，服务器可达）
+    if is_today:
+        try:
+            events = await _history_from_60s(mmdd)
+            source = "60s百科"
+        except Exception:
+            events = None
+    if events is None:
+        key = os.environ.get("TIANAPI_KEY", "").strip()
+        if key:
+            try:
+                events = await _history_from_tianapi(key, mmdd)
+                source = "天行数据"
+            except Exception:
+                events = None
+    if events is None:
+        try:
+            events = await _history_from_wiki(mmdd)
+            source = "维基百科"
+        except Exception:
+            events = None
+    if events is None:
+        result = {"code": 502, "message": "历史上的今天数据暂不可用"}
+        _cache_set(f"history:{mmdd}", 600, result)
+        return result
+
+    events.sort(key=lambda e: _year_sort_key(e["year"]))
+    result = {"code": 200, "message": "ok", "tip": "内容整理自公开资料，仅供参考",
+              "data": {"date": mmdd, "source": source, "count": len(events), "events": events}}
+    _cache_set(f"history:{mmdd}", 12 * 3600, result)
+    return result

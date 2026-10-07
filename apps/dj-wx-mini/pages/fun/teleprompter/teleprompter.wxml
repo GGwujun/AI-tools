@@ -1,0 +1,77 @@
+<!-- 编辑模式 -->
+<view wx:if="{{mode === 'edit'}}" class="page">
+  <scroll-view scroll-y class="content">
+
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">文案内容</text>
+        <text class="card-count">{{text.length}}/5000</text>
+      </view>
+      <textarea
+        class="script-input"
+        value="{{text}}"
+        placeholder="粘贴或输入要念的文案&#10;支持换行分段，念稿更轻松"
+        maxlength="5000"
+        auto-height
+        bindinput="onTextInput"
+      ></textarea>
+    </view>
+
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">字号</text>
+      </view>
+      <view class="chip-row">
+        <view wx:for="{{['小','中','大','特大','超大']}}" wx:key="index"
+              class="chip {{fontIndex === index ? 'active' : ''}}"
+              bindtap="onFontTap" data-index="{{index}}">{{item}}</view>
+      </view>
+
+      <view class="card-head gap-top">
+        <text class="card-title">滚动速度</text>
+      </view>
+      <view class="chip-row">
+        <view wx:for="{{['很慢','慢','中','快','很快']}}" wx:key="index"
+              class="chip {{speedIndex === index ? 'active' : ''}}"
+              bindtap="onSpeedTap" data-index="{{index}}">{{item}}</view>
+      </view>
+    </view>
+
+    <button class="go-btn" bindtap="startPlay">开始提词</button>
+
+    <view class="tips">
+      <text>· 播放中点屏幕任意处可暂停/继续\n· 底部按钮可随时调速、调字号\n· 屏幕保持常亮，不会自动锁屏\n· 文案自动保存，下次打开还在</text>
+    </view>
+
+  </scroll-view>
+</view>
+
+<!-- 播放模式：全屏黑底滚动字幕 -->
+<view wx:if="{{mode === 'play'}}" class="player">
+  <view class="player-viewport script-viewport" bindtap="togglePause">
+    <view class="script-text" style="font-size: {{fontRpx}}rpx; transform: translateY({{offsetY}}px);">
+      <text user-select="{{false}}">{{text}}</text>
+    </view>
+  </view>
+
+  <!-- 顶部控制 -->
+  <view class="player-top" style="padding-top: {{statusBarHeight}}px">
+    <view class="p-btn" catchtap="stopPlay">✕ 退出</view>
+    <view wx:if="{{finished}}" class="p-btn primary" catchtap="restart">↻ 重新开始</view>
+    <view wx:else class="p-btn" catchtap="togglePause">{{paused ? '▶ 继续' : '⏸ 暂停'}}</view>
+  </view>
+
+  <!-- 底部控制 -->
+  <view class="player-bottom">
+    <view class="p-btn" catchtap="speedDown">慢速 −</view>
+    <view class="p-speed">{{speedLabel}}</view>
+    <view class="p-btn" catchtap="speedUp">快速 +</view>
+    <view class="p-btn" catchtap="fontDown">A −</view>
+    <view class="p-btn" catchtap="fontUp">A +</view>
+  </view>
+
+  <!-- 进度条 -->
+  <view class="progress-bar">
+    <view class="progress-inner" style="width: {{progress}}%;"></view>
+  </view>
+</view>

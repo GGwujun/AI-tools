@@ -24,7 +24,8 @@ const TOOL_SECTIONS = [
       { key: 'gif', name: '视频转 GIF', icon: '/images/icons_svg/play.svg', color: 'pink', desc: '制作表情包和循环动图' },
       { key: 'watermark', name: '文字水印', icon: '/images/icons_svg/coupon.svg', color: 'purple', desc: '给视频加上专属文字标识' },
       { key: 'reverse', name: '视频倒放', icon: '/images/icons_svg/refresh.svg', color: 'pink', desc: '画面声音全部倒着播' },
-      { key: 'mute', name: '视频去声音', icon: '/images/icons_svg/tool-audio.svg', color: 'indigo', desc: '一键静音，几秒完成' }
+      { key: 'mute', name: '视频去声音', icon: '/images/icons_svg/tool-audio.svg', color: 'indigo', desc: '一键静音，几秒完成' },
+      { key: 'merge', name: '双视频合成', icon: '/images/icons_svg/video.svg', color: 'red', desc: '同框/画中画，二合一' }
     ]
   },
   {
@@ -41,10 +42,11 @@ const TOOL_SECTIONS = [
   },
   {
     id: 'ai',
-    title: 'AI 创作',
-    subtitle: '生成文案，配合提取内容使用',
+    title: '创作辅助',
+    subtitle: '写文案、看提词，拍摄一条龙',
     tools: [
-      { key: 'writer', name: '文案生成', icon: '/images/icons_svg/tool-ai-rewrite.svg', color: 'pink', desc: '智能生成标题、摘要与发布文案' }
+      { key: 'writer', name: '文案生成', icon: '/images/icons_svg/tool-ai-rewrite.svg', color: 'pink', desc: '智能生成标题、摘要与发布文案' },
+      { key: 'teleprompter', name: '提词器', icon: '/images/icons_svg/copy-text.svg', color: 'blue', desc: '全屏滚动字幕，拍视频神器' }
     ]
   },
   {
@@ -55,7 +57,8 @@ const TOOL_SECTIONS = [
       { key: 'oil', name: '今日油价', icon: '/images/icons_svg/wallet.svg', color: 'orange', desc: '31 省汽柴油价，调价提醒' },
       { key: 'gold', name: '今日金价', icon: '/images/icons_svg/premium.svg', color: 'yellow', desc: '国际/上海金价，附换算器' },
       { key: 'sunset', name: '朝霞预测', icon: '/images/icons_svg/hot.svg', color: 'red', desc: '火烧云指数，摄影人必备' },
-      { key: 'wallpaper', name: '每日壁纸', icon: '/images/icons_svg/hd.svg', color: 'blue', desc: 'Bing 高清壁纸一键保存' }
+      { key: 'wallpaper', name: '每日壁纸', icon: '/images/icons_svg/hd.svg', color: 'blue', desc: 'Bing 高清壁纸一键保存' },
+      { key: 'history', name: '历史上的今天', icon: '/images/icons_svg/calendar.svg', color: 'purple', desc: '老照片大事记，天天有故事' }
     ]
   },
   {
@@ -84,10 +87,13 @@ const ROUTE_MAP = {
   ocr: '/pages/ai/ocr/ocr',
   eraser: '/pages/ai/eraser/eraser',
   writer: '/pages/ai/writer/writer',
+  teleprompter: '/pages/fun/teleprompter/teleprompter',
+  merge: '/pages/tools/merge-tool/merge-tool',
   oil: '/pages/daily/oil/oil',
   gold: '/pages/daily/gold/gold',
   sunset: '/pages/daily/sunset/sunset',
   wallpaper: '/pages/daily/wallpaper/wallpaper',
+  history: '/pages/daily/history/history',
   nickname: '/pages/fun/nickname/nickname',
   danmaku: '/pages/fun/danmaku/danmaku',
   dice: '/pages/fun/dice/dice',

@@ -1,0 +1,129 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll safe-bottom">
+
+    <!-- 工具说明 -->
+    <view class="tool-header">
+      <image class="tool-header-icon" src="/images/icons_svg/video.svg" mode="aspectFit"></image>
+      <view class="tool-header-main">
+        <text class="tool-header-name">双视频合成</text>
+        <text class="tool-header-desc">两个视频同框或画中画，短视频自动定格补齐</text>
+      </view>
+    </view>
+
+    <!-- 视频 1 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">视频一（主视频）</text>
+      </view>
+      <textarea
+        class="url-input"
+        value="{{url1}}"
+        placeholder="粘贴视频分享链接（抖音/快手/B站等）"
+        maxlength="1000"
+        auto-height
+        bindinput="onUrl1Input"
+      ></textarea>
+      <text class="card-sub">{{layout === 'pip' ? '画中画模式下铺满全屏' : '显示在左侧/上方'}}</text>
+    </view>
+
+    <!-- 视频 2 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">视频二</text>
+      </view>
+      <textarea
+        class="url-input"
+        value="{{url2}}"
+        placeholder="粘贴另一个视频的分享链接"
+        maxlength="1000"
+        auto-height
+        bindinput="onUrl2Input"
+      ></textarea>
+    </view>
+
+    <!-- 布局设置 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">合成布局</text>
+      </view>
+      <view class="choice-row">
+        <view
+          wx:for="{{layouts}}"
+          wx:key="value"
+          class="choice-chip {{layout === item.value ? 'active' : ''}}"
+          bindtap="onOptionTap"
+          data-key="layout"
+          data-value="{{item.value}}"
+        >{{item.label}}</view>
+      </view>
+
+      <view wx:if="{{layout === 'pip'}}" class="field-item pip-field">
+        <text class="field-label">小窗位置</text>
+        <view class="choice-row">
+          <view
+            wx:for="{{pipPos}}"
+            wx:key="value"
+            class="choice-chip {{pip === item.value ? 'active' : ''}}"
+            bindtap="onOptionTap"
+            data-key="pip"
+            data-value="{{item.value}}"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <view class="field-item">
+        <text class="field-label">声音</text>
+        <view class="choice-row">
+          <view
+            wx:for="{{audios}}"
+            wx:key="value"
+            class="choice-chip {{audio === item.value ? 'active' : ''}}"
+            bindtap="onOptionTap"
+            data-key="audio"
+            data-value="{{item.value}}"
+          >{{item.label}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 执行按钮 -->
+    <button class="run-btn" bindtap="startProcess" disabled="{{running}}">
+      {{running ? '合成中...' : '开始合成'}}
+    </button>
+
+    <!-- 处理中状态 -->
+    <view wx:if="{{running}}" class="card status-card">
+      <view class="status-spinner"></view>
+      <view class="status-main">
+        <text class="status-title">正在合成，请稍候</text>
+        <text class="status-meta">已用时 {{elapsed}} 秒 · 两路视频同时重新编码，最长支持 3 分钟</text>
+      </view>
+    </view>
+
+    <!-- 失败 -->
+    <view wx:if="{{error}}" class="card error-card">
+      <text class="error-title">合成失败</text>
+      <text class="error-detail">{{error}}</text>
+      <button class="retry-btn" bindtap="retry">重新处理</button>
+    </view>
+
+    <!-- 结果：文件 -->
+    <view wx:if="{{result}}" class="card result-card">
+      <view class="file-meta">
+        <image class="file-icon" src="/images/icons_svg/video.svg" mode="aspectFit"></image>
+        <view class="file-main">
+          <text class="file-name">{{result.filename}}</text>
+          <text class="file-sub">{{result.sizeText}}{{result.duration ? ' · 约 ' + result.duration + ' 秒' : ''}}</text>
+        </view>
+      </view>
+      <text wx:if="{{result.note}}" class="file-note">{{result.note}}</text>
+      <view class="btn-row">
+        <button class="ghost-btn" bindtap="copyLink">复制链接</button>
+        <button class="ghost-btn" bindtap="shareResultFile">发给朋友</button>
+        <button class="primary-btn" bindtap="saveResult">保存到相册</button>
+      </view>
+      <text class="result-tip">文件服务器保留 2 小时，请及时保存</text>
+    </view>
+
+  </scroll-view>
+</view>

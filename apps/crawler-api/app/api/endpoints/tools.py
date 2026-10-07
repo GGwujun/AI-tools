@@ -597,6 +597,124 @@ async def serve_tool_file(filename: str):
 
 
 # ---------------------------------------------------------------------------
+# 双视频合成（同框 / 画中画）
+MERGE_MAX_SECONDS = 180          # 两路同时重编码，限 3 分钟
+MERGE_PIP_POS = {                # 画中画小窗位置 -> overlay 表达式（边距 24）
+    'tl': ('24', '24'),
+    'tr': ('main_w-overlay_w-24', '24'),
+    'bl': ('24', 'main_h-overlay_h-24'),
+    'br': ('main_w-overlay_w-24', 'main_h-overlay_h-24'),
+}
+
+
+def _merge_filter(m1: dict, m2: dict, layout: str, pip: str) -> str:
+    """生成双视频合成的 filter_complex。短视频自动停帧补齐到长视频时长。"""
+    total = max(m1['duration'], m2['duration'])
+    pads = [max(0.0, total - m1['duration']), max(0.0, total - m2['duration'])]
+
+    def chain(i: int, scale: str, label: str) -> str:
+        parts = [f'[{i}:v]fps=30', f'scale={scale}', 'setsar=1']
+        if pads[i] > 0.5:
+            parts.append(f'tpad=stop_mode=clone:stop_duration={pads[i]:.2f}')
+        return ','.join(parts) + label
+
+    if layout == 'side':      # 左右同框：统一高度 1280
+        fc = ';'.join([chain(0, '-2:1280', '[s0]'),
+                       chain(1, '-2:1280', '[s1]'),
+                       '[s0][s1]hstack=inputs=2,format=yuv420p[v]'])
+    elif layout == 'top':     # 上下同框：统一宽度 1080
+        fc = ';'.join([chain(0, '1080:-2', '[s0]'),
+                       chain(1, '1080:-2', '[s1]'),
+                       '[s0][s1]vstack=inputs=2,format=yuv420p[v]'])
+    else:                     # pip：主视频 1080 宽，小窗约 1/4
+        x, y = MERGE_PIP_POS[pip]
+        fc = ';'.join([chain(0, '1080:-2', '[base]'),
+                       chain(1, '270:-2', '[sub]'),
+                       f'[base][sub]overlay=x={x}:y={y},format=yuv420p[v]'])
+    return fc
+
+
+@router.post('/merge', summary='双视频合成（左右/上下同框、画中画）')
+async def merge_tool(request: Request):
+    """
+    # [中文]
+    ### 用途:
+    - 两个视频合成一个：左右同框 / 上下同框 / 画中画
+    - 短视频自动停帧补齐到长视频时长
+    ### 参数:
+    - url1: 主视频（分享链接或直链，画中画时铺满全屏）
+    - url2: 第二个视频
+    - params: layout=side|top|pip, pip=tl|tr|bl|br, audio=main|mix
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='请求体不是合法 JSON')
+
+    url1 = str(body.get('url1') or '').strip()
+    url2 = str(body.get('url2') or '').strip()
+    params = body.get('params') if isinstance(body.get('params'), dict) else {}
+    direct = bool(body.get('direct'))
+    layout = params.get('layout') if params.get('layout') in ('side', 'top', 'pip') else 'side'
+    pip = params.get('pip') if params.get('pip') in MERGE_PIP_POS else 'br'
+    audio = params.get('audio') if params.get('audio') in ('main', 'mix') else 'main'
+
+    if not url1 or not url2:
+        raise HTTPException(status_code=400, detail='需要提供两个视频链接')
+
+    os.makedirs(TOOLS_DIR, exist_ok=True)
+    if _cleanup_outputs() > MAX_DIR_BYTES:
+        raise HTTPException(status_code=503, detail='服务器繁忙，请稍后再试')
+
+    src1 = _out_path('_src1', 'mp4')
+    src2 = _out_path('_src2', 'mp4')
+    try:
+        async with _semaphore:
+            d1, h1 = await _resolve_direct_url(url1, direct)
+            await _download_source(d1, h1, src1)
+            d2, h2 = await _resolve_direct_url(url2, direct)
+            await _download_source(d2, h2, src2)
+            m1 = await _probe(src1)
+            m2 = await _probe(src2)
+            if not m1['has_video'] or not m2['has_video']:
+                raise HTTPException(status_code=400, detail='两个链接都需要是视频（图集不支持合成）')
+            total = max(m1['duration'], m2['duration'])
+            if total > MERGE_MAX_SECONDS:
+                raise HTTPException(status_code=400,
+                                    detail=f'合成最长支持 {MERGE_MAX_SECONDS // 60} 分钟内的视频')
+
+            fc = _merge_filter(m1, m2, layout, pip)
+            # 音频：mix 且两路都有音轨才真正混合，否则用有音轨的那路
+            use_amix = audio == 'mix' and m1['has_audio'] and m2['has_audio']
+            if use_amix:
+                fc += f';[0:a][1:a]amix=inputs=2:duration=longest:dropout_transition=0:normalize=0[a]'
+                audio_args = ['-map', '[a]']
+            elif m1['has_audio']:
+                audio_args = ['-map', '0:a:0']
+            elif m2['has_audio']:
+                audio_args = ['-map', '1:a:0']
+            else:
+                audio_args = []
+
+            out = _out_path('merged', 'mp4')
+            args = (FFMPEG_BASE + ['-i', src1, '-i', src2, '-filter_complex', fc,
+                                   '-map', '[v]'] + audio_args +
+                    ['-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+                     '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', out])
+            await _run_ffmpeg(args, timeout=max(180, int(total * 4)))
+        data = _file_result('merged', out, {
+            'layout': layout, 'duration': round(total, 1),
+            'note': '短视频结尾自动定格补齐时长',
+        })
+    finally:
+        _quiet_remove(src1)
+        _quiet_remove(src2)
+
+    return {'code': 200, 'message': 'ok',
+            'tip': '合成需要两路视频同时重新编码，请耐心等待', 'data': data}
+
+
+# ---------------------------------------------------------------------------
 # 图片小工具：multipart 上传本地图（压缩/拼接/加水印）
 MAX_UPLOAD_IMAGES = 9
 MAX_IMAGE_BYTES = 20 * 1024 * 1024

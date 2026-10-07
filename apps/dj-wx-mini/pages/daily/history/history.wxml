@@ -1,0 +1,44 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 日期切换 -->
+    <view class="date-card">
+      <view class="date-arrow" bindtap="shiftDay" data-delta="-1">‹ 前一天</view>
+      <view class="date-main">
+        <text class="date-label">{{dateLabel}}</text>
+        <text class="date-sub" wx:if="{{isToday}}">今天</text>
+        <text class="date-sub" wx:else bindtap="goToday">回到今天</text>
+      </view>
+      <view class="date-arrow" bindtap="shiftDay" data-delta="1">后一天 ›</view>
+    </view>
+
+    <!-- 加载中 -->
+    <view wx:if="{{loading}}" class="card loading-card">
+      <view class="spinner"></view>
+      <text>正在翻历史书…</text>
+    </view>
+
+    <!-- 失败 -->
+    <view wx:if="{{error}}" class="card error-card">
+      <text class="error-text">{{error}}</text>
+    </view>
+
+    <!-- 大事列表 -->
+    <view wx:if="{{events.length}}" class="card">
+      <view class="card-head">
+        <text class="card-title">这一天发生的事（{{events.length}} 条）</text>
+      </view>
+      <view class="event-list">
+        <view wx:for="{{events}}" wx:key="index" class="event-row">
+          <view class="event-year">{{item.year}}</view>
+          <view class="event-body">
+            <text class="event-title">{{item.title}}</text>
+            <text wx:if="{{item.description}}" class="event-desc">{{item.description}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="source-note">数据来源：{{source}}</view>
+    </view>
+
+  </scroll-view>
+</view>

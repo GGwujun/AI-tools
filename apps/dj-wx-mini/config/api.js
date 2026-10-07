@@ -46,6 +46,7 @@ module.exports = {
   aiChatApi: current.aiChatApi,
   // 视频小工具（ffmpeg 后端处理）
   toolsProcessApi: current.toolsProcessApi,
+  toolsMergeApi: `${current.toolsFileBase}/api/tools/merge`,
   toolsFileBase: current.toolsFileBase,
   // 图片小工具（先逐张上传暂存，再提交处理）
   toolsImageUploadApi: `${current.toolsFileBase}/api/tools/image_upload`,
@@ -58,6 +59,7 @@ module.exports = {
   dailySunsetApi: `${current.toolsFileBase}/api/daily/sunset`,
   dailyWallpaperApi: `${current.toolsFileBase}/api/daily/wallpaper`,
   dailyWallpaperFile: `${current.toolsFileBase}/api/daily/wallpaper/file`,
+  dailyHistoryApi: `${current.toolsFileBase}/api/daily/history`,
   // 广告位 ID
   adUnitId: current.adUnitId,
   bannerAdUnitId: current.bannerAdUnitId
