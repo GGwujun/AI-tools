@@ -174,6 +174,23 @@
 }
 
 /* 水印位置九宫格 */
+/* 改尺寸：自定义宽高输入 */
+.size-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.size-input {
+  flex: 1;
+  text-align: center;
+}
+
+.size-x {
+  color: #97a0b5;
+  font-size: 30rpx;
+}
+
 .position-grid {
   display: inline-block;
   padding: 16rpx;

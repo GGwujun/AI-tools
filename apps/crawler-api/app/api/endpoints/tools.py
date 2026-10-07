@@ -434,6 +434,41 @@ async def tool_transform(src: str, params: dict, meta: dict) -> dict:
         'duration': round(meta['duration'], 1)})
 
 
+# 视频转竖屏 9:16（1080x1920）：
+# blur  放大模糊垫背景（搬运横屏视频最常用）、white  白底居中、crop  居中裁剪铺满
+VERTICAL_MODES = ('blur', 'white', 'crop')
+
+
+async def tool_vertical(src: str, params: dict, meta: dict) -> dict:
+    mode = params.get('mode') if params.get('mode') in VERTICAL_MODES else 'blur'
+    out = _out_path('vertical', 'mp4')
+    if mode == 'crop':
+        vf = 'crop=ih*9/16:ih,scale=1080:1920,setsar=1,format=yuv420p'
+        args = FFMPEG_BASE + ['-i', src, '-vf', vf]
+    elif mode == 'white':
+        # pad 直接给白边，单输入有限流（lavfi color 是无限流，做 overlay 主输入会永不结束）
+        vf = ('scale=1080:1920:force_original_aspect_ratio=decrease,'
+              'pad=1080:1920:(ow-iw)/2:(oh-ih)/2:white,setsar=1,format=yuv420p')
+        args = FFMPEG_BASE + ['-i', src, '-vf', vf]
+    else:
+        fc = ('[0:v]split=2[bg][fg];'
+              '[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,'
+              'boxblur=20:2,setsar=1[bgb];'
+              '[fg]scale=1080:1920:force_original_aspect_ratio=decrease,setsar=1[fgs];'
+              '[bgb][fgs]overlay=x=(W-w)/2:y=(H-h)/2,format=yuv420p[v]')
+        args = FFMPEG_BASE + ['-i', src, '-filter_complex', fc, '-map', '[v]', '-map', '0:a:0?']
+    if meta['has_audio']:
+        args += ['-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+                 '-c:a', 'aac', '-b:a', '128k']
+    else:
+        args += ['-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast', '-an']
+    args += ['-movflags', '+faststart', out]
+    await _run_ffmpeg(args, timeout=max(120, int(meta['duration'] * 2)))
+    return _file_result('vertical', out, {
+        'mode': mode, 'width': 1080, 'height': 1920,
+        'duration': round(meta['duration'], 1)})
+
+
 async def tool_gif(src: str, params: dict, meta: dict) -> dict:
     duration = meta['duration']
     start = _clamp(_to_float(params.get('start'), 0.0), 0.0, max(duration - 1, 0.0) if duration else 0.0)
@@ -578,6 +613,7 @@ TOOL_HANDLERS = {
     'audio_convert': tool_audio_convert,
     'speed': tool_speed,
     'transform': tool_transform,
+    'vertical': tool_vertical,
 }
 
 # 文本型工具的描述（给前端展示处理时长预期）
@@ -587,6 +623,7 @@ TOOL_TIPS = {
     'watermark': '添加水印需要重新编码，请耐心等待',
     'reverse': '倒放需要整段重新编码，视频越长等待越久（最长 2 分钟）',
     'speed': '变速需要重新编码，声音会同步变速',
+    'vertical': '转竖屏需要整段重新编码，视频越长等待越久',
 }
 
 
@@ -868,11 +905,49 @@ async def img_convert(paths: list, params: dict) -> dict:
     return _file_result('img_converted', out, {'target': target})
 
 
+# 常用证件照/头像尺寸（像素，300dpi）
+IMG_RESIZE_PRESETS = {
+    'in': (295, 413),      # 一寸 2.5x3.5cm
+    'in2': (413, 526),     # 二寸 3.5x4.5cm
+    'in_s': (260, 378),    # 小一寸 2.2x3.2cm
+    'in2_s': (355, 445),   # 小二寸 3.3x3.8cm
+    'avatar': (400, 400),  # 方形头像
+}
+
+
+async def img_resize(paths: list, params: dict) -> dict:
+    src = paths[0]
+    preset = params.get('preset')
+    if preset in IMG_RESIZE_PRESETS:
+        w, h = IMG_RESIZE_PRESETS[preset]
+    else:
+        w = int(_clamp(_to_float(params.get('w'), 0), 20, 4000))
+        h = int(_clamp(_to_float(params.get('h'), 0), 20, 4000))
+    # cover 模式：先放大到铺满目标比例，再居中裁掉多余部分
+    cover = f'scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h}'
+    ext = _img_out_ext(src)
+    if ext == 'png':
+        out = _out_path('img_resized', 'png')
+        args = FFMPEG_BASE + ['-i', src, '-vf', f'{cover},format=rgba',
+                              '-frames:v', '1', out]
+    else:
+        # JPG/WebP 不支持透明，垫白底（画布直接用目标尺寸，无需 probe）
+        out = _out_path('img_resized', ext)
+        fc = f'[0:v]{cover}[fg];[1:v][fg]overlay=format=auto,format=yuv420p'
+        args = FFMPEG_BASE + ['-i', src, '-f', 'lavfi', '-i', f'color=c=white:s={w}x{h}',
+                              '-filter_complex', fc, '-frames:v', '1', '-q:v', '2', out]
+    await _run_ffmpeg(args, timeout=120)
+    return _file_result('img_resized', out, {
+        'width': w, 'height': h, 'preset': preset if preset in IMG_RESIZE_PRESETS else 'custom',
+        'note': '已按比例居中裁剪至目标尺寸'})
+
+
 IMAGE_TOOL_HANDLERS = {
     'image_compress': img_compress,
     'image_stitch': img_stitch,
     'image_watermark': img_watermark,
     'image_convert': img_convert,
+    'image_resize': img_resize,
 }
 
 

@@ -168,6 +168,22 @@ const TOOL_CONFIG = {
         ]
       }
     ]
+  },
+  vertical: {
+    name: '视频转竖屏',
+    desc: '横屏视频一键转 9:16 竖屏，抖音快手通用',
+    icon: '/images/icons_svg/video.svg',
+    placeholder: '粘贴视频分享链接（抖音/快手/B站等）',
+    fields: [
+      {
+        key: 'mode', label: '背景方式', type: 'choice', default: 'blur',
+        options: [
+          { value: 'blur', label: '模糊背景（推荐）' },
+          { value: 'white', label: '白底居中' },
+          { value: 'crop', label: '裁剪铺满' }
+        ]
+      }
+    ]
   }
 };
 

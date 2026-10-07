@@ -27,7 +27,8 @@ const TOOL_SECTIONS = [
       { key: 'mute', name: '视频去声音', icon: '/images/icons_svg/tool-audio.svg', color: 'indigo', desc: '一键静音，几秒完成' },
       { key: 'merge', name: '双视频合成', icon: '/images/icons_svg/video.svg', color: 'red', desc: '同框/画中画，二合一' },
       { key: 'speed', name: '视频变速', icon: '/images/icons_svg/play.svg', color: 'orange', desc: '快放慢放，声音同步' },
-      { key: 'transform', name: '镜像旋转', icon: '/images/icons_svg/refresh.svg', color: 'green', desc: '镜像/翻转/旋转校正' }
+      { key: 'transform', name: '镜像旋转', icon: '/images/icons_svg/refresh.svg', color: 'green', desc: '镜像/翻转/旋转校正' },
+      { key: 'vertical', name: '视频转竖屏', icon: '/images/icons_svg/video.svg', color: 'indigo', desc: '横屏转 9:16，发抖音必备' }
     ]
   },
   {
@@ -39,6 +40,7 @@ const TOOL_SECTIONS = [
       { key: 'image_stitch', name: '图片拼接', icon: '/images/icons_svg/thumbnail.svg', color: 'purple', desc: '多张拼长图，聊天记录神器' },
       { key: 'image_watermark', name: '图片水印', icon: '/images/icons_svg/coupon.svg', color: 'yellow', desc: '给图片加专属文字标识' },
       { key: 'image_convert', name: '图片转格式', icon: '/images/icons_svg/refresh.svg', color: 'red', desc: 'JPG/PNG/WebP 互转' },
+      { key: 'image_resize', name: '图片改尺寸', icon: '/images/icons_svg/thumbnail.svg', color: 'indigo', desc: '证件照/头像尺寸一键裁剪' },
       { key: 'grid', name: '九宫格切图', icon: '/images/icons_svg/thumbnail.svg', color: 'green', desc: '一张图切成 9 张发朋友圈' },
       { key: 'eraser', name: '图片去水印', icon: '/images/icons_svg/tool-image-remove-watermark.svg', color: 'blue', desc: '处理图片贴片、角标和日期水印' }
     ]
@@ -87,8 +89,8 @@ const TOOL_SECTIONS = [
 ];
 
 // 走通用工具页的工具 id（其余走独立页面）
-const VIDEO_TOOL_KEYS = ['extract_audio', 'screenshot', 'asr', 'clip', 'compress', 'convert', 'gif', 'watermark', 'grid', 'reverse', 'mute', 'audio_convert', 'speed', 'transform'];
-const IMAGE_TOOL_KEYS = ['image_compress', 'image_stitch', 'image_watermark', 'image_convert'];
+const VIDEO_TOOL_KEYS = ['extract_audio', 'screenshot', 'asr', 'clip', 'compress', 'convert', 'gif', 'watermark', 'grid', 'reverse', 'mute', 'audio_convert', 'speed', 'transform', 'vertical'];
+const IMAGE_TOOL_KEYS = ['image_compress', 'image_stitch', 'image_watermark', 'image_convert', 'image_resize'];
 
 const ROUTE_MAP = {
   ocr: '/pages/ai/ocr/ocr',

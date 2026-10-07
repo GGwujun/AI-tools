@@ -64,6 +64,16 @@
         </block>
       </view>
 
+      <!-- 改尺寸：自定义宽高（选了"自定义"才显示） -->
+      <view wx:if="{{tool === 'image_resize' && form.preset === 'custom'}}" class="field-item">
+        <text class="field-label">自定义尺寸（像素）</text>
+        <view class="size-row">
+          <input class="field-input size-input" type="number" value="{{form.customW}}" placeholder="宽" bindinput="onFieldInput" data-key="customW" />
+          <text class="size-x">×</text>
+          <input class="field-input size-input" type="number" value="{{form.customH}}" placeholder="高" bindinput="onFieldInput" data-key="customH" />
+        </view>
+      </view>
+
       <!-- 水印位置九宫格 -->
       <view wx:if="{{tool === 'image_watermark'}}" class="field-item">
         <text class="field-label">水印位置</text>

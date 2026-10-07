@@ -71,6 +71,26 @@ const TOOL_CONFIG = {
         ]
       }
     ]
+  },
+  image_resize: {
+    name: '图片改尺寸',
+    desc: '证件照/头像尺寸一键裁剪，也支持自定义宽高',
+    icon: '/images/icons_svg/thumbnail.svg',
+    maxImages: 1,
+    tip: '按比例居中裁剪，PNG 保留透明、其余垫白底',
+    fields: [
+      {
+        key: 'preset', label: '目标尺寸', type: 'choice', default: 'in',
+        options: [
+          { value: 'in', label: '一寸 295×413' },
+          { value: 'in2', label: '二寸 413×526' },
+          { value: 'in_s', label: '小一寸 260×378' },
+          { value: 'in2_s', label: '小二寸 355×445' },
+          { value: 'avatar', label: '方形头像 400×400' },
+          { value: 'custom', label: '自定义' }
+        ]
+      }
+    ]
   }
 };
 
@@ -124,6 +144,10 @@ Page({
     (config.fields || []).forEach((field) => {
       form[field.key] = field.default != null ? field.default : '';
     });
+    if (tool === 'image_resize') {
+      form.customW = '750';
+      form.customH = '1000';
+    }
 
     this.setData({
       tool,
@@ -227,6 +251,20 @@ Page({
     if (form.quality) params.quality = form.quality;
     if (form.direction) params.direction = form.direction;
     if (form.target) params.target = form.target;
+    if (tool === 'image_resize') {
+      if (form.preset === 'custom') {
+        const w = parseInt(form.customW, 10);
+        const h = parseInt(form.customH, 10);
+        if (!(w >= 20 && w <= 4000) || !(h >= 20 && h <= 4000)) {
+          wx.showToast({ title: '宽高需在 20~4000 之间', icon: 'none' });
+          return null;
+        }
+        params.w = w;
+        params.h = h;
+      } else {
+        params.preset = form.preset;
+      }
+    }
     return params;
   },
 
