@@ -87,7 +87,7 @@
           data-id="{{item.id}}"
           data-url="{{item.url}}"
         >
-          <image class="history-cover" src="{{item.cover}}" mode="aspectFill"></image>
+          <image class="history-cover" src="{{item.cover}}" mode="aspectFill" data-index="{{index}}" binderror="onCoverError"></image>
           <view class="history-main">
             <text class="history-title">{{item.title}}</text>
             <text class="history-meta">{{item.platformText}} · {{item.timeText}}</text>

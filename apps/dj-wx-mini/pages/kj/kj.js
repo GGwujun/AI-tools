@@ -67,6 +67,13 @@ Page({
     this.loadData();
   },
 
+  // 封面防盗链/签名过期加载失败 → 换本地占位图
+  onCoverError(e) {
+    const index = e.currentTarget.dataset.index;
+    if (index == null || !this.data.displayItems[index]) return;
+    this.setData({ [`displayItems[${index}].cover`]: this.data.fallbackCover });
+  },
+
   loadData() {
     const historyItems = (storage.get('parseHistory', []) || []).map((item) => ({
       itemKey: `history_${item.id}`,

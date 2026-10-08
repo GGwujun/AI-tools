@@ -179,6 +179,13 @@ Page({
     });
   },
 
+  // 封面防盗链/签名过期加载失败 → 换本地占位图
+  onCoverError(e) {
+    const index = e.currentTarget.dataset.index;
+    if (index == null || !this.data.recentItems[index]) return;
+    this.setData({ [`recentItems[${index}].cover`]: this.data.fallbackCover });
+  },
+
   onInput(e) {
     this.setData({ draftInput: e.detail.value || '' });
   },

@@ -43,7 +43,7 @@
         data-kind="{{item.kind}}"
         data-id="{{item.id}}"
       >
-        <image class="material-cover" src="{{item.cover}}" mode="aspectFill"></image>
+        <image class="material-cover" src="{{item.cover}}" mode="aspectFill" data-index="{{index}}" binderror="onCoverError"></image>
         <view class="material-main">
           <view class="material-head">
             <text class="material-platform">{{item.platformText}}</text>

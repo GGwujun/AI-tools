@@ -26,7 +26,7 @@
       </view>
 
       <view wx:for="{{tasks}}" wx:key="url" class="task-item" bindtap="openTask" data-index="{{index}}">
-        <image wx:if="{{item.cover}}" class="task-cover" src="{{item.cover}}" mode="aspectFill"></image>
+        <image wx:if="{{item.cover}}" class="task-cover" src="{{item.cover}}" mode="aspectFill" data-index="{{index}}" binderror="onCoverError"></image>
         <view wx:else class="task-cover task-cover-placeholder">
           <text class="task-cover-text">{{item.platformLabel[0]}}</text>
         </view>

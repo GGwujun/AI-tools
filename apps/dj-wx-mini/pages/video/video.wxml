@@ -36,6 +36,7 @@
           class="preview-cover"
           src="{{resultData.photo}}"
           mode="aspectFill"
+          binderror="onCoverError"
           bindtap="{{resultData.pics && resultData.pics.length ? 'onPreviewCurrentPic' : 'onPreviewCover'}}"
         ></image>
         <view wx:if="{{resultData.pics && resultData.pics.length}}" class="gallery-badge">{{currentPicIndex + 1}} / {{resultData.pics.length}}</view>

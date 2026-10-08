@@ -195,6 +195,13 @@ Page({
     }
   },
 
+  // 封面防盗链/签名过期加载失败 → 置空走平台字母占位块
+  onCoverError(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (index == null || !this.data.tasks[index]) return;
+    this.setData({ [`tasks[${index}].cover`]: '' });
+  },
+
   // 查看单条解析结果（带数据直达，无需二次解析）
   openTask(e) {
     const index = Number(e.currentTarget.dataset.index);

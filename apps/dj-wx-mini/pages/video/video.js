@@ -648,6 +648,12 @@ Page({
     });
   },
 
+  // 封面防盗链/签名过期加载失败 → 换本地占位图
+  onCoverError() {
+    if (!this.data.resultData || !this.data.resultData.photo) return;
+    this.setData({ 'resultData.photo': '/images/gfgzh.jpeg' });
+  },
+
   onDownloadCover() {
     this.saveImageByUrl(this.data.resultData?.photo || '', '封面已保存');
   },
