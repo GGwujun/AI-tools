@@ -51,7 +51,7 @@ function lookup(words) {
 
 Page({
   data: {
-    words,
+    words: WORDS,
     picked: [],
     title: '',
     result: '',
