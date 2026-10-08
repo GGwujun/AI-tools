@@ -475,7 +475,7 @@ Page({
     wx.request({
       url: api.toolsProcessApi,
       method: 'POST',
-      timeout: 300000,
+      timeout: 600000,
       header: { 'Content-Type': 'application/json' },
       data: {
         tool: this.data.tool,

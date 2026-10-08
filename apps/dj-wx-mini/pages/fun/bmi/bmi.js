@@ -20,7 +20,6 @@ Page({
   data: {
     height: '170',
     weight: '65',
-    gender: 'male',
     result: null
   },
 
@@ -34,10 +33,6 @@ Page({
 
   onWeightInput(e) {
     this.setData({ weight: e.detail.value });
-  },
-
-  onGenderTap(e) {
-    this.setData({ gender: e.currentTarget.dataset.gender });
   },
 
   start() {

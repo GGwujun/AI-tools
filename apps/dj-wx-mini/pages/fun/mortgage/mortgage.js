@@ -195,12 +195,15 @@ Page({
       wx.showToast({ title: '提前还款额至少 0.1 万', icon: 'none' });
       return;
     }
-    const raw = calcPrepay(base.amount, base.rate, YEARS[this.data.yearIndex],
-      paid, prepay, this.data.after);
-    if (raw.B - prepay * 10000 <= 0) {
+    // 先算剩余本金做校验，避免还款额超过本金时 calcPrepay 内部出现 NaN
+    const balance = balanceAfter(
+      base.amount * 10000, base.rate / 100 / 12, base.months, paid);
+    if (balance - prepay * 10000 <= 0) {
       wx.showToast({ title: '还款额不能超过剩余本金', icon: 'none' });
       return;
     }
+    const raw = calcPrepay(base.amount, base.rate, YEARS[this.data.yearIndex],
+      paid, prepay, this.data.after);
     const isShorten = this.data.after === 'shorten';
     this.setData({
       prepayResult: {

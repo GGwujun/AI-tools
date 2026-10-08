@@ -233,7 +233,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: `${this.data.toolName}｜视频小工具合集`,
+      title: `${this.data.toolName}｜图片小工具合集`,
       path: `/pages/tools/image-tool?tool=${this.data.tool}`
     };
   },
@@ -478,7 +478,7 @@ Page({
       wx.request({
         url: api.toolsImageProcessApi,
         method: 'POST',
-        timeout: 300000,
+        timeout: 600000,
         header: { 'Content-Type': 'application/json' },
         data: {
           tool: this.data.tool,

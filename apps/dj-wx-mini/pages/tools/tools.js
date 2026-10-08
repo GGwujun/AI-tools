@@ -106,7 +106,7 @@ const ROUTE_MAP = {
   eraser: '/pages/ai/eraser/eraser',
   writer: '/pages/ai/writer/writer',
   teleprompter: '/pages/fun/teleprompter/teleprompter',
-  merge: '/pages/tools/merge-tool/merge-tool',
+  merge: '/pages/tools/merge-tool',
   oil: '/pages/daily/oil/oil',
   gold: '/pages/daily/gold/gold',
   sunset: '/pages/daily/sunset/sunset',

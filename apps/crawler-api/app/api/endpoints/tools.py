@@ -192,6 +192,10 @@ async def _run_ffmpeg(args: list, timeout: int = FFMPEG_TIMEOUT):
         _, stderr = await asyncio.wait_for(proc.communicate(), timeout)
     except asyncio.TimeoutError:
         proc.kill()
+        try:
+            await proc.wait()  # 等 kill 生效，回收子进程
+        except Exception:
+            pass
         raise HTTPException(status_code=504, detail='处理超时，请稍后重试')
     if proc.returncode != 0:
         detail = stderr.decode('utf-8', 'ignore')[-300:].replace('\n', ' ') or f'exit {proc.returncode}'
@@ -427,9 +431,11 @@ async def tool_transform(src: str, params: dict, meta: dict) -> dict:
     vf, swap = TRANSFORM_MODES[mode]
     width, height = (meta['height'], meta['width']) if swap else (meta['width'], meta['height'])
     out = _out_path('transformed', 'mp4')
+    # 音频统一转 aac：源音轨可能是 PCM/opus（MOV/WebM 源），copy 进 MP4 容器会报错
     await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', vf,
                                      '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-                                     '-c:a', 'copy', '-movflags', '+faststart', out])
+                                     '-c:a', 'aac', '-b:a', '128k',
+                                     '-movflags', '+faststart', out])
     return _file_result('transformed', out, {
         'mode': mode, 'width': width, 'height': height,
         'duration': round(meta['duration'], 1)})
@@ -509,7 +515,8 @@ async def tool_watermark(src: str, params: dict, meta: dict) -> dict:
     out = _out_path('watermarked', 'mp4')
     await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', vf,
                                      '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-                                     '-c:a', 'copy', '-movflags', '+faststart', out])
+                                     '-c:a', 'aac', '-b:a', '128k',
+                                     '-movflags', '+faststart', out])
     return _file_result('watermarked', out, {'duration': round(meta['duration'], 1)})
 
 
@@ -602,7 +609,8 @@ async def tool_subtitle(src: str, params: dict, meta: dict) -> dict:
     out = _out_path('subtitled', 'mp4')
     await _run_ffmpeg(FFMPEG_BASE + ['-i', src, '-vf', vf,
                                      '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-                                     '-c:a', 'copy', '-movflags', '+faststart', out],
+                                     '-c:a', 'aac', '-b:a', '128k',
+                                     '-movflags', '+faststart', out],
                       timeout=max(120, int(meta['duration'] * 2)))
     extra = {'lines': len(lines), 'per': round(per, 1), 'duration': round(meta['duration'], 1)}
     if t > meta['duration']:
@@ -672,6 +680,13 @@ async def tool_asr(src: str, params: dict, meta: dict) -> dict:
         _quiet_remove(wav_path)
 
 
+# 整段重编码的工具：限制源视频时长，避免长视频跑到 600s 超时白等
+# （mute 是流复制、gif 只编码前 15 秒、grid/screenshot 只取一帧、frames 有 48 帧上限，不在列）
+SLOW_TOOLS = {'compress', 'convert', 'watermark', 'speed', 'transform', 'vertical', 'subtitle'}
+# 只处理音频的工具（源可以是纯音频文件）
+AUDIO_ONLY_TOOLS = {'extract_audio', 'audio_convert', 'asr'}
+
+
 TOOL_HANDLERS = {
     'extract_audio': tool_extract_audio,
     'screenshot': tool_screenshot,
@@ -730,7 +745,7 @@ async def process_tool(request: Request):
 
     tool = body.get('tool')
     url = str(body.get('url') or '').strip()
-    params = body.get('params') or {}
+    params = body.get('params') if isinstance(body.get('params'), dict) else {}
     direct = bool(body.get('direct'))
 
     if tool not in TOOL_HANDLERS:
@@ -748,6 +763,12 @@ async def process_tool(request: Request):
             direct_url, headers = await _resolve_direct_url(url, direct)
             await _download_source(direct_url, headers, src_path)
             meta = await _probe(src_path)
+            if not meta['has_video'] and tool not in AUDIO_ONLY_TOOLS:
+                raise HTTPException(status_code=400, detail='这个链接不是视频/图片，无法处理')
+            if tool in SLOW_TOOLS and meta['duration'] > MAX_ASSESS_SECONDS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f'该工具最长支持 {MAX_ASSESS_SECONDS // 60} 分钟内的视频')
             data = await TOOL_HANDLERS[tool](src_path, params, meta)
     finally:
         _quiet_remove(src_path)
