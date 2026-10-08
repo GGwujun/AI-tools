@@ -54,7 +54,7 @@ Page({
   onShareAppMessage() {
     return {
       title: '双视频合成｜视频小工具合集',
-      path: '/pages/tools/merge-tool/merge-tool'
+      path: '/pages/tools/merge-tool'
     };
   },
 

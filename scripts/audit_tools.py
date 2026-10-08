@@ -127,6 +127,54 @@ for u in hot_urls:
     if page not in app_json['pages']:
         problems.append(f'home hotTools 指向 {u} 不在 app.json')
 
+# ---------- 8. 全部 js/wxml 里的 /pages/ 跳转字符串必须在 app.json ----------
+nav_re = re.compile(r"[`'\"](/pages/[a-zA-Z0-9_/.-]+)")
+known_pages = set(app_json['pages'])
+seen_nav = set()
+for root, _, files in os.walk(MINI):
+    if 'node_modules' in root or 'miniprogram_npm' in root:
+        continue
+    for fn in files:
+        if not fn.endswith(('.js', '.wxml')) or fn.endswith('.min.js'):
+            continue
+        p = os.path.join(root, fn)
+        for m in nav_re.finditer(read(p)):
+            page = m.group(1).rstrip('/').lstrip('/')
+            if page in seen_nav:
+                continue
+            seen_nav.add(page)
+            if page not in known_pages:
+                problems.append(f'{os.path.relpath(p, MINI)} 跳转目标不在 app.json: {page}')
+
+# ---------- 9. 静态资源引用存在性（wxml/js/json 里的 /images/... 等） ----------
+img_re = re.compile(r"[\"'](/images/[a-zA-Z0-9_/.-]+)")
+imgs = set()
+for root, _, files in os.walk(MINI):
+    if 'node_modules' in root:
+        continue
+    for fn in files:
+        if not fn.endswith(('.wxml', '.js', '.json')):
+            continue
+        for m in img_re.finditer(read(os.path.join(root, fn))):
+            imgs.add(m.group(1))
+for img in sorted(imgs):
+    if not os.path.isfile(os.path.join(MINI, img.lstrip('/'))):
+        problems.append(f'静态资源不存在: {img}')
+
+# ---------- 10. 相对 require 路径可解析 ----------
+req_re = re.compile(r"require\(['\"](\.[^'\"]+)['\"]\)")
+for root, _, files in os.walk(MINI):
+    if 'node_modules' in root:
+        continue
+    for fn in files:
+        if not fn.endswith('.js'):
+            continue
+        p = os.path.join(root, fn)
+        for m in req_re.finditer(read(p)):
+            target = os.path.normpath(os.path.join(root, m.group(1)))
+            if not (os.path.isfile(target) or os.path.isfile(target + '.js')):
+                problems.append(f'{os.path.relpath(p, MINI)} require 解析失败: {m.group(1)}')
+
 print('=== 工具总数(入口):', len(section_keys), '===')
 if problems:
     print(f'发现 {len(problems)} 个问题:')
