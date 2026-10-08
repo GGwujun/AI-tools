@@ -654,6 +654,13 @@ Page({
     this.setData({ 'resultData.photo': '/images/gfgzh.jpeg' });
   },
 
+  // 图集大图签名过期 403 → 该张换本地占位图
+  onPicError(e) {
+    const index = e.currentTarget.dataset.index;
+    if (index == null || !this.data.resultData || !this.data.resultData.pics) return;
+    this.setData({ [`resultData.pics[${index}]`]: '/images/gfgzh.jpeg' });
+  },
+
   onDownloadCover() {
     this.saveImageByUrl(this.data.resultData?.photo || '', '封面已保存');
   },

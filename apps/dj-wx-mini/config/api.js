@@ -1,7 +1,19 @@
 // 小程序 API 地址集中配置
-// 切换环境：把 ENV 改成 'online' 用线上，'local' 用本地开发服务器
+// 环境选择：开发者工具自动连本地后端（真机预览/体验版/正式版走线上），
+// 想在开发者工具里连线上时把 FORCE_ENV 改成 'online'
 
-const ENV = 'online'; // 'online' | 'local'
+const FORCE_ENV = ''; // '' 自动 | 'online' | 'local'
+
+function detectEnv() {
+  if (FORCE_ENV) return FORCE_ENV;
+  try {
+    const info = wx.getDeviceInfo ? wx.getDeviceInfo() : {};
+    if (info.platform === 'devtools') return 'local';
+  } catch (e) { /* 老基础库取不到设备信息，走默认 */ }
+  return 'online';
+}
+
+const ENV = detectEnv(); // 'online' | 'local'
 
 const HOSTS = {
   // crawler-api（解析/下载/代理）—— 线上经 nginx HTTPS

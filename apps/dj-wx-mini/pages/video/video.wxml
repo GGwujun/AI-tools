@@ -19,7 +19,7 @@
           circular="false"
         >
           <swiper-item wx:for="{{resultData.pics}}" wx:key="*this">
-            <image class="preview-cover" src="{{item}}" mode="aspectFill" bindtap="onPreviewCurrentPic"></image>
+            <image class="preview-cover" src="{{item}}" mode="aspectFill" data-index="{{index}}" binderror="onPicError" bindtap="onPreviewCurrentPic"></image>
           </swiper-item>
         </swiper>
         <video
