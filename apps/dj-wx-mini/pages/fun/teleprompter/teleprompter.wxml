@@ -48,7 +48,7 @@
 
 <!-- 播放模式：全屏黑底滚动字幕 -->
 <view wx:if="{{mode === 'play'}}" class="player">
-  <view class="player-viewport script-viewport" bindtap="togglePause">
+  <view class="player-viewport" bindtap="togglePause">
     <view class="script-text" style="font-size: {{fontRpx}}rpx; transform: translateY({{offsetY}}px);">
       <text user-select="{{false}}">{{text}}</text>
     </view>

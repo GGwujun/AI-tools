@@ -14,7 +14,7 @@
         <text class="answer-text">{{result}}</text>
         <button class="copy-btn" size="mini" bindtap="reset">重来</button>
       </view>
-      <view wx:elif="{{unsupported}}" class="answer bad">
+      <view wx:elif="{{unsupported}}" class="answer">
         <text class="answer-bad">这个关系有点绕，暂不支持，点重来试试</text>
       </view>
     </view>

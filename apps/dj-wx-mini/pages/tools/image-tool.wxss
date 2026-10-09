@@ -394,3 +394,10 @@
   font-size: 20rpx;
   text-align: center;
 }
+
+/* flex 容器内的文本主列 */
+.tool-header-main,
+.status-main {
+  flex: 1;
+  min-width: 0;
+}

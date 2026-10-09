@@ -51,6 +51,7 @@
           wx:for="{{hotTools}}"
           wx:key="key"
           class="hot-item"
+          hover-class="press"
           bindtap="openHotTool"
           data-url="{{item.url}}"
         >
@@ -83,6 +84,7 @@
           wx:for="{{recentItems}}"
           wx:key="id"
           class="history-item"
+          hover-class="press"
           bindtap="openRecent"
           data-id="{{item.id}}"
           data-url="{{item.url}}"
@@ -111,6 +113,7 @@
           wx:for="{{faqs}}"
           wx:key="id"
           class="faq-item"
+          hover-class="press"
           bindtap="toggleFaq"
           data-id="{{item.id}}"
         >
@@ -124,11 +127,11 @@
     </view>
 
     <view class="footer-nav-row">
-      <view class="footer-shortcut" bindtap="goToTools">
+      <view class="footer-shortcut" hover-class="press" bindtap="goToTools">
         <text class="footer-shortcut-title">工具箱</text>
         <text class="footer-shortcut-desc">50+ 个小工具：视频、图片、日常</text>
       </view>
-      <view class="footer-shortcut" bindtap="goToProfile">
+      <view class="footer-shortcut" hover-class="press" bindtap="goToProfile">
         <text class="footer-shortcut-title">我的</text>
         <text class="footer-shortcut-desc">记录、协议、反馈与设置</text>
       </view>

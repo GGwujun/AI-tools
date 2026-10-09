@@ -243,3 +243,8 @@
   color: #98a2b3;
   font-size: 22rpx;
 }
+
+.item-left {
+  flex: 1;
+  min-width: 0;
+}

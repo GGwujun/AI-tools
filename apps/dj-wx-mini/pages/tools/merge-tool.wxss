@@ -371,3 +371,11 @@
 .pip-field {
   margin-top: 24rpx;
 }
+
+/* flex 容器内的文本主列 */
+.tool-header-main,
+.status-main,
+.file-main {
+  flex: 1;
+  min-width: 0;
+}

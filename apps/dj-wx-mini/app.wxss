@@ -1,5 +1,5 @@
 page {
-  background: #f6f8ff;
+  background: #f7f8fa;
   color: #111827;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
 }
@@ -20,4 +20,17 @@ button::after {
 
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 统一按压反馈：可点击的 view 容器加 hover-class="press" */
+.press {
+  opacity: 0.65;
+}
+
+/* 选项 chip 选中态切换的平滑过渡 */
+.cat-chip, .chip, .choice-chip, .color-dot, .count-item, .day-item, .filter-chip,
+.mode-chip, .mode-item, .mode-tab, .opt-chip, .plan-item, .platform-item,
+.position-cell, .preview-tab, .prov-chip, .repeat-chip, .seg-item, .style-item,
+.tab-item, .table-row {
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }

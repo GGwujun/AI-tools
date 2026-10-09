@@ -1,6 +1,6 @@
 <view class="page">
   <scroll-view scroll-y class="scroll safe-bottom" wx:if="{{resultData}}">
-    <view wx:if="{{fromShare}}" class="share-banner" bindtap="goHome">
+    <view wx:if="{{fromShare}}" class="share-banner" hover-class="press" bindtap="goHome">
       <text class="share-banner-text">来自好友分享 · 点此解析你自己的视频</text>
     </view>
 
@@ -62,25 +62,25 @@
     </view>
 
     <view class="action-grid">
-      <view class="action-item" bindtap="openDocExtract">
+      <view class="action-item" hover-class="press" bindtap="openDocExtract">
         <view class="action-icon">
           <image class="action-icon-image" src="/images/icons_svg/copy-text.svg" mode="aspectFit"></image>
         </view>
         <text class="action-text">复制文案</text>
       </view>
-      <view class="action-item" bindtap="confirmAdWatch" data-action="downloadCover">
+      <view class="action-item" hover-class="press" bindtap="confirmAdWatch" data-action="downloadCover">
         <view class="action-icon">
           <image class="action-icon-image" src="/images/icons_svg/extract-cover.svg" mode="aspectFit"></image>
         </view>
         <text class="action-text">{{resultData.pics && resultData.pics.length ? '预览当前图' : '提取封面'}}</text>
       </view>
-      <view class="action-item" bindtap="confirmAdWatch" data-action="{{resultData.downurl ? 'copyLink' : 'copyCurrentPic'}}">
+      <view class="action-item" hover-class="press" bindtap="confirmAdWatch" data-action="{{resultData.downurl ? 'copyLink' : 'copyCurrentPic'}}">
         <view class="action-icon">
           <image class="action-icon-image" src="/images/icons_svg/link.svg" mode="aspectFit"></image>
         </view>
         <text class="action-text">提取链接</text>
       </view>
-      <view class="action-item" bindtap="{{resultData.pics && resultData.pics.length ? 'confirmAdWatch' : 'toggleFavorite'}}" data-action="{{resultData.pics && resultData.pics.length ? 'downloadCurrentPic' : ''}}">
+      <view class="action-item" hover-class="press" bindtap="{{resultData.pics && resultData.pics.length ? 'confirmAdWatch' : 'toggleFavorite'}}" data-action="{{resultData.pics && resultData.pics.length ? 'downloadCurrentPic' : ''}}">
         <view class="action-icon">
           <image class="action-icon-image" src="/images/icons_svg/favorite.svg" mode="aspectFit"></image>
         </view>

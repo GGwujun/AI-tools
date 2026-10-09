@@ -90,7 +90,7 @@
   border-radius: 999rpx;
   background: rgba(16, 24, 40, 0.58);
   color: #fff;
-  font-size: 18rpx;
+  font-size: 20rpx;
   font-weight: 600;
 }
 
@@ -114,7 +114,7 @@
   border-radius: 999rpx;
   background: #eef4ff;
   color: #1565ff;
-  font-size: 18rpx;
+  font-size: 20rpx;
   font-weight: 600;
 }
 
@@ -139,7 +139,7 @@
 .meta-label {
   display: block;
   color: #98a2b3;
-  font-size: 18rpx;
+  font-size: 20rpx;
 }
 
 .meta-value {

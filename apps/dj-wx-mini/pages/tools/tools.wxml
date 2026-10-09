@@ -10,6 +10,7 @@
           wx:for="{{section.tools}}"
           wx:key="key"
           class="tool-card"
+          hover-class="press"
           bindtap="onToolTap"
           data-tool="{{item.key}}"
         >

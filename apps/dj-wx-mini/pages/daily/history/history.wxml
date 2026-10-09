@@ -28,7 +28,7 @@
       <view class="card-head">
         <text class="card-title">这一天发生的事（{{events.length}} 条）</text>
       </view>
-      <view class="event-list">
+      <view>
         <view wx:for="{{events}}" wx:key="index" class="event-row">
           <view class="event-year">{{item.year}}</view>
           <view class="event-body">

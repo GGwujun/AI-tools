@@ -1,13 +1,13 @@
 .page {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #f7f8fa;
   box-sizing: border-box;
 }
 
 /* 自定义标题栏（navigationStyle: custom） */
 .fake-nav {
   padding: 100rpx 30rpx 24rpx;
-  background: #f6f8ff;
+  background: #f7f8fa;
 }
 
 .fake-nav-title {

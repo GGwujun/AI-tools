@@ -42,8 +42,8 @@
   "window": {
     "navigationBarTitleText": "无水印助手",
     "navigationBarTextStyle": "black",
-    "navigationBarBackgroundColor": "#f6f8ff",
-    "backgroundColor": "#f6f8ff",
+    "navigationBarBackgroundColor": "#f7f8fa",
+    "backgroundColor": "#f7f8fa",
     "backgroundTextStyle": "light"
   },
   "requiredPrivateInfos": [

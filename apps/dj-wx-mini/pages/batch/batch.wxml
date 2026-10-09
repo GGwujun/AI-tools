@@ -20,12 +20,12 @@
     </view>
 
     <view wx:if="{{tasks.length}}" class="section-card">
-      <view class="section-head between">
+      <view class="section-head">
         <text class="section-title">解析队列（{{tasks.length}} 条）</text>
         <text wx:if="{{!running}}" class="link-text" bindtap="retryFailed">重试失败项</text>
       </view>
 
-      <view wx:for="{{tasks}}" wx:key="url" class="task-item" bindtap="openTask" data-index="{{index}}">
+      <view wx:for="{{tasks}}" wx:key="url" class="task-item" hover-class="press" bindtap="openTask" data-index="{{index}}">
         <image wx:if="{{item.cover}}" class="task-cover" src="{{item.cover}}" mode="aspectFill" data-index="{{index}}" binderror="onCoverError"></image>
         <view wx:else class="task-cover task-cover-placeholder">
           <text class="task-cover-text">{{item.platformLabel[0]}}</text>

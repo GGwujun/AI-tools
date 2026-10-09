@@ -371,3 +371,11 @@
   border-radius: 14rpx;
   background: #f2f4f7;
 }
+
+/* flex 容器内的文本主列 */
+.tool-header-main,
+.status-main,
+.file-main {
+  flex: 1;
+  min-width: 0;
+}

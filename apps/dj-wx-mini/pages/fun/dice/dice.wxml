@@ -56,7 +56,7 @@
     <text class="shake-tip">把手机用力摇一摇也可以触发</text>
   </view>
 
-  <view class="card bottom-card">
+  <view class="card">
     <!-- 骰子个数 -->
     <block wx:if="{{mode === 'dice'}}">
       <text class="card-title">骰子个数</text>

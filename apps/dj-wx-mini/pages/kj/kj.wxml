@@ -39,6 +39,7 @@
         wx:for="{{displayItems}}"
         wx:key="itemKey"
         class="material-card"
+        hover-class="press"
         bindtap="handleItemTap"
         data-kind="{{item.kind}}"
         data-id="{{item.id}}"
