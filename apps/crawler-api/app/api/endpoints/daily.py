@@ -66,6 +66,26 @@ def _sina_fields(text: str, code: str):
     return []
 
 
+def _nf_price(fields):
+    """新浪内盘期货(如沪金 nf_AU0)取最新价/昨结算。
+    实测字段语义：[8]最新价 [10]昨结算；开盘竞价等时段 [5]/[8] 可能为 0，
+    依次退化到 [5]昨收、买卖均价，避免展示 0.00。"""
+    if not fields:
+        return None, None
+    price = _f(fields[8]) if len(fields) > 8 else None
+    if not price:
+        price = _f(fields[5]) if len(fields) > 5 else None
+    if not price:
+        bid = _f(fields[6]) if len(fields) > 6 else None
+        ask = _f(fields[7]) if len(fields) > 7 else None
+        if bid and ask:
+            price = round((bid + ask) / 2, 3)
+    prev = _f(fields[10]) if len(fields) > 10 else None
+    if not prev:
+        prev = _f(fields[9]) if len(fields) > 9 else None
+    return price, prev
+
+
 def _quote(price, prev):
     if price is None:
         return None
@@ -98,7 +118,8 @@ async def daily_gold():
             intl.update({"unit": "美元/盎司", "name": (xau[13] or "国际现货金") if len(xau) > 13 else "国际现货金",
                          "time": _fmt_hm(xau[6]) if len(xau) > 6 else "",
                          "date": xau[12] if len(xau) > 12 else ""})
-        sh = _quote(_f(auf[5]) if auf else None, _f(auf[9]) if auf else None)
+        sh_price, sh_prev = _nf_price(auf)
+        sh = _quote(sh_price, sh_prev)
         if sh:
             sh.update({"unit": "元/克", "name": "上海黄金(沪金连续)",
                        "time": _fmt_hm(auf[1]) if len(auf) > 1 else "",

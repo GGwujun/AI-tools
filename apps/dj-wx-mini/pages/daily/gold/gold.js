@@ -56,7 +56,8 @@ Page({
 
   // 涨跌展示字段：dir = up/down/flat，格式化文本
   decorate(q) {
-    if (!q || q.price == null) return null;
+    // 价格为 0 视为无效（数据源异常时段），整卡隐藏而不是显示 0.00
+    if (!q || q.price == null || !(q.price > 0)) return null;
     const pct = q.change_pct;
     const dir = pct > 0 ? 'up' : (pct < 0 ? 'down' : 'flat');
     return Object.assign({}, q, {
