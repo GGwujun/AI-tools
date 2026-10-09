@@ -21,3 +21,4 @@
     <button class="primary-btn" bindtap="copyTemplate">复制投诉模板</button>
   </scroll-view>
 </view>
+<back-home />

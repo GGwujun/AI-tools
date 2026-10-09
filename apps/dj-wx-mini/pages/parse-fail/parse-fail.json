@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "解析失败"
+  "navigationBarTitleText": "解析失败",
+  "usingComponents": {
+    "back-home": "/components/back-home/index"
+  }
 }

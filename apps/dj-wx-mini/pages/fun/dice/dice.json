@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "back-home": "/components/back-home/index"
+  },
   "navigationBarTitleText": "随机决定器",
   "navigationBarBackgroundColor": "#2c2f3e",
   "navigationBarTextStyle": "white"

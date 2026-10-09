@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "back-home": "/components/back-home/index"
+  },
   "navigationBarTitleText": "今日油价",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "light"

@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "详情",
-  "enablePullDownRefresh": false
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "back-home": "/components/back-home/index"
+  }
 }

@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "视频工具",
   "usingComponents": {
-    "banner-ad": "/components/banner-ad/banner-ad"
+    "banner-ad": "/components/banner-ad/banner-ad",
+    "back-home": "/components/back-home/index"
   }
 }

@@ -10,7 +10,33 @@
   background: #f7f8fa;
 }
 
+.fake-nav-row {
+  display: flex;
+  align-items: center;
+}
+
+.fake-nav-back {
+  width: 64rpx;
+  height: 64rpx;
+  margin-left: -16rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+.fake-nav-space {
+  width: 48rpx;
+  flex-shrink: 0;
+}
+
 .fake-nav-title {
+  flex: 1;
+  text-align: center;
   font-size: 36rpx;
   font-weight: 700;
   color: #1a1a1a;

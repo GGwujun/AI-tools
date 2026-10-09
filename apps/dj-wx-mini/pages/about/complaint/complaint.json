@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "侵权投诉"
+  "navigationBarTitleText": "侵权投诉",
+  "usingComponents": {
+    "back-home": "/components/back-home/index"
+  }
 }

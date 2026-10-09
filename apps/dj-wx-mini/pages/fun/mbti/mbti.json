@@ -1,4 +1,6 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "back-home": "/components/back-home/index"
+  },
   "navigationBarTitleText": "MBTI 人格测试"
 }

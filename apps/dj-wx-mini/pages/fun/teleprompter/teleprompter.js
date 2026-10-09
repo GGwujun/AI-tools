@@ -8,6 +8,13 @@ const SPEED_LABELS = ['很慢', '慢', '中', '快', '很快'];
 const TICK_MS = 30;
 
 Page({
+  goBack() {
+    wx.navigateBack({
+      delta: 1,
+      fail: () => wx.switchTab({ url: '/pages/tools/tools' })
+    });
+  },
+
   data: {
     mode: 'edit',          // edit | play
     text: '',

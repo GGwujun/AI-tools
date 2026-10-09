@@ -1,0 +1,4 @@
+<view wx:if="{{show}}" class="back-home" hover-class="bh-press" hover-stay-time="80" bindtap="goHome">
+  <text class="back-home-icon">🏠</text>
+  <text class="back-home-text">首页</text>
+</view>

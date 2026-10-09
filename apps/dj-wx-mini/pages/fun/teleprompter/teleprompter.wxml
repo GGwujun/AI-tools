@@ -1,5 +1,12 @@
 <!-- 编辑模式 -->
 <view wx:if="{{mode === 'edit'}}" class="page">
+  <view class="edit-nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="edit-nav-row">
+      <text class="edit-nav-back" hover-class="press" bindtap="goBack">‹</text>
+      <text class="edit-nav-title">提词器</text>
+      <view class="edit-nav-space"></view>
+    </view>
+  </view>
   <scroll-view scroll-y class="content">
 
     <view class="card">
@@ -75,3 +82,4 @@
     <view class="progress-inner" style="width: {{progress}}%;"></view>
   </view>
 </view>
+<back-home />

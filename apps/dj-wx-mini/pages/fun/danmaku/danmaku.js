@@ -20,6 +20,13 @@ const SPEEDS = [
 ];
 
 Page({
+  goBack() {
+    wx.navigateBack({
+      delta: 1,
+      fail: () => wx.switchTab({ url: '/pages/tools/tools' })
+    });
+  },
+
   data: {
     text: '',
     colors: COLORS,

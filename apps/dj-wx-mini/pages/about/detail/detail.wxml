@@ -16,3 +16,4 @@
     <button class="primary-btn" bindtap="handlePrimaryAction">{{detail.primaryText}}</button>
   </scroll-view>
 </view>
+<back-home />
