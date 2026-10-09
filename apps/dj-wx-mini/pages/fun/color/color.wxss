@@ -76,7 +76,8 @@
 
 .hex-input {
   flex: 1;
-  padding: 16rpx 24rpx;
+  height: 72rpx;
+  padding: 0 24rpx;
   border-radius: 16rpx;
   background: #f7f8fa;
   color: #101828;

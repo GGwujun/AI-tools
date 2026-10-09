@@ -282,7 +282,8 @@
   flex: 1;
   background: #f5f6f8;
   border-radius: 14rpx;
-  padding: 18rpx 24rpx;
+  height: 78rpx;
+  padding: 0 24rpx;
   font-size: 30rpx;
   color: #333;
   text-align: center;

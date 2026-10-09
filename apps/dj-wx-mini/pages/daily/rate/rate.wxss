@@ -48,7 +48,8 @@
 
 .convert-input {
   flex: 1;
-  padding: 20rpx 26rpx;
+  height: 84rpx;
+  padding: 0 26rpx;
   border-radius: 18rpx;
   background: #fff;
   color: #101828;

@@ -35,7 +35,8 @@
 
 .form-input {
   flex: 1;
-  padding: 18rpx 24rpx;
+  height: 76rpx;
+  padding: 0 24rpx;
   border-radius: 16rpx;
   background: #f7f8fa;
   color: #101828;
