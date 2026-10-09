@@ -64,7 +64,7 @@
     </view>
 
     <view wx:else class="empty-card">
-      <view class="empty-illus">□</view>
+      <view class="empty-illus">🗂️</view>
       <text class="empty-title">还没有保存的素材</text>
       <text class="empty-desc">解析成功后加入素材库，后续复查会更方便</text>
       <button class="empty-btn" bindtap="goHome">去解析视频</button>
