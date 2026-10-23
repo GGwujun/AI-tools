@@ -7,6 +7,7 @@ const TOOL_SECTIONS = [
     subtitle: '从视频里提取音频、文案和画面',
     tools: [
       { key: 'asr', name: '视频转文字', icon: '/images/icons_svg/tool-video-to-text.svg', color: 'blue', desc: '提取口播文案，一键复制' },
+      { key: 'draft', name: '一键出稿', icon: '/images/icons_svg/tool-ai-rewrite.svg', color: 'red', desc: '口播识别 + AI 改写，直接可发布' },
       { key: 'extract_audio', name: '音频提取', icon: '/images/icons_svg/extract-audio.svg', color: 'indigo', desc: '提取视频音轨保存为 MP3' },
       { key: 'audio_convert', name: '音频转格式', icon: '/images/icons_svg/tool-audio.svg', color: 'yellow', desc: 'MP3/WAV/AAC 等格式互转' },
       { key: 'screenshot', name: '视频截图', icon: '/images/icons_svg/extract-cover.svg', color: 'green', desc: '截取任意一帧保存为图片' },
@@ -105,6 +106,7 @@ const ROUTE_MAP = {
   ocr: '/pages/ai/ocr/ocr',
   eraser: '/pages/ai/eraser/eraser',
   writer: '/pages/ai/writer/writer',
+  draft: '/pages/ai/draft/draft',
   teleprompter: '/pages/fun/teleprompter/teleprompter',
   merge: '/pages/tools/merge-tool',
   oil: '/pages/daily/oil/oil',

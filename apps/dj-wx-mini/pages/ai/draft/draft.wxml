@@ -1,0 +1,184 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+
+    <!-- 输入/就绪态 -->
+    <block wx:if="{{phase === 'input'}}">
+
+      <view class="card">
+        <view class="card-header">
+          <text class="card-title">来源视频</text>
+        </view>
+
+        <block wx:if="{{hasSourceParam}}">
+          <view class="source-banner">
+            <text class="source-banner-text">已带入原视频文案与链接，选好平台直接开始</text>
+          </view>
+          <text class="source-url">{{sourceUrl}}</text>
+        </block>
+        <block wx:else>
+          <view class="link-row">
+            <input class="link-input" value="{{linkInput}}" bindinput="onLinkInput"
+                   placeholder="粘贴抖音/快手/B站等视频分享链接" confirm-type="done" />
+            <view class="paste-btn" hover-class="press" bindtap="onPasteTap">粘贴</view>
+          </view>
+          <text class="link-tip">支持整段分享文案，自动提取链接</text>
+        </block>
+      </view>
+
+      <view class="card">
+        <view class="card-header">
+          <text class="card-title">发布平台</text>
+        </view>
+        <view class="platform-grid">
+          <view wx:for="{{platforms}}" wx:key="id"
+                class="platform-item {{selectedPlatform === item.id ? 'active' : ''}}"
+                hover-class="press" bindtap="selectPlatform" data-id="{{item.id}}">
+            <text class="platform-icon">{{item.icon}}</text>
+            <text class="platform-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="card">
+        <view class="card-header">
+          <text class="card-title">文案风格</text>
+        </view>
+        <view class="style-list">
+          <view wx:for="{{styles}}" wx:key="id"
+                class="style-item {{selectedStyle === item.id ? 'active' : ''}}"
+                hover-class="press" bindtap="selectStyle" data-id="{{item.id}}">
+            <text>{{item.emoji}} {{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{asrError}}" class="card error-card">
+        <text class="error-text">{{asrError}}</text>
+        <view class="error-actions">
+          <view class="action-btn" hover-class="press" bindtap="retryAsr">重试识别</view>
+          <view wx:if="{{canSkipAsr}}" class="action-btn primary" hover-class="press" bindtap="skipAsrAndGenerate">用原文案直接生成</view>
+        </view>
+      </view>
+
+      <button class="generate-btn" hover-class="press" bindtap="startPipeline">🚀 开始出稿</button>
+
+      <view wx:if="{{history.length}}" class="card">
+        <view class="history-header">
+          <text class="card-title">最近出稿</text>
+          <text class="clear-btn" hover-class="press" bindtap="clearHistory">清空</text>
+        </view>
+        <view wx:for="{{history}}" wx:key="id" class="history-item" hover-class="press"
+              bindtap="onHistoryTap" data-index="{{index}}">
+          <view class="history-main">
+            <text class="history-topic">{{item.resultTitle || item.resultContent}}</text>
+            <text class="history-platform">{{item.platformName}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 两阶段进行中 -->
+    <view wx:elif="{{phase === 'running'}}" class="state-wrap">
+      <view class="loading-spinner"></view>
+      <text class="state-title">{{runStage === 'asr' ? '正在识别口播内容…' : '正在生成文案…'}}</text>
+      <text class="state-sub">已等待 {{elapsed}} 秒 · 视频越长识别越久，请保持页面打开</text>
+    </view>
+
+    <!-- 出稿结果 -->
+    <block wx:elif="{{phase === 'result'}}">
+      <view wx:if="{{resultTitle}}" class="card">
+        <view class="result-header">
+          <text class="card-title">标题</text>
+          <text class="copy-btn" hover-class="press" bindtap="copyTitle">复制</text>
+        </view>
+        <text class="result-content">{{resultTitle}}</text>
+      </view>
+
+      <view class="card">
+        <view class="result-header">
+          <text class="card-title">正文</text>
+          <text class="copy-btn" hover-class="press" bindtap="copyContent">复制</text>
+        </view>
+        <text class="result-content">{{resultContent}}</text>
+      </view>
+
+      <view wx:if="{{resultTags.length}}" class="card">
+        <view class="result-header">
+          <text class="card-title">话题标签</text>
+          <text class="copy-btn" hover-class="press" bindtap="copyTags">复制全部</text>
+        </view>
+        <view class="tags">
+          <text wx:for="{{resultTags}}" wx:key="*this" class="tag">{{item}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{transcript}}" class="card">
+        <view class="result-header" hover-class="press" bindtap="toggleTranscript">
+          <text class="card-title">口播稿</text>
+          <text class="copy-btn">{{showTranscript ? '收起 ▲' : '展开 ▼'}}</text>
+        </view>
+        <text wx:if="{{showTranscript}}" class="result-content transcript">{{transcript}}</text>
+        <text wx:if="{{transcriptTruncated}}" class="link-tip">口播稿过长，已截断前 8000 字参与改写</text>
+        <text wx:if="{{showTranscript}}" class="copy-btn center" hover-class="press" bindtap="copyTranscript">复制口播稿</text>
+      </view>
+
+      <view class="card">
+        <view class="card-header">
+          <text class="card-title">换个平台 / 风格重新生成</text>
+        </view>
+        <view class="platform-grid">
+          <view wx:for="{{platforms}}" wx:key="id"
+                class="platform-item {{selectedPlatform === item.id ? 'active' : ''}}"
+                hover-class="press" bindtap="selectPlatform" data-id="{{item.id}}">
+            <text class="platform-icon">{{item.icon}}</text>
+            <text class="platform-name">{{item.name}}</text>
+          </view>
+        </view>
+        <view class="style-list">
+          <view wx:for="{{styles}}" wx:key="id"
+                class="style-item {{selectedStyle === item.id ? 'active' : ''}}"
+                hover-class="press" bindtap="selectStyle" data-id="{{item.id}}">
+            <text>{{item.emoji}} {{item.name}}</text>
+          </view>
+        </view>
+        <button class="generate-btn slim" hover-class="press" bindtap="regenerate">重新生成（不用重新识别）</button>
+      </view>
+
+      <button class="generate-btn" hover-class="press" bindtap="copyAll">📋 复制全部（标题+正文+标签）</button>
+
+      <banner-ad />
+    </block>
+
+    <!-- AI 失败：口播稿保留 -->
+    <block wx:elif="{{phase === 'ai-failed'}}">
+      <view class="card error-card">
+        <text class="error-text">{{aiError}}</text>
+        <view class="error-actions">
+          <view class="action-btn primary" hover-class="press" bindtap="regenerate">重试生成</view>
+        </view>
+      </view>
+
+      <view wx:if="{{transcript}}" class="card">
+        <view class="result-header">
+          <text class="card-title">口播稿（已识别，可直接复制）</text>
+          <text class="copy-btn" hover-class="press" bindtap="copyTranscript">复制</text>
+        </view>
+        <text class="result-content transcript">{{transcript}}</text>
+      </view>
+
+      <view class="card">
+        <view class="platform-grid">
+          <view wx:for="{{platforms}}" wx:key="id"
+                class="platform-item {{selectedPlatform === item.id ? 'active' : ''}}"
+                hover-class="press" bindtap="selectPlatform" data-id="{{item.id}}">
+            <text class="platform-icon">{{item.icon}}</text>
+            <text class="platform-name">{{item.name}}</text>
+          </view>
+        </view>
+        <button class="generate-btn slim" hover-class="press" bindtap="regenerate">换个平台重新生成</button>
+      </view>
+    </block>
+
+  </scroll-view>
+</view>
+<back-home />

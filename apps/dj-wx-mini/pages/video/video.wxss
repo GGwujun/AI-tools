@@ -362,6 +362,25 @@
 }
 
 /* AI 改写文案按钮 */
+/* 一键出稿主推按钮（橙色实底） */
+.draft-btn {
+  margin-top: 18rpx;
+  height: 88rpx;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 88rpx;
+  padding: 0 24rpx;
+  background: linear-gradient(135deg, #ff7a18, #ff5a3c);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6rpx 20rpx rgba(255, 90, 60, 0.3);
+}
+
+.draft-btn::after {
+  border: none;
+}
+
 .ai-rewrite-btn {
   margin-top: 18rpx;
   height: 82rpx;

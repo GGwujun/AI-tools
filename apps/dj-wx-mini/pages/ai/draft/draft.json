@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "back-home": "/components/back-home/index",
+    "banner-ad": "/components/banner-ad/banner-ad"
+  },
+  "navigationBarTitleText": "一键出稿"
+}

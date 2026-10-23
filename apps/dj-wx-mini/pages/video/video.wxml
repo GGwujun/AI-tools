@@ -88,6 +88,8 @@
       </view>
     </view>
 
+    <button wx:if="{{resultData.downurl}}" class="draft-btn" hover-class="press" bindtap="goDraft">🚀 一键出稿 · 口播稿改写成原创文案</button>
+
     <button class="ai-rewrite-btn" bindtap="goAiWriter">✍️ AI 改写文案 · 一键生成原创文案</button>
 
     <view class="tool-chips-card">

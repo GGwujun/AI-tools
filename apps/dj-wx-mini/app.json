@@ -11,6 +11,7 @@
     "pages/ai/ocr/ocr",
     "pages/ai/writer/writer",
     "pages/ai/eraser/eraser",
+    "pages/ai/draft/draft",
     "pages/daily/oil/oil",
     "pages/daily/gold/gold",
     "pages/daily/sunset/sunset",

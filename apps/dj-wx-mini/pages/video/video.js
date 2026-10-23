@@ -1,5 +1,5 @@
 ﻿const storage = require('../../utils/safe-storage');
-const { inferPlatformLabelFromUrl } = require('../../utils/parse-link');
+const { inferPlatformLabelFromUrl, detectPlatform } = require('../../utils/parse-link');
 const { parseVideo, inferFailureReason } = require('../../utils/parse-runner');
 const api = require('../../config/api');
 
@@ -1145,6 +1145,28 @@ Page({
 
     wx.navigateTo({
       url: `/pages/ai/writer/writer?${params}`
+    });
+  },
+
+  // 一键出稿：带分享链（后端现解析直链）+ 原文案 + 源平台进 draft 页
+  goDraft() {
+    const resultData = this.data.resultData;
+    if (!resultData) return;
+
+    const sourceUrl = resultData.videourl || '';
+    if (!sourceUrl) {
+      wx.showToast({ title: '缺少来源链接', icon: 'none' });
+      return;
+    }
+
+    const params = [
+      `url=${encodeURIComponent(sourceUrl)}`,
+      `title=${encodeURIComponent((resultData.title || '').slice(0, 500))}`,
+      `platform=${detectPlatform(sourceUrl) || ''}`
+    ].join('&');
+
+    wx.navigateTo({
+      url: `/pages/ai/draft/draft?${params}`
     });
   }
 });
