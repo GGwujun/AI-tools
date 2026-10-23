@@ -1,5 +1,5 @@
 // 工具箱：分组展示。视频类小工具统一走 pages/tools/video-tool 通用页，
-// ocr/eraser/writer 是独立页面。
+// AI 文案工具族走 pages/ai/ai-tool 通用页，ocr/eraser/writer 等是独立页面。
 const TOOL_SECTIONS = [
   {
     id: 'extract',
@@ -57,6 +57,12 @@ const TOOL_SECTIONS = [
     subtitle: '写文案、看提词，拍摄一条龙',
     tools: [
       { key: 'writer', name: '文案生成', icon: '/images/icons_svg/tool-ai-rewrite.svg', color: 'pink', desc: '智能生成标题、摘要与发布文案' },
+      { key: 'xhs_note', name: '小红书文案', icon: '/images/icons_svg/tool-copywriting.svg', color: 'red', desc: '产品/主题一键生成种草笔记' },
+      { key: 'moments', name: '朋友圈文案', icon: '/images/icons_svg/message.svg', color: 'green', desc: '一个主题出 3 条不同风格' },
+      { key: 'title_gen', name: '标题生成器', icon: '/images/icons_svg/tool-ai-rewrite.svg', color: 'orange', desc: '一个主题出 10 个爆款标题' },
+      { key: 'tags_gen', name: '话题标签', icon: '/images/icons_svg/hot.svg', color: 'pink', desc: '文案一键生成 12 个标签' },
+      { key: 'weekly', name: '周报生成器', icon: '/images/icons_svg/calendar.svg', color: 'purple', desc: '流水账一键变结构化周报' },
+      { key: 'acrostic', name: '藏头诗', icon: '/images/icons_svg/copy-text.svg', color: 'indigo', desc: '每个字开头，七言藏头' },
       { key: 'teleprompter', name: '提词器', icon: '/images/icons_svg/copy-text.svg', color: 'blue', desc: '全屏滚动字幕，拍视频神器' }
     ]
   },
@@ -101,6 +107,7 @@ const TOOL_SECTIONS = [
 // 走通用工具页的工具 id（其余走独立页面）
 const VIDEO_TOOL_KEYS = ['extract_audio', 'screenshot', 'asr', 'clip', 'compress', 'convert', 'gif', 'watermark', 'grid', 'reverse', 'mute', 'audio_convert', 'speed', 'transform', 'vertical', 'frames', 'subtitle'];
 const IMAGE_TOOL_KEYS = ['image_compress', 'image_stitch', 'image_watermark', 'image_convert', 'image_resize', 'image_border', 'image_collage', 'image_recolor'];
+const AI_TOOL_KEYS = ['xhs_note', 'moments', 'title_gen', 'tags_gen', 'weekly', 'acrostic'];
 
 const ROUTE_MAP = {
   ocr: '/pages/ai/ocr/ocr',
@@ -148,6 +155,11 @@ Page({
 
     if (IMAGE_TOOL_KEYS.indexOf(tool) >= 0) {
       wx.navigateTo({ url: `/pages/tools/image-tool?tool=${tool}` });
+      return;
+    }
+
+    if (AI_TOOL_KEYS.indexOf(tool) >= 0) {
+      wx.navigateTo({ url: `/pages/ai/ai-tool?tool=${tool}` });
       return;
     }
 

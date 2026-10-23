@@ -23,35 +23,42 @@ tools_js = read(os.path.join(MINI, 'pages', 'tools', 'tools.js'))
 section_keys = re.findall(r"\{ key: '([a-z_0-9]+)',", tools_js)
 video_keys = re.findall(r"'([a-z_0-9]+)'", re.search(r'const VIDEO_TOOL_KEYS = \[(.*?)\];', tools_js, re.S).group(1))
 image_keys = re.findall(r"'([a-z_0-9]+)'", re.search(r'const IMAGE_TOOL_KEYS = \[(.*?)\];', tools_js, re.S).group(1))
+ai_keys = re.findall(r"'([a-z_0-9]+)'", re.search(r'const AI_TOOL_KEYS = \[(.*?)\];', tools_js, re.S).group(1))
 route_map = dict(re.findall(r"\s*([a-z_0-9]+): '(/pages/[^']+)'", tools_js))
 
 dup = [k for k in set(section_keys) if section_keys.count(k) > 1]
 if dup:
     problems.append(f'tools.js 入口重复 key: {dup}')
 
-no_dispatch = [k for k in section_keys if k not in video_keys and k not in image_keys and k not in route_map]
+no_dispatch = [k for k in section_keys if k not in video_keys and k not in image_keys and k not in ai_keys and k not in route_map]
 if no_dispatch:
-    problems.append(f'tools.js 入口无法跳转(不在 VIDEO/IMAGE/ROUTE): {no_dispatch}')
+    problems.append(f'tools.js 入口无法跳转(不在 VIDEO/IMAGE/AI/ROUTE): {no_dispatch}')
 
 dead_route = [k for k in route_map if k not in section_keys]
 if dead_route:
     problems.append(f'ROUTE_MAP 有但入口没列出: {dead_route}')
 dead_video = [k for k in video_keys if k not in section_keys]
 dead_image = [k for k in image_keys if k not in section_keys]
-if dead_video or dead_image:
-    problems.append(f'keys 有但入口没列出: {dead_video + dead_image}')
+dead_ai = [k for k in ai_keys if k not in section_keys]
+if dead_video or dead_image or dead_ai:
+    problems.append(f'keys 有但入口没列出: {dead_video + dead_image + dead_ai}')
 
 # ---------- 2. TOOL_CONFIG 覆盖 ----------
 vt = read(os.path.join(MINI, 'pages', 'tools', 'video-tool.js'))
 it = read(os.path.join(MINI, 'pages', 'tools', 'image-tool.js'))
+at = read(os.path.join(MINI, 'pages', 'ai', 'ai-tool.js'))
 vt_cfg = re.findall(r'^\s{2}([a-z_0-9]+): \{', vt, re.M)
 it_cfg = re.findall(r'^\s{2}([a-z_0-9]+): \{', it, re.M)
+at_cfg = re.findall(r'^\s{2}([a-z_0-9]+): \{', at, re.M)
 for k in video_keys:
     if k not in vt_cfg:
         problems.append(f'video-tool.js 缺 TOOL_CONFIG[{k}]')
 for k in image_keys:
     if k not in it_cfg:
         problems.append(f'image-tool.js 缺 TOOL_CONFIG[{k}]')
+for k in ai_keys:
+    if k not in at_cfg:
+        problems.append(f'ai-tool.js 缺 AI_TOOL_CONFIG[{k}]')
 
 # ---------- 3. app.json 页面存在性 ----------
 app_json = json.loads(read(os.path.join(MINI, 'app.json')))

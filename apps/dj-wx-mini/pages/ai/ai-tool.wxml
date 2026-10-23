@@ -1,0 +1,128 @@
+<view class="page">
+  <!-- 输入态 -->
+  <block wx:if="{{config && !running && !result}}">
+    <view class="card head-card">
+      <view class="tool-head">
+        <text class="tool-icon">{{config.emoji}}</text>
+        <view class="tool-meta">
+          <text class="tool-name">{{config.name}}</text>
+          <text class="tool-desc">{{config.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card form-card">
+      <block wx:for="{{config.fields}}" wx:key="key">
+        <view class="field">
+          <text class="field-label">{{item.label}}</text>
+          <textarea
+            wx:if="{{item.type === 'textarea'}}"
+            class="field-textarea"
+            value="{{form[item.key]}}"
+            maxlength="{{item.maxlength}}"
+            placeholder="{{item.placeholder}}"
+            placeholder-class="ph"
+            bindinput="onFieldInput"
+            data-key="{{item.key}}"
+          ></textarea>
+          <input
+            wx:else
+            class="field-input"
+            value="{{form[item.key]}}"
+            maxlength="{{item.maxlength}}"
+            placeholder="{{item.placeholder}}"
+            placeholder-class="ph"
+            bindinput="onFieldInput"
+            data-key="{{item.key}}"
+          />
+        </view>
+      </block>
+
+      <view class="tip" wx:if="{{config.tip}}">💡 {{config.tip}}</view>
+
+      <button class="gen-btn" hover-class="press" bindtap="generate" disabled="{{running}}">
+        ✨ 立即生成
+      </button>
+    </view>
+
+    <view class="card error-card" wx:if="{{error}}">
+      <text class="error-text">{{error}}</text>
+      <button class="retry-btn" hover-class="press" bindtap="generate">重试</button>
+    </view>
+  </block>
+
+  <!-- 生成中 -->
+  <view class="card running-card" wx:if="{{running}}">
+    <view class="spinner"></view>
+    <text class="running-text">AI 正在生成…</text>
+    <text class="elapsed">已等待 {{elapsed}} 秒</text>
+  </view>
+
+  <!-- 结果态 -->
+  <block wx:if="{{result}}">
+    <!-- draft：标题 + 正文 + 标签 -->
+    <block wx:if="{{result.kind === 'draft'}}">
+      <view class="card" wx:if="{{result.title}}">
+        <view class="card-title">标题</view>
+        <text class="draft-title">{{result.title}}</text>
+      </view>
+      <view class="card">
+        <view class="card-title">正文</view>
+        <text class="content-text" user-select>{{result.content}}</text>
+      </view>
+      <view class="card" wx:if="{{result.tags.length}}">
+        <view class="card-title">话题标签</view>
+        <view class="tag-wrap">
+          <text class="tag" wx:for="{{result.tags}}" wx:key="*this">{{item}}</text>
+        </view>
+      </view>
+      <view class="btn-row">
+        <button class="act-btn" hover-class="press" bindtap="copyText">复制正文</button>
+        <button class="act-btn" hover-class="press" bindtap="copyTags" wx:if="{{result.tags.length}}">复制标签</button>
+      </view>
+    </block>
+
+    <!-- lines：条目列表，逐条复制 -->
+    <block wx:if="{{result.kind === 'lines'}}">
+      <view class="card">
+        <view class="card-title">生成结果（点击单条复制）</view>
+        <view class="line-item" hover-class="press" wx:for="{{result.lines}}" wx:key="*this" bindtap="copyLine" data-index="{{index}}">
+          <text class="line-no">{{index + 1}}</text>
+          <text class="line-text" user-select>{{item}}</text>
+        </view>
+      </view>
+      <view class="btn-row">
+        <button class="act-btn" hover-class="press" bindtap="copyAllLines">复制全部</button>
+      </view>
+    </block>
+
+    <!-- tags：标签组 -->
+    <block wx:if="{{result.kind === 'tags'}}">
+      <view class="card">
+        <view class="card-title">话题标签（{{result.tags.length}} 个）</view>
+        <view class="tag-wrap">
+          <text class="tag" wx:for="{{result.tags}}" wx:key="*this">{{item}}</text>
+        </view>
+      </view>
+      <view class="btn-row">
+        <button class="act-btn" hover-class="press" bindtap="copyTags">一键复制标签</button>
+      </view>
+    </block>
+
+    <!-- text：纯文本 -->
+    <block wx:if="{{result.kind === 'text'}}">
+      <view class="card">
+        <view class="card-title">生成结果</view>
+        <text class="content-text" user-select>{{result.text}}</text>
+      </view>
+      <view class="btn-row">
+        <button class="act-btn" hover-class="press" bindtap="copyText">复制全部</button>
+      </view>
+    </block>
+
+    <button class="gen-btn again-btn" hover-class="press" bindtap="generate">🔄 换个写法重新生成</button>
+    <banner-ad />
+  </block>
+
+  <back-home />
+</view>

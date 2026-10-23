@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "AI 文案工具",
+  "usingComponents": {
+    "back-home": "/components/back-home/index",
+    "banner-ad": "/components/banner-ad/banner-ad"
+  }
+}
