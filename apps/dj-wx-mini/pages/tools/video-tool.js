@@ -435,6 +435,7 @@ Page({
     wx.showLoading({ title: '加载广告中...' });
 
     if (!wx.createRewardedVideoAd) {
+      wx.hideLoading();
       callback();
       return;
     }

@@ -157,6 +157,7 @@ Page({
     wx.showLoading({ title: '加载广告中...' });
 
     if (!wx.createRewardedVideoAd) {
+      wx.hideLoading();
       callback();
       return;
     }
@@ -249,10 +250,12 @@ Page({
     const lines = content.split('\n').map((l) => l.trim()).filter((l) => l);
 
     if (kind === 'lines') {
-      return {
-        kind,
-        lines: lines.map((l) => clean(l).replace(/^\d+\s*[.、)．]\s*/, ''))
-      };
+      const cleaned = lines.map((l) => clean(l));
+      // 模型偶尔加「以下是 10 个标题：」这类前言/尾解释：
+      // 编号行凑够 3 条就只认编号行，否则退回全部行
+      const numbered = cleaned.filter((l) => /^\d+\s*[.、)．]/.test(l));
+      const picked = numbered.length >= 3 ? numbered : cleaned;
+      return { kind, lines: picked.map((l) => l.replace(/^\d+\s*[.、)．]\s*/, '')) };
     }
 
     if (kind === 'tags') {
@@ -304,6 +307,20 @@ Page({
     wx.setClipboardData({
       data: result.text || result.content || '',
       success: () => wx.showToast({ title: '已复制', icon: 'success' })
+    });
+  },
+
+  copyAll() {
+    const { result } = this.data;
+    if (!result) return;
+    const parts = [];
+    if (result.title) parts.push(result.title);
+    if (result.content) parts.push(result.content);
+    if (result.tags && result.tags.length) parts.push(result.tags.join(' '));
+    if (!parts.length) return;
+    wx.setClipboardData({
+      data: parts.join('\n\n'),
+      success: () => wx.showToast({ title: '已复制全部', icon: 'success' })
     });
   },
 

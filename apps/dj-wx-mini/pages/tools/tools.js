@@ -54,7 +54,7 @@ const TOOL_SECTIONS = [
   {
     id: 'ai',
     title: '创作辅助',
-    subtitle: '写文案、看提词，拍摄一条龙',
+    subtitle: '写文案、起标题、看提词，创作一条龙',
     tools: [
       { key: 'writer', name: '文案生成', icon: '/images/icons_svg/tool-ai-rewrite.svg', color: 'pink', desc: '智能生成标题、摘要与发布文案' },
       { key: 'xhs_note', name: '小红书文案', icon: '/images/icons_svg/tool-copywriting.svg', color: 'red', desc: '产品/主题一键生成种草笔记' },

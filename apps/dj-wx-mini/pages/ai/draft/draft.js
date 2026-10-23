@@ -4,7 +4,7 @@
 const api = require('../../../config/api');
 const storage = require('../../../utils/safe-storage');
 const { track } = require('../../../utils/track');
-const { detectPlatform, extractSupportedLinks } = require('../../../utils/parse-link');
+const { extractSupportedLinks } = require('../../../utils/parse-link');
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 const AI_MODEL = 'glm-4-flash';
@@ -189,6 +189,7 @@ Page({
     wx.showLoading({ title: '加载广告中...' });
 
     if (!wx.createRewardedVideoAd) {
+      wx.hideLoading();
       callback();
       return;
     }

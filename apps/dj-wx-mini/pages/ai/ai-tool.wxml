@@ -79,6 +79,7 @@
       <view class="btn-row">
         <button class="act-btn" hover-class="press" bindtap="copyText">复制正文</button>
         <button class="act-btn" hover-class="press" bindtap="copyTags" wx:if="{{result.tags.length}}">复制标签</button>
+        <button class="act-btn" hover-class="press" bindtap="copyAll">复制全部</button>
       </view>
     </block>
 
