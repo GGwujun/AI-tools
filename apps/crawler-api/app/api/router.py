@@ -7,7 +7,7 @@ from app.api.endpoints import (
     kuaishou_web,
     xiaohongshu_web,
     weibo_web,
-    hybrid_parsing, ios_shortcut, download, proxy, ai_proxy, tools, daily,
+    hybrid_parsing, ios_shortcut, download, proxy, ai_proxy, tools, daily, track,
 )
 
 router = APIRouter()
@@ -51,3 +51,6 @@ router.include_router(tools.router, prefix="/tools", tags=["Video-Tools"])
 
 # Daily routers (今日数据: 金价/油价/朝霞晚霞预测/每日壁纸)
 router.include_router(daily.router, prefix="/daily", tags=["Daily-Data"])
+
+# Track router (轻量埋点: 匿名事件 NDJSON 落盘 + 汇总)
+router.include_router(track.router, prefix="/track", tags=["Analytics"])

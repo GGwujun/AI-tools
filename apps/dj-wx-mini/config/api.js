@@ -73,6 +73,8 @@ module.exports = {
   dailyWallpaperFile: `${current.toolsFileBase}/api/daily/wallpaper/file`,
   dailyHistoryApi: `${current.toolsFileBase}/api/daily/history`,
   dailyRateApi: `${current.toolsFileBase}/api/daily/rate`,
+  // 轻量埋点（匿名事件，fire-and-forget）
+  trackApi: `${current.toolsFileBase}/api/track`,
   // 广告位 ID
   adUnitId: current.adUnitId,
   bannerAdUnitId: current.bannerAdUnitId

@@ -6,6 +6,7 @@ const {
   findUrls
 } = require('./parse-link');
 const { rankRouteOptions, recordRouteResult } = require('./route-ranker');
+const { track } = require('./track');
 const api = require('../config/api');
 
 const FALLBACK_PARSE_CONFIG = {
@@ -278,11 +279,17 @@ async function parseVideo(input) {
   const routeSequence = buildRouteOptions(config);
   if (!routeSequence.length) throw new Error('config missing');
 
-  const { apiData, route } = await requestAcrossRoutes(targetUrl, routeSequence, config);
-  const resultData = buildResultData(platform, apiData, targetUrl, route);
-  if (!resultData) throw new Error('empty result');
+  try {
+    const { apiData, route } = await requestAcrossRoutes(targetUrl, routeSequence, config);
+    const resultData = buildResultData(platform, apiData, targetUrl, route);
+    if (!resultData) throw new Error('empty result');
 
-  return resultData;
+    track('parse_ok', { platform });
+    return resultData;
+  } catch (error) {
+    track('parse_fail', { platform, ok: false });
+    throw error;
+  }
 }
 
 module.exports = {

@@ -2,6 +2,7 @@
 // 流程：选图 → 逐张 wx.uploadFile 暂存到服务器 → JSON 提交统一处理
 const api = require('../../config/api');
 const storage = require('../../utils/safe-storage');
+const { track } = require('../../utils/track');
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 
@@ -426,9 +427,13 @@ Page({
 
     this.uploadAll()
       .then((names) => this.submitProcess(params, names))
-      .then((result) => this.setData({ result }))
+      .then((result) => {
+        this.setData({ result });
+        track('tool_use', { tool: this.data.tool });
+      })
       .catch((e) => {
         this.setData({ error: e.message || '处理失败，请稍后重试' });
+        track('tool_fail', { tool: this.data.tool, ok: false });
       })
       .then(() => {
         this.stopElapsed();

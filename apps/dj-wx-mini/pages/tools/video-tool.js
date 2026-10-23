@@ -1,6 +1,7 @@
 // 通用视频小工具页：所有 ffmpeg 类工具共用（配置驱动表单 + 结果展示）
 const api = require('../../config/api');
 const storage = require('../../utils/safe-storage');
+const { track } = require('../../utils/track');
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 
@@ -492,9 +493,11 @@ Page({
             result.imageUrls = result.images.map((path) => this.absUrl(path));
           }
           this.setData({ result });
+          track('tool_use', { tool: this.data.tool });
         } else {
           const detail = payload.detail || payload.message || `处理失败（${res.statusCode}）`;
           this.setData({ error: typeof detail === 'string' ? detail : JSON.stringify(detail) });
+          track('tool_fail', { tool: this.data.tool, ok: false });
         }
       },
       fail: (err) => {
@@ -502,6 +505,7 @@ Page({
           ? '处理超时，视频可能太大，请稍后重试'
           : '网络异常，请稍后重试';
         this.setData({ error: message });
+        track('tool_fail', { tool: this.data.tool, ok: false });
       },
       complete: () => {
         this.stopElapsed();

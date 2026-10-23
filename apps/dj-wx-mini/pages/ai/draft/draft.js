@@ -3,6 +3,7 @@
 // 传分享链接让后端现解析直链，避开 x-expires 过期。
 const api = require('../../../config/api');
 const storage = require('../../../utils/safe-storage');
+const { track } = require('../../../utils/track');
 const { detectPlatform, extractSupportedLinks } = require('../../../utils/parse-link');
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
@@ -523,6 +524,7 @@ ${platform.rewrite}
     if (history.length > 20) history.length = 20;
     storage.set(HISTORY_KEY, history);
     this.setData({ history: history.slice(0, 10) });
+    track('draft_done', { platform: this.data.selectedPlatform });
   },
 
   // ============ 计时 ============
