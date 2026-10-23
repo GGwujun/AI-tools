@@ -27,8 +27,10 @@ ALLOWED_EVENTS = {
     'tool_use', 'tool_fail',           # ffmpeg 视频小工具（video-tool/image-tool）
     'draft_done',                      # 一键出稿完成
     'ai_tool_use',                     # AI 文案工具族生成成功
+    'js_error',                        # 前端全局错误（onError/onUnhandledRejection/页面404）
 }
 MAX_STRING_LEN = 64
+MSG_MAX_LEN = 200                      # js_error 的 msg 字段（错误信息/堆栈截断）
 RATE_LIMIT = 120         # 次
 RATE_WINDOW = 60         # 秒
 SUMMARY_TTL = 60         # 秒
@@ -44,6 +46,7 @@ class TrackEvent(BaseModel):
     event: str = Field(max_length=32)
     tool: str = ''
     platform: str = ''
+    msg: str = ''
     ok: bool = True
 
 
@@ -103,6 +106,8 @@ async def track_event(body: TrackEvent, request: Request):
         'platform': body.platform[:MAX_STRING_LEN] if body.platform else '',
         'ok': body.ok,
     }
+    if body.msg:
+        record['msg'] = body.msg[:MSG_MAX_LEN]
 
     try:
         _append(record)

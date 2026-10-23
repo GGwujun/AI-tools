@@ -29,6 +29,12 @@ services:
       # 智谱 AI key（AI 代理用）。在本目录建 .env 文件写入:
       #   ZHIPU_API_KEY=你的智谱key
       ZHIPU_API_KEY: "${ZHIPU_API_KEY:-}"
+    # 容器日志旋转：uvicorn 每请求一行访问日志，不旋转会无限增长
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
 
 volumes:
   crawler-download:
